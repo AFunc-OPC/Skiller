@@ -1,0 +1,24 @@
+# Environment
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+.pnpm-debug.log
+yarn-error.log
+
+# Build
+build/

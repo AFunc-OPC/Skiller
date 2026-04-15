@@ -1,0 +1,31 @@
+<svg viewBox="0 0 44 44" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-logo-merged">
+  <defs>
+    <linearGradient id="logo-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="logo-glow-merged" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 充满整个44×44区域的圆角矩形 -->
+  <rect x="2" y="2" width="40" height="40" rx="11" fill="url(#logo-grad-bg)" />
+
+  <!-- 图标居中放大，更饱满 -->
+  <path 
+    d="M14 20L22 16L30 20V28L22 32L14 28V24L22 28L30 24" 
+    stroke="white" 
+    stroke-width="2.2" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+    fill="none"
+    opacity="0.97"
+  />
+  <circle cx="22" cy="24" r="2.6" fill="white" opacity="0.95" />
+</svg>

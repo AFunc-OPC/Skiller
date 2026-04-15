@@ -1,0 +1,1101 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tag Tree - Botanical/Organic Theme
+   "Cultivating your taxonomy"
+   底色和边框与技能中心保持一致
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tree-bg: var(--bg-elevated);
+  --tree-node-bg: transparent;
+  --tree-node-hover: rgba(16, 185, 129, 0.06);
+  --tree-node-selected: rgba(16, 185, 129, 0.12);
+  --tree-node-drag: rgba(245, 158, 11, 0.12);
+  --tree-text: var(--text-primary);
+  --tree-text-muted: var(--text-secondary);
+  --tree-branch: #8fa88f;
+  --tree-branch-highlight: var(--accent-mint);
+  --tree-accent: var(--accent-mint);
+  --tree-accent-warm: var(--accent-amber);
+  --tree-leaf-green: var(--accent-mint);
+  --tree-bud: #7cb083;
+  --tree-glow: rgba(16, 185, 129, 0.2);
+  --tree-shadow: rgba(0, 0, 0, 0.05);
+  --tree-border: var(--border-soft);
+  --tree-drag-border: var(--accent-amber);
+}
+
+[data-theme="dark"] {
+  --tree-node-hover: rgba(52, 211, 153, 0.08);
+  --tree-node-selected: rgba(52, 211, 153, 0.12);
+  --tree-node-drag: rgba(251, 194, 36, 0.1);
+  --tree-branch: #4a7c59;
+  --tree-branch-highlight: var(--accent-mint);
+  --tree-bud: #4a7c59;
+  --tree-glow: rgba(52, 211, 153, 0.15);
+  --tree-shadow: rgba(0, 0, 0, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tree Container
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-view-container {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.tree-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  border-bottom: 1px solid var(--border-soft);
+  position: relative;
+  z-index: 2;
+}
+
+.tree-toolbar-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tree-toolbar-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tree-toolbar-btn:hover {
+  color: var(--tree-accent);
+  background: var(--tree-node-hover);
+  border-color: var(--border-soft);
+}
+
+.tree-toolbar-info {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tree Nodes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node {
+  position: relative;
+  user-select: none;
+}
+
+.tree-node-row {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.tree-node-row:hover {
+  background: var(--tree-node-hover);
+}
+
+.tree-node-row.selected {
+  background: var(--tree-node-selected);
+}
+
+.tree-node-row.dragging {
+  opacity: 0.4;
+}
+
+.tree-node-row.drag-over {
+  background: var(--tree-node-drag);
+  border: 2px dashed var(--tree-drag-border);
+  border-radius: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Indent Guide Lines
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-indent-guides {
+  display: flex;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.tree-indent-guide {
+  width: 24px;
+  height: 100%;
+  border-left: 1px solid var(--border-soft);
+  opacity: 0;
+  margin-left: 12px;
+}
+
+.tree-indent-guide.show {
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Toggle Button
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.tree-toggle:hover {
+  background: var(--tree-node-hover);
+  color: var(--tree-accent);
+}
+
+.tree-toggle-icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.tree-toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-toggle-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Node Label
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-label {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 450;
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.125rem 0;
+}
+
+.tree-node-row:hover .tree-node-label {
+  color: var(--tree-accent);
+}
+
+.tree-node-row.selected .tree-node-label {
+  color: var(--tree-accent);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Node ID
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-id-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tree-node-id {
+  font-size: 0.625rem;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+
+.tree-node-id-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  opacity: 0;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.tree-node-row:hover .tree-node-id-copy {
+  opacity: 0.5;
+}
+
+.tree-node-id-copy:hover {
+  opacity: 1 !important;
+  background: var(--tree-node-hover);
+  color: var(--tree-accent);
+}
+
+.tree-node-id-copy svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.tree-node-id-copy.copied {
+  color: var(--tree-accent);
+  opacity: 1 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Action Buttons
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tree-node-row:hover .tree-node-actions {
+  opacity: 1;
+}
+
+.tree-action-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.tree-action-btn:hover {
+  background: var(--tree-node-selected);
+  color: var(--tree-accent);
+}
+
+.tree-action-btn.danger:hover {
+  background: rgba(205, 92, 92, 0.15);
+  color: #c55a5a;
+}
+
+.tree-action-btn svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Drag Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-drag-overlay {
+  padding: 0.5rem 1rem;
+  background: var(--bg-elevated);
+  border: 2px solid var(--tree-accent-warm);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--tree-shadow);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--tree-accent-warm);
+  cursor: grabbing;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Droppable Zone
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-droppable-zone {
+  min-height: 100%;
+  transition: background 0.2s ease;
+}
+
+.tree-droppable-zone.drag-active {
+  background: var(--tree-node-drag);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Empty State
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.tree-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.tree-empty-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: none;
+}
+
+.tree-empty-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.tree-empty-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Loading State
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.tree-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-soft);
+  border-top-color: var(--tree-accent);
+  border-radius: 50%;
+  animation: tree-spin 0.8s linear infinite;
+}
+
+@keyframes tree-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes tree-node-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tree-node {
+  animation: tree-node-enter 0.15s ease-out backwards;
+}
+
+.tree-node:nth-child(1) { animation-delay: 0ms; }
+.tree-node:nth-child(2) { animation-delay: 10ms; }
+.tree-node:nth-child(3) { animation-delay: 20ms; }
+.tree-node:nth-child(4) { animation-delay: 30ms; }
+.tree-node:nth-child(5) { animation-delay: 40ms; }
+.tree-node:nth-child(6) { animation-delay: 50ms; }
+.tree-node:nth-child(7) { animation-delay: 60ms; }
+.tree-node:nth-child(8) { animation-delay: 70ms; }
+.tree-node:nth-child(9) { animation-delay: 80ms; }
+.tree-node:nth-child(10) { animation-delay: 90ms; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Scrollbar Styling
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-soft) transparent;
+}
+
+.tree-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.tree-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 1rem;
+  background: transparent;
+  border-bottom: 1px solid var(--border-soft);
+  position: relative;
+  z-index: 2;
+}
+
+.tree-toolbar-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tree-toolbar-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--tree-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tree-toolbar-btn:hover {
+  color: var(--tree-accent);
+  background: var(--tree-node-hover);
+  border-color: var(--tree-border);
+}
+
+.tree-toolbar-info {
+  font-size: 0.6875rem;
+  color: var(--tree-text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tree Nodes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node {
+  position: relative;
+  user-select: none;
+}
+
+.tree-node-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 6px;
+  margin: 1px 0.5rem;
+  position: relative;
+}
+
+.tree-node-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: transparent;
+  transition: background 0.15s ease;
+  z-index: -1;
+}
+
+.tree-node-row:hover::before {
+  background: var(--tree-node-hover);
+}
+
+.tree-node-row.selected::before {
+  background: var(--tree-node-selected);
+}
+
+.tree-node-row.dragging {
+  opacity: 0.4;
+}
+
+.tree-node-row.drag-over {
+  background: var(--tree-node-drag);
+  border: 2px dashed var(--tree-drag-border);
+  border-radius: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Branch Lines - Organic Curves
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-branch-container {
+  position: relative;
+}
+
+.tree-branch-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--tree-branch) 5%,
+    var(--tree-branch) 95%,
+    transparent 100%
+  );
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+.tree-branch-line::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--tree-glow) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tree-node:hover ~ .tree-branch-container .tree-branch-line::before,
+.tree-branch-container:hover .tree-branch-line::before {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Expand/Collapse Toggle - Leaf Bud
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tree-toggle:hover {
+  background: var(--tree-node-hover);
+}
+
+.tree-toggle.hidden {
+  visibility: hidden;
+}
+
+.tree-toggle-bud {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tree-toggle-bud.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-toggle-bud svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tree-toggle-bud .bud-stem {
+  stroke: var(--tree-branch);
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+  transition: stroke 0.2s ease;
+}
+
+.tree-toggle-bud .bud-leaf {
+  fill: var(--tree-bud);
+  transition: fill 0.2s ease, transform 0.3s ease;
+  transform-origin: center;
+}
+
+.tree-toggle-bud.expanded .bud-leaf {
+  fill: var(--tree-leaf-green);
+  transform: scale(1.1);
+}
+
+.tree-toggle:hover .bud-stem {
+  stroke: var(--tree-branch-highlight);
+}
+
+.tree-toggle:hover .bud-leaf {
+  fill: var(--tree-leaf-green);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Node Icon - Leaf Indicator
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 0.125rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+.tree-node-row:hover .tree-node-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.tree-node-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tree-node-icon .leaf-shape {
+  fill: var(--tree-leaf-green);
+}
+
+.tree-node-icon .leaf-vein {
+  stroke: var(--bg-elevated);
+  stroke-width: 0.5;
+  fill: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Node Label
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-label {
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 450;
+  color: var(--text-primary);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.tree-node-skill-count {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--tree-node-hover);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 6px;
+  margin-left: 0.375rem;
+  opacity: 0.7;
+}
+
+.tree-node-row:hover .tree-node-skill-count {
+  opacity: 1;
+  background: var(--border-soft);
+}
+
+.tree-node-row:hover .tree-node-label {
+  color: var(--tree-accent);
+}
+
+.tree-node-row.selected .tree-node-label {
+  color: var(--tree-accent);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Node ID
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-id-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.tree-node-id {
+  font-size: 0.625rem;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--text-secondary);
+  opacity: 0.45;
+}
+
+.tree-node-id-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  opacity: 0;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.tree-node-row:hover .tree-node-id-copy {
+  opacity: 0.5;
+}
+
+.tree-node-id-copy:hover {
+  opacity: 1 !important;
+  background: var(--tree-node-hover);
+  color: var(--tree-accent);
+}
+
+.tree-node-id-copy svg {
+  width: 10px;
+  height: 10px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.tree-node-id-copy.copied {
+  color: var(--tree-accent);
+  opacity: 1 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Depth Indicator - Tree Rings
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-depth-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--tree-text-muted);
+  background: var(--tree-node-hover);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+  transition: all 0.15s ease;
+}
+
+.tree-node-row:hover .tree-depth-badge {
+  background: var(--tree-border);
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Action Buttons
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-node-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tree-node-row:hover .tree-node-actions {
+  opacity: 1;
+}
+
+.tree-action-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--tree-text-muted);
+  transition: all 0.15s ease;
+}
+
+.tree-action-btn:hover {
+  background: var(--tree-node-selected);
+  color: var(--tree-accent);
+}
+
+.tree-action-btn.danger:hover {
+  background: rgba(205, 92, 92, 0.15);
+  color: #c55a5a;
+}
+
+.tree-action-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  fill: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Drag Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-drag-overlay {
+  padding: 0.5rem 1rem;
+  background: var(--bg-elevated);
+  border: 2px solid var(--tree-accent-warm);
+  border-radius: 8px;
+  box-shadow: 
+    0 4px 12px var(--tree-shadow),
+    0 0 20px var(--tree-glow);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--tree-accent-warm);
+  cursor: grabbing;
+  transform: rotate(2deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Droppable Zone
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-droppable-zone {
+  min-height: 100%;
+  transition: background 0.2s ease;
+}
+
+.tree-droppable-zone.drag-active {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--tree-node-drag) 50%,
+    transparent 100%
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Empty State
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--tree-text-muted);
+}
+
+.tree-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.tree-empty-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tree-empty-icon .seed-shape {
+  fill: var(--tree-branch);
+}
+
+.tree-empty-title {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--tree-text);
+  margin-bottom: 0.25rem;
+}
+
+.tree-empty-desc {
+  font-size: 0.8125rem;
+  color: var(--tree-text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Loading State
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--tree-text-muted);
+}
+
+.tree-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--tree-border);
+  border-top-color: var(--tree-accent);
+  border-radius: 50%;
+  animation: tree-spin 0.8s linear infinite;
+}
+
+@keyframes tree-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes tree-node-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tree-node {
+  animation: tree-node-enter 0.25s ease-out backwards;
+}
+
+.tree-node:nth-child(1) { animation-delay: 0ms; }
+.tree-node:nth-child(2) { animation-delay: 30ms; }
+.tree-node:nth-child(3) { animation-delay: 60ms; }
+.tree-node:nth-child(4) { animation-delay: 90ms; }
+.tree-node:nth-child(5) { animation-delay: 120ms; }
+.tree-node:nth-child(6) { animation-delay: 150ms; }
+.tree-node:nth-child(7) { animation-delay: 180ms; }
+.tree-node:nth-child(8) { animation-delay: 210ms; }
+.tree-node:nth-child(9) { animation-delay: 240ms; }
+.tree-node:nth-child(10) { animation-delay: 270ms; }
+
+/* Stagger for deeper levels */
+.tree-branch-container .tree-node {
+  animation-delay: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Scrollbar Styling
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tree-branch) transparent;
+}
+
+.tree-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--tree-branch);
+  border-radius: 3px;
+  opacity: 0.5;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--tree-branch-highlight);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tag Dialog Theme Overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tree-view-container ~ .tag-dialog-compact,
+.tree-view-container .tag-dialog-compact {
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+}
+
+.tag-dialog-compact.tree-themed {
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-header h3 {
+  color: var(--text-primary);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-path {
+  background: var(--tree-node-hover);
+  color: var(--text-secondary);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-input {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-input:focus {
+  border-color: var(--accent-mint);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-desc {
+  color: var(--text-secondary);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-btn-ghost {
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-btn-ghost:hover {
+  background: var(--tree-node-hover);
+  color: var(--text-primary);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-btn-primary {
+  background: var(--accent-mint);
+}
+
+.tag-dialog-compact.tree-themed .tag-dialog-btn-danger {
+  background: #c55a5a;
+}

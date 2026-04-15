@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Skill Button Preview</title>
+    <style>
+      :root {
+        --bg: #0f1115;
+        --panel: #171a21;
+        --panel-soft: #1d212b;
+        --border: #2b3240;
+        --text: #edf2f7;
+        --muted: #98a2b3;
+        --accent: #6ea8fe;
+        --accent-2: #8fd3ff;
+        --hover: #232937;
+        --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(110, 168, 254, 0.18), transparent 28%),
+          radial-gradient(circle at top right, rgba(143, 211, 255, 0.12), transparent 24%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .wrap {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .hero {
+        margin-bottom: 24px;
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px;
+        margin: 20px 0 28px;
+        background: rgba(23, 26, 33, 0.92);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .search {
+        flex: 1;
+        min-width: 220px;
+        height: 48px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--panel-soft);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel-soft);
+      }
+
+      .toggle span {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #252b38;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: rgba(23, 26, 33, 0.95);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #b8d7ff;
+        background: rgba(110, 168, 254, 0.12);
+        border: 1px solid rgba(110, 168, 254, 0.28);
+      }
+
+      .card-body {
+        padding: 20px;
+      }
+
+      .hint {
+        margin: 0 0 18px;
+        color: var(--muted);
+        line-height: 1.7;
+        min-height: 70px;
+      }
+
+      .demo-bar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        min-height: 84px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #12151c;
+        border: 1px dashed rgba(255, 255, 255, 0.09);
+        position: relative;
+      }
+
+      .menu {
+        position: absolute;
+        top: 66px;
+        right: 0;
+        width: 290px;
+        background: rgba(24, 28, 36, 0.98);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .menu-item:last-child {
+        border-bottom: none;
+      }
+
+      .menu-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #222938;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+      }
+
+      .menu-copy strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .menu-copy small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .btn-split,
+      .btn-flat,
+      .btn-entry {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .btn-main {
+        height: 44px;
+        padding: 0 16px;
+        border: 1px solid rgba(110, 168, 254, 0.28);
+        color: var(--text);
+        background: linear-gradient(180deg, rgba(110, 168, 254, 0.18), rgba(110, 168, 254, 0.1));
+        font-weight: 600;
+      }
+
+      .btn-arrow {
+        width: 42px;
+        height: 44px;
+        border: 1px solid rgba(110, 168, 254, 0.28);
+        background: linear-gradient(180deg, rgba(110, 168, 254, 0.18), rgba(110, 168, 254, 0.1));
+        border-left: none;
+      }
+
+      .btn-split .btn-main {
+        border-radius: 14px 0 0 14px;
+      }
+
+      .btn-split .btn-arrow {
+        border-radius: 0 14px 14px 0;
+      }
+
+      .btn-flat {
+        gap: 10px;
+        height: 44px;
+        padding: 0 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(110, 168, 254, 0.24);
+        background: linear-gradient(180deg, rgba(110, 168, 254, 0.16), rgba(110, 168, 254, 0.08));
+        font-weight: 600;
+      }
+
+      .btn-entry {
+        gap: 12px;
+        min-width: 216px;
+        height: 52px;
+        padding: 0 16px;
+        border-radius: 16px;
+        background: #171d27;
+        border: 1px solid var(--border);
+      }
+
+      .btn-entry .entry-icon,
+      .entry-arrow,
+      .plus-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        background: #263042;
+        flex-shrink: 0;
+      }
+
+      .entry-copy {
+        flex: 1;
+      }
+
+      .entry-copy strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .entry-copy small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .recommend {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(110, 168, 254, 0.24);
+        background: rgba(110, 168, 254, 0.08);
+        color: #cfe2ff;
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1024px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <h1>“添加技能”按钮样式对比</h1>
+        <p>目标是让按钮更像桌面工具栏里的正式操作入口，并且下拉菜单与当前项目的深色玻璃面板风格一致。下面是 3 种方向，其中 A 是我推荐的方案。</p>
+      </div>
+
+      <div class="bar">
+        <div class="search"></div>
+        <div class="actions">
+          <div class="toggle"><span></span><span></span></div>
+          <div class="btn-split">
+            <button class="btn-main">+ 添加技能</button>
+            <button class="btn-arrow">▾</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card-head">
+            <h2>A. 分体主按钮</h2>
+            <span class="badge">推荐</span>
+          </div>
+          <div class="card-body">
+            <p class="hint">强调主操作感，按钮本体负责“添加技能”语义，右侧箭头负责展开，最像桌面应用工具栏。适合你现在这个功能区。</p>
+            <div class="demo-bar">
+              <div class="btn-split">
+                <button class="btn-main">+ 添加技能</button>
+                <button class="btn-arrow">▾</button>
+              </div>
+              <div class="menu">
+                <div class="menu-item">
+                  <div class="menu-icon"></div>
+                  <div class="menu-copy"><strong>导入 .zip / .skill</strong><small>导入后自动写入用户目录下的 `.skiller/skills`</small></div>
+                </div>
+                <div class="menu-item">
+                  <div class="menu-icon"></div>
+                  <div class="menu-copy"><strong>通过 npx skills 导入</strong><small>先检测 git / npx 可用性，再展示终端执行过程</small></div>
+                </div>
+                <div class="menu-item">
+                  <div class="menu-icon"></div>
+                  <div class="menu-copy"><strong>从仓库中选择</strong><small>从已添加仓库里挑选 skill 并导入到本地技能目录</small></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>B. 单体按钮</h2>
+            <span class="badge">简洁</span>
+          </div>
+          <div class="card-body">
+            <p class="hint">更干净，但“点击添加”和“展开菜单”的职责混在一起，交互语义不如 A 清楚，适合更轻量的页面。</p>
+            <div class="demo-bar">
+              <button class="btn-flat"><span class="plus-dot"></span>添加技能 ▾</button>
+              <div class="menu">
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>导入 .zip / .skill</strong><small>适合本地离线包</small></div></div>
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>通过 npx skills 导入</strong><small>适合命令安装型技能</small></div></div>
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>从仓库中选择</strong><small>适合已有仓库沉淀</small></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>C. 条目式入口</h2>
+            <span class="badge">克制</span>
+          </div>
+          <div class="card-body">
+            <p class="hint">风格更贴近“标签治理”一类面板入口，但它会弱化“添加技能”这个动作的优先级，不太适合放在顶部主功能区。</p>
+            <div class="demo-bar">
+              <button class="btn-entry">
+                <span class="entry-icon"></span>
+                <span class="entry-copy"><strong>添加技能</strong><small>展开导入方式</small></span>
+                <span class="entry-arrow"></span>
+              </button>
+              <div class="menu">
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>导入 .zip / .skill</strong><small>本地文件导入</small></div></div>
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>通过 npx skills 导入</strong><small>命令行安装</small></div></div>
+                <div class="menu-item"><div class="menu-icon"></div><div class="menu-copy"><strong>从仓库中选择</strong><small>仓库选择导入</small></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="recommend">
+        推荐采用 A：分体主按钮。它最符合你前面指定的“主按钮 + 右侧小箭头”，同时也最适合当前页面顶部工具栏的位置。接下来如果你确认，我会把正式组件改成这个方向，并把下拉菜单做得更贴近项目现有的深色玻璃面板风格。
+      </div>
+    </div>
+  </body>
+  </html>

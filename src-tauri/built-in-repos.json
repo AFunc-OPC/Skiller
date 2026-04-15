@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Superpowers",
+    "url": "https://github.com/obra/superpowers",
+    "branch": "main",
+    "description": "An agentic skills framework & software development methodology that works. ",
+    "skill_relative_path": "",
+    "auth_method": "ssh"
+  },
+  {
+    "name": "vercel-labs/agent-skills",
+    "url": "https://github.com/vercel-labs/agent-skills.git",
+    "branch": "main",
+    "description": "Vercel's official collection of agent skills",
+    "skill_relative_path": "",
+    "auth_method": "ssh"
+  },
+  {
+    "name": "anthropics/skills",
+    "url": "https://github.com/anthropics/skills.git",
+    "branch": "main",
+    "description": "Public repository for Agent Skills ",
+    "skill_relative_path": "",
+    "auth_method": "ssh"
+  }
+]

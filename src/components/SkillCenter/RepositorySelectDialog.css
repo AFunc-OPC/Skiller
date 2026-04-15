@@ -1,0 +1,1260 @@
+/* ═══════════════════════════════════════════════════════════════
+   Repository Import Dialog - Editorial Design System
+   A refined, magazine-inspired dialog with depth and character
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Prevent horizontal scroll when dialog is open */
+body:has(.repo-import-overlay) {
+  overflow-x: hidden;
+}
+
+.repo-import-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(12px) saturate(0.9);
+  z-index: 100;
+  animation: ri-overlay-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+@keyframes ri-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.repo-import-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100vw - 2rem);
+  max-width: 1024px;
+  height: calc(100vh - 3rem);
+  max-height: 680px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border-radius: 24px;
+  box-shadow: 
+    0 0 0 1px var(--border-soft),
+    0 32px 96px -12px rgba(0, 0, 0, 0.2),
+    0 12px 32px -6px rgba(0, 0, 0, 0.1);
+  z-index: 101;
+  overflow: hidden;
+  animation: ri-dialog-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="dark"] .repo-import-dialog {
+  box-shadow: 
+    0 0 0 1px var(--border-soft),
+    0 32px 96px -12px rgba(0, 0, 0, 0.6),
+    0 12px 32px -6px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes ri-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+
+.repo-import-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.06) 0%,
+    transparent 100%
+  );
+}
+
+[data-theme="dark"] .repo-import-header {
+  background: linear-gradient(
+    180deg,
+    rgba(52, 211, 153, 0.08) 0%,
+    transparent 100%
+  );
+}
+
+.repo-import-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.repo-import-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent-mint), #059669);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 6px 16px -3px rgba(16, 185, 129, 0.4);
+  transition: transform 0.2s;
+}
+
+.repo-import-dialog:hover .repo-import-title-icon {
+  transform: scale(1.05);
+}
+
+.repo-import-title-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.repo-import-title h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.repo-import-close {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.repo-import-close:hover {
+  background: var(--bg-base);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.repo-import-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.repo-import-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.55);
+  backdrop-filter: blur(8px) saturate(0.95);
+  z-index: 100;
+  animation: ri-overlay-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+}
+
+@keyframes ri-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Highlight ─────────────────────────────────────────────────── */
+
+.highlight {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
+  color: var(--accent-mint);
+  padding: 0 0.125rem;
+  margin: 0 -0.125rem;
+  border-radius: 2px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+[data-theme="dark"] .highlight {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.3), rgba(52, 211, 153, 0.2));
+  color: #6ee7b7;
+}
+
+.repo-item.active .highlight,
+.skill-item.selected .highlight {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.45), rgba(16, 185, 129, 0.35));
+  color: #065f46;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .repo-item.active .highlight,
+[data-theme="dark"] .skill-item.selected .highlight {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.5), rgba(52, 211, 153, 0.4));
+  color: #d1fae5;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4);
+}
+
+.repo-import-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100vw - 2rem);
+  max-width: 960px;
+  height: calc(100vh - 4rem);
+  max-height: 640px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border-radius: 20px;
+  box-shadow: 
+    0 0 0 1px var(--border-soft),
+    0 24px 80px -8px rgba(0, 0, 0, 0.15),
+    0 8px 24px -4px rgba(0, 0, 0, 0.08);
+  z-index: 101;
+  overflow: hidden;
+  animation: ri-dialog-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="dark"] .repo-import-dialog {
+  box-shadow: 
+    0 0 0 1px var(--border-soft),
+    0 24px 80px -8px rgba(0, 0, 0, 0.5),
+    0 8px 24px -4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes ri-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+
+.repo-import-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.04) 0%,
+    transparent 100%
+  );
+}
+
+[data-theme="dark"] .repo-import-header {
+  background: linear-gradient(
+    180deg,
+    rgba(52, 211, 153, 0.06) 0%,
+    transparent 100%
+  );
+}
+
+.repo-import-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.repo-import-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent-mint), #059669);
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.3);
+}
+
+.repo-import-title-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.repo-import-title h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.repo-import-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.repo-import-close:hover {
+  background: var(--bg-base);
+  border-color: var(--border-soft);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.repo-import-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Main Content ─────────────────────────────────────────────── */
+
+.repo-import-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Left Panel: Repository List ──────────────────────────────── */
+
+.repo-import-left {
+  width: 300px;
+  min-width: 0;
+  max-width: 32%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-soft);
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.repo-import-search {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.repo-import-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.repo-import-search-icon {
+  position: absolute;
+  left: 0.625rem;
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.repo-import-search-input {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.375rem 0.625rem 0.375rem 2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.repo-import-search-input:focus {
+  outline: none;
+  border-color: var(--accent-mint);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.repo-import-search-input:focus + .repo-import-search-icon,
+.repo-import-search-input:not(:placeholder-shown) + .repo-import-search-icon {
+  color: var(--accent-mint);
+}
+
+.repo-import-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.repo-import-list {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.375rem;
+}
+
+.repo-import-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.repo-import-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.repo-import-list::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+
+.repo-import-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.repo-import-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.repo-import-empty-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+
+.repo-import-empty-text {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.repo-import-empty-action {
+  margin-top: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--accent-mint);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.repo-import-empty-action:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ── Repository Item ──────────────────────────────────────────── */
+
+.repo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  background: var(--bg-elevated);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  color: var(--text-primary);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.repo-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.25s;
+}
+
+.repo-item:hover {
+  border-color: var(--border-soft);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+}
+
+.repo-item.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.06));
+  border-color: var(--accent-mint);
+  box-shadow: 0 3px 12px -2px rgba(16, 185, 129, 0.25);
+}
+
+.repo-item.active::before {
+  background: var(--accent-mint);
+}
+
+[data-theme="dark"] .repo-item.active {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.16), rgba(52, 211, 153, 0.08));
+}
+
+.repo-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--bg-base);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: all 0.25s;
+}
+
+.repo-item.active .repo-item-icon {
+  background: var(--accent-mint);
+  color: white;
+  transform: scale(1.03);
+}
+
+.repo-item-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.repo-item-content {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.repo-item-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.0625rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.repo-item-url {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.repo-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.repo-item-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem;
+  background: var(--bg-base);
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.repo-item-meta-item svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ── Right Panel: Skill Selection ─────────────────────────────── */
+
+.repo-import-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.repo-import-panel-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.04) 0%,
+    transparent 100%
+  );
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .repo-import-panel-header {
+  background: linear-gradient(
+    180deg,
+    rgba(52, 211, 153, 0.06) 0%,
+    transparent 100%
+  );
+}
+
+.repo-import-panel-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.repo-import-panel-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.repo-import-panel-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.repo-import-navigate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--accent-mint);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.repo-import-navigate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.repo-import-navigate-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.4);
+}
+
+.repo-import-navigate-btn:hover::before {
+  opacity: 1;
+}
+
+.repo-import-navigate-btn:active {
+  transform: translateY(0);
+}
+
+.repo-import-navigate-btn svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.25s;
+}
+
+.repo-import-navigate-btn:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.repo-import-panel-desc {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.repo-import-panel-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.repo-import-panel-url-compact {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.repo-import-panel-separator {
+  color: var(--border-soft);
+  font-weight: 600;
+}
+
+.repo-import-panel-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  color: var(--accent-mint);
+  font-weight: 500;
+}
+
+.repo-import-panel-path svg {
+  width: 12px;
+  height: 12px;
+}
+
+.repo-import-panel-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--accent-mint);
+  color: white;
+  border-radius: 3px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.repo-import-panel-branch svg {
+  width: 10px;
+  height: 10px;
+}
+
+.repo-import-skills-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.repo-import-skills-search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.repo-import-skills-list {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.375rem;
+}
+
+.repo-import-skills-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.repo-import-skills-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.repo-import-skills-list::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+
+/* ── Select All Button ────────────────────────────────────────── */
+
+.repo-import-select-all {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.repo-import-select-all:hover {
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+}
+
+.repo-import-select-all.all-selected {
+  background: var(--accent-mint);
+  border-color: var(--accent-mint);
+  color: white;
+}
+
+.repo-import-select-all svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Skill Item ───────────────────────────────────────────────── */
+
+.skill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.25rem;
+  background: var(--bg-base);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  color: var(--text-primary);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  animation: skill-item-in 0.3s ease-out backwards;
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.25s;
+}
+
+@keyframes skill-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skill-item:nth-child(1) { animation-delay: 0ms; }
+.skill-item:nth-child(2) { animation-delay: 40ms; }
+.skill-item:nth-child(3) { animation-delay: 80ms; }
+.skill-item:nth-child(4) { animation-delay: 120ms; }
+.skill-item:nth-child(5) { animation-delay: 160ms; }
+.skill-item:nth-child(6) { animation-delay: 200ms; }
+.skill-item:nth-child(7) { animation-delay: 240ms; }
+.skill-item:nth-child(8) { animation-delay: 280ms; }
+.skill-item:nth-child(9) { animation-delay: 320ms; }
+.skill-item:nth-child(10) { animation-delay: 360ms; }
+
+.skill-item:hover {
+  border-color: var(--border-soft);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px -3px rgba(0, 0, 0, 0.08);
+}
+
+.skill-item.selected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.06));
+  border-color: var(--accent-mint);
+  box-shadow: 0 4px 16px -3px rgba(16, 185, 129, 0.25);
+}
+
+.skill-item.selected::before {
+  background: var(--accent-mint);
+}
+
+[data-theme="dark"] .skill-item.selected {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.16), rgba(52, 211, 153, 0.08));
+}
+
+.skill-item-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-soft);
+  border-radius: 5px;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  margin-top: 1px;
+}
+
+.skill-item.selected .skill-item-checkbox {
+  background: var(--accent-mint);
+  border-color: var(--accent-mint);
+  color: white;
+  transform: scale(1.05);
+}
+
+.skill-item-checkbox svg {
+  width: 12px;
+  height: 12px;
+}
+
+.skill-item-content {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.skill-item-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.skill-item-desc {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.skill-item-path {
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ── Placeholder State ────────────────────────────────────────── */
+
+.repo-import-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.repo-import-placeholder-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1.25rem;
+  opacity: 0.3;
+  animation: ri-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ri-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+.repo-import-placeholder-text {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: 0.375rem;
+  color: var(--text-primary);
+}
+
+.repo-import-placeholder-hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* ── Error Banner ─────────────────────────────────────────────── */
+
+.repo-import-error {
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-top: 1px solid rgba(239, 68, 68, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  color: #ef4444;
+  animation: ri-error-in 0.3s ease-out;
+}
+
+@keyframes ri-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.repo-import-error svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+
+.repo-import-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2rem;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-base);
+}
+
+.repo-import-footer-info {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.repo-import-footer-info strong {
+  color: var(--accent-mint);
+  font-weight: 700;
+  font-size: 1.125rem;
+  margin: 0 0.25rem;
+}
+
+.repo-import-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.repo-import-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.repo-import-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+}
+
+.repo-import-btn-ghost:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+.repo-import-btn-primary {
+  background: var(--accent-mint);
+  border: none;
+  color: white;
+  box-shadow: 0 6px 16px -3px rgba(16, 185, 129, 0.4);
+}
+
+.repo-import-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -3px rgba(16, 185, 129, 0.5);
+}
+
+.repo-import-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.repo-import-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.repo-import-btn-primary svg {
+  width: 16px;
+  height: 16px;
+}
+
+.repo-import-btn-primary .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ri-spin 0.6s linear infinite;
+}
+
+@keyframes ri-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Loading State ────────────────────────────────────────────── */
+
+.repo-import-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.repo-import-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-soft);
+  border-top-color: var(--accent-mint);
+  border-radius: 50%;
+  animation: ri-spin 0.8s linear infinite;
+}
+
+.repo-import-loading-text {
+  font-size: 0.9375rem;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .repo-import-dialog {
+    width: calc(100vw - 1.5rem);
+    height: calc(100vh - 2rem);
+    max-height: none;
+  }
+
+  .repo-import-body {
+    flex-direction: column;
+  }
+
+  .repo-import-left {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .repo-import-list {
+    max-height: 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .repo-import-dialog {
+    width: calc(100vw - 1rem);
+    height: calc(100vh - 1.5rem);
+    border-radius: 20px;
+  }
+
+  .repo-import-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .repo-import-title h3 {
+    font-size: 1.0625rem;
+  }
+
+  .repo-import-search {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .repo-import-panel-header {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .repo-import-panel-title {
+    font-size: 0.875rem;
+  }
+
+  .repo-import-panel-desc {
+    font-size: 0.625rem;
+  }
+
+  .repo-import-panel-meta-row {
+    font-size: 0.625rem;
+    gap: 0.375rem;
+  }
+
+  .repo-import-panel-url-compact {
+    max-width: 140px;
+  }
+
+  .repo-import-skills-toolbar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .repo-import-skills-search {
+    width: 100%;
+    order: 1;
+  }
+
+  .repo-import-select-all {
+    order: 2;
+  }
+
+  .repo-import-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .repo-import-footer-info {
+    text-align: center;
+  }
+
+  .repo-import-footer-actions {
+    justify-content: stretch;
+  }
+
+  .repo-import-footer-actions .repo-import-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

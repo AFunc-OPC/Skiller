@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tauri API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #output {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tauri API 测试</h1>
+    
+    <div id="status" class="status"></div>
+    
+    <div>
+        <button onclick="testInvoke()">测试 invoke API</button>
+        <button onclick="testCreateTag()">测试创建标签</button>
+        <button onclick="testGetTags()">测试获取标签</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script type="module">
+        import { invoke } from '@tauri-apps/api/core';
+        
+        // 检查 Tauri 环境
+        const statusDiv = document.getElementById('status');
+        if (window.__TAURI_INTERNALS__) {
+            statusDiv.className = 'status success';
+            statusDiv.textContent = '✅ Tauri 环境正常！window.__TAURI_INTERNALS__ 已定义';
+        } else {
+            statusDiv.className = 'status error';
+            statusDiv.textContent = '❌ Tauri 环境异常！window.__TAURI_INTERNALS__ 未定义。请使用 npm run tauri:dev 启动应用';
+        }
+
+        const output = document.getElementById('output');
+
+        window.testInvoke = async function() {
+            output.textContent = '测试 invoke API...\n';
+            try {
+                const result = await invoke('get_tags');
+                output.textContent += `✅ 成功！\n返回数据: ${JSON.stringify(result, null, 2)}`;
+            } catch (error) {
+                output.textContent += `❌ 失败: ${error}`;
+            }
+        };
+
+        window.testCreateTag = async function() {
+            output.textContent = '测试创建标签...\n';
+            try {
+                const tag = await invoke('create_tag', {
+                    request: {
+                        name: 'TestTag-' + Date.now(),
+                        group_id: 'group-build'
+                    }
+                });
+                output.textContent += `✅ 成功创建标签！\n返回数据: ${JSON.stringify(tag, null, 2)}`;
+            } catch (error) {
+                output.textContent += `❌ 失败: ${error}`;
+            }
+        };
+
+        window.testGetTags = async function() {
+            output.textContent = '获取所有标签...\n';
+            try {
+                const tags = await invoke('get_tags');
+                output.textContent += `✅ 成功获取 ${tags.length} 个标签！\n`;
+                output.textContent += JSON.stringify(tags, null, 2);
+            } catch (error) {
+                output.textContent += `❌ 失败: ${error}`;
+            }
+        };
+    </script>
+</body>
+</html>
