@@ -1,0 +1,151 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'Beta*'
+      - 'Release*'
+
+permissions:
+  contents: write
+  actions: read
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            arch: aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            arch: x64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            arch: x64
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            arch: amd64
+
+    runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.os }}-${{ matrix.arch }})
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            cmake \
+            curl \
+            wget \
+            libssl-dev \
+            libgtk-3-dev \
+            libglib2.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            patchelf
+
+      - name: Setup cmake (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.28'
+
+      - name: Setup MSVC developer command prompt
+        if: matrix.os == 'windows-latest'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ matrix.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.target }}-cargo-
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Skiller ${{ github.ref_name }}'
+          releaseBody: 'See [CHANGELOG](./CHANGELOG.md) for details.'
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.target }}
+
+      - name: Upload macOS binary artifact
+        if: startsWith(matrix.target, 'aarch64-apple-darwin') || startsWith(matrix.target, 'x86_64-apple-darwin')
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: src-tauri/target/${{ matrix.target }}/release/skiller
+
+  build-mac-universal:
+    needs: build
+    runs-on: macos-latest
+    name: Create Universal Binary
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download aarch64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-latest-aarch64
+          path: artifacts/aarch64
+
+      - name: Download x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-latest-x64
+          path: artifacts/x64
+
+      - name: Create universal binary
+        run: |
+          mkdir -p release
+          lipo -create \
+            artifacts/aarch64/skiller \
+            artifacts/x64/skiller \
+            -output release/skiller
+
+      - name: Upload universal binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: release/skiller
