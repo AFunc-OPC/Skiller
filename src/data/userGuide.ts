@@ -35,7 +35,7 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 |------|----------|----------|
 | 技能 | 已管理技能总数 | 显示可用/禁用数量，有可用技能时显示绿色 |
 | 项目 | 已创建项目数 | 无项目时显示警告色 |
-| 标签 | 标签总数 | 无标签技能数，全部分类完成显示绿色 |
+| 标签 | 标签总数 | 显示无标签技能数，全部已分类显示绿色 |
 | 仓库 | 已同步/总仓库数 | 有待同步仓库时显示警告色 |
 
 #### 快速操作
@@ -62,10 +62,10 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 #### 界面布局
 
-技能中心采用三栏布局：
-- **左侧**：标签树导航，支持搜索和层级浏览
-- **右侧**：技能列表/网格展示区
-- **抽屉**：技能详情面板
+技能中心采用主内容区 + 抽屉布局：
+- **主内容区左侧**：标签树导航，支持搜索和层级浏览
+- **主内容区右侧**：技能列表/网格展示区
+- **抽屉面板**：点击技能打开详情面板
 
 #### 搜索与筛选
 
@@ -603,7 +603,6 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 | \`Esc\` | 关闭弹窗、抽屉、预览 |
 | \`Tab\` | 在表单元素间切换焦点 |
 | \`Enter\` | 确认对话框操作、提交表单 |
-| \`Ctrl/Cmd + F\` | 聚焦搜索框 |
 
 ---
 
@@ -613,13 +612,12 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 1. **查看运行日志**：设置 > 运行日志，查看错误信息
 2. **提交 Issue**：在开源仓库提交问题反馈
-3. **查阅文档**：访问官方文档获取更多信息
 
 ---
 
 **版本**：v0.1.0 (Beta)  
 **技术栈**：Tauri + React + TypeScript + Tailwind CSS  
-**开源地址**：[GitHub Repository]
+**开源地址**：[https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `
 
 export const USER_GUIDE_CONTENT_EN = `# Skiller User Guide
@@ -1227,7 +1225,6 @@ No. Deleting project configuration only removes the project record in Skiller, i
 | \`Esc\` | Close popups, drawers, previews |
 | \`Tab\` | Switch focus between form elements |
 | \`Enter\` | Confirm dialog action, submit form |
-| \`Ctrl/Cmd + F\` | Focus search box |
 
 ---
 
@@ -1237,11 +1234,10 @@ If you encounter issues, please get help through:
 
 1. **Check Runtime Logs**: Settings > Runtime Logs, view error information
 2. **Submit Issue**: Submit problem feedback in open source repository
-3. **Read Documentation**: Visit official documentation for more information
 
 ---
 
 **Version**: v0.1.0 (Beta)  
 **Tech Stack**: Tauri + React + TypeScript + Tailwind CSS  
-**Open Source**: [GitHub Repository]
+**Open Source**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `

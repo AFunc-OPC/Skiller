@@ -3,6 +3,7 @@ import type { ComponentProps, ReactElement, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { Components, ExtraProps } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from '../../data/userGuide'
 import './UserGuideModal.css'
 
@@ -347,6 +348,19 @@ export function UserGuideModal({
     },
     code: ({ className, children }: CodeProps) => {
       return <code className={className}>{children}</code>
+    },
+    a: ({ href, children }) => {
+      const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (href) {
+          openUrl(href)
+        }
+      }
+      return (
+        <a href={href} onClick={handleClick}>
+          {children}
+        </a>
+      )
     },
   }
 

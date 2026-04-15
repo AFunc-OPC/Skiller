@@ -1,9 +1,11 @@
 [package]
 name = "skiller"
-version = "1.1.0"
+version = "0.1.0"
 description = "跨平台 Skill 管理工具"
 authors = ["Skiller Team"]
 edition = "2021"
+repository = "https://github.com/AFunc-OPC/Skiller"
+license = "MIT"
 
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }

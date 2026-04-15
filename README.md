@@ -1,11 +1,25 @@
 # Skiller - 跨平台 Skill 管理工具
 
-**版本**: v1.1.0
+**版本**: v0.1.0
 **状态**: Production Ready
+**开源地址**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
+**主页**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)
 
 ## 项目简介
 
 Skiller 是一款跨平台桌面应用，用于统一管理 AI 工具的 Skill（技能/提示词配置）。支持多个 AI CLI 工具（Claude Code、OpenCode、Cursor 等），提供可视化管理界面，实现 Skill 的集中管理、分类标签、项目分发等功能。
+
+## 快速使用
+
+从 [GitHub Releases](https://github.com/AFunc-OPC/Skiller/releases) 下载对应平台的安装包：
+
+| 平台 | 安装包格式 | 说明 |
+|------|-----------|------|
+| **macOS** | `.dmg` | 支持 Intel (x64) 和 Apple Silicon (aarch64)，推荐下载 universal 版本 |
+| **Windows** | `.msi` / `.exe` | MSI 安装包或 NSIS 安装包，支持 x64 |
+| **Linux** | `.deb` / `.AppImage` | DEB 适用于 Debian/Ubuntu，AppImage 为通用格式 |
+
+下载后直接安装即可使用。
 
 ## 技术栈
 
@@ -226,9 +240,9 @@ npm run tauri:dev
 
 #### 各平台数据库默认路径
 
-- **macOS**: `~/Library/Application Support/com.skiller.app/skiller.db`
-- **Windows**: `%APPDATA%\com.skiller.app\skiller.db`
-- **Linux**: `~/.config/com.skiller.app/skiller.db`
+- **macOS**: `~/Library/Application Support/com.skiller.desktop/skiller.db`
+- **Windows**: `%APPDATA%\com.skiller.desktop\skiller.db`
+- **Linux**: `~/.config/com.skiller.desktop/skiller.db`
 
 #### 启动脚本说明
 
@@ -268,8 +282,8 @@ npm run tauri:build:mac-x64    # Intel
 
 1. 创建 Git 标签并推送：
    ```bash
-   git tag v1.1.0
-   git push origin v1.1.0
+   git tag v0.1.0
+   git push origin v0.1.0
    ```
 
 2. GitHub Actions 自动构建以下产物：
@@ -427,8 +441,8 @@ Tauri 依赖平台原生库：
 
 ```bash
 # 创建并推送标签
-git tag v1.1.0
-git push origin v1.1.0
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 ### 构建产物
@@ -495,9 +509,9 @@ chore: 构建工具、依赖更新
 
 | 平台 | 路径 |
 |------|------|
-| macOS | `~/Library/Application Support/com.skiller.app/skiller.db` |
-| Windows | `%APPDATA%\com.skiller.app\skiller.db` |
-| Linux | `~/.config/com.skiller.app/skiller.db` |
+| macOS | `~/Library/Application Support/com.skiller.desktop/skiller.db` |
+| Windows | `%APPDATA%\com.skiller.desktop\skiller.db` |
+| Linux | `~/.config/com.skiller.desktop/skiller.db` |
 
 **说明**：
 
@@ -509,17 +523,17 @@ chore: 构建工具、依赖更新
 
 ```bash
 # macOS
-ls -la ~/Library/Application\ Support/com.skiller.app/
+ls -la ~/Library/Application\ Support/com.skiller.desktop/
 
 # 查看数据库表结构
-sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db ".schema"
+sqlite3 ~/Library/Application\ Support/com.skiller.desktop/skiller.db ".schema"
 
 # 查看所有表
-sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db ".tables"
+sqlite3 ~/Library/Application\ Support/com.skiller.desktop/skiller.db ".tables"
 
 # 查看预置数据
-sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db "SELECT * FROM tag_groups;"
-sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db "SELECT * FROM tool_presets;"
+sqlite3 ~/Library/Application\ Support/com.skiller.desktop/skiller.db "SELECT * FROM tag_groups;"
+sqlite3 ~/Library/Application\ Support/com.skiller.desktop/skiller.db "SELECT * FROM tool_presets;"
 ```
 
 **修改存储位置**：
@@ -528,7 +542,7 @@ sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db "SELECT * FROM
 
 ```json
 {
-  "identifier": "com.skiller.app"  // 修改此值会改变存储目录
+  "identifier": "com.skiller.desktop"  // 修改此值会改变存储目录
 }
 ```
 
@@ -541,29 +555,13 @@ sqlite3 ~/Library/Application\ Support/com.skiller.app/skiller.db "SELECT * FROM
 - ✅ 不记录 Skill 内容到日志
 - ✅ 本地存储，无云端同步
 
-## 已知问题
-
-- Windows 软链接需要管理员权限，建议使用复制模式
-- Linux AppImage 首次运行较慢
-
-## 后续规划
-
-- [ ] 日志追溯 Tab（V1.2）
-- [ ] 关于/作者信息页（V1.2）
-- [ ] Tag 云统计图表
-- [ ] Tag 智能推荐
-- [ ] 云端同步功能
-
 ## 许可证
 
 MIT License
 
 ## 联系方式
 
-- GitHub Issues: https://github.com/yourusername/skiller/issues
-- 文档: https://docs.skiller.app
+- GitHub: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
+- Homepage: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)
+- Issues: [https://github.com/AFunc-OPC/Skiller/issues](https://github.com/AFunc-OPC/Skiller/issues)
 
----
-
-**生成时间**: 2026-04-05
-**生成工具**: OpenCode Project Generator v1.1
