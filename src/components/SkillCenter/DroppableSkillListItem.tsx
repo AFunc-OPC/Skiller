@@ -11,6 +11,7 @@ interface DroppableSkillListItemProps {
   searchKeyword?: string
   onSkillClick: (skill: Skill) => void
   language: Language
+  enableDropHighlight?: boolean
 }
 
 const STATUS_COLORS = [
@@ -37,6 +38,7 @@ export function DroppableSkillListItem({
   searchKeyword = '',
   onSkillClick,
   language,
+  enableDropHighlight = false,
 }: DroppableSkillListItemProps) {
   const { tree } = useTagTreeStore()
   const { isOver, setNodeRef, active } = useDroppable({
@@ -48,7 +50,7 @@ export function DroppableSkillListItem({
   })
 
   const isDraggingTag = active?.data?.current?.type === 'tag-for-skill'
-  const showDropIndicator = isOver && isDraggingTag
+  const showDropIndicator = enableDropHighlight && isOver && isDraggingTag
   const isDisabled = skill.status === 'disabled'
 
   const getTagName = (tagId: string): string => {

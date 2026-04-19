@@ -9,6 +9,7 @@ interface DroppableSkillCardProps {
   onClick: () => void
   style?: React.CSSProperties
   language: 'zh' | 'en'
+  enableDropHighlight?: boolean
 }
 
 export function DroppableSkillCard({
@@ -17,6 +18,7 @@ export function DroppableSkillCard({
   onClick,
   style,
   language,
+  enableDropHighlight = false,
 }: DroppableSkillCardProps) {
   const { isOver, setNodeRef, active } = useDroppable({
     id: `skill-card-${skill.id}`,
@@ -27,7 +29,7 @@ export function DroppableSkillCard({
   })
 
   const isDraggingTag = active?.data?.current?.type === 'tag-for-skill'
-  const showDropIndicator = isOver && isDraggingTag
+  const showDropIndicator = enableDropHighlight && isOver && isDraggingTag
 
   return (
     <div

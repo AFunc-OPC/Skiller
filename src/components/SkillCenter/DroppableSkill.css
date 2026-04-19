@@ -12,21 +12,14 @@
 }
 
 .skill-area-drop-hint {
-  position: absolute;
-  inset: 0.5rem;
+  position: sticky;
+  top: 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: rgba(16, 185, 129, 0.08);
-  border: 2px dashed var(--accent-mint);
-  border-radius: 12px;
-  z-index: 100;
+  margin-bottom: 0.75rem;
+  z-index: 20;
   pointer-events: none;
   animation: drop-area-pulse 0.8s ease infinite;
-}
-
-[data-theme="dark"] .skill-area-drop-hint {
-  background: rgba(52, 211, 153, 0.1);
 }
 
 @keyframes drop-area-pulse {
@@ -35,13 +28,19 @@
 }
 
 .skill-area-drop-text {
-  padding: 0.75rem 1.5rem;
-  background: var(--accent-mint);
-  color: #0a0a0a;
-  font-size: 0.875rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px dashed rgba(16, 185, 129, 0.45);
+  color: var(--accent-mint);
+  font-size: 0.75rem;
   font-weight: 600;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+[data-theme="dark"] .skill-area-drop-text {
+  background: rgba(52, 211, 153, 0.14);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .droppable-skill-wrapper {

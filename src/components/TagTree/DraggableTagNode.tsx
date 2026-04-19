@@ -9,6 +9,8 @@ interface DraggableTagNodeProps {
   depth: number
   selectedTagId: string | null
   onSelectTag: (tagId: string) => void
+  activeDragTagId?: string | null
+  highlightDragged?: boolean
 }
 
 const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
@@ -20,15 +22,20 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
   </svg>
 )
 
-export const DraggableTagNode = memo<DraggableTagNodeProps>(({
+export const DraggableTagNode = memo<DraggableTagNodeProps>(({ 
   node,
   depth,
   selectedTagId,
   onSelectTag,
+  activeDragTagId = null,
+  highlightDragged = false,
 }) => {
   const { expandedIds, toggleExpanded } = useTagTreeStore()
   const isExpanded = expandedIds.has(node.tag.id)
   const isSelected = selectedTagId === node.tag.id
+  const isActiveDraggedTag = highlightDragged && activeDragTagId === node.tag.id
+  const isDraggingThisTag = activeDragTagId === node.tag.id
+  const shouldHighlight = isDraggingThisTag ? isActiveDraggedTag : isSelected
   const hasChildren = node.children.length > 0
   const skillCount = node.tag.skill_count || 0
 
@@ -62,7 +69,7 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
         className={`
           flex items-center gap-1 px-3 py-2 cursor-pointer rounded-lg transition-colors
           ${isDragging ? 'opacity-40' : ''}
-          ${isSelected
+          ${shouldHighlight
             ? 'bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]'
             : 'hover:bg-[var(--border-soft)] text-[var(--text-secondary)]'}
         `}
@@ -107,6 +114,8 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
               depth={depth + 1}
               selectedTagId={selectedTagId}
               onSelectTag={onSelectTag}
+              activeDragTagId={activeDragTagId}
+              highlightDragged={highlightDragged}
             />
           ))}
         </div>

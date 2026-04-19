@@ -3,10 +3,12 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
+  pointerWithin,
   PointerSensor,
   useSensor,
   useSensors,
   DragStartEvent,
+  DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
 import { Tag } from 'lucide-react'
@@ -90,8 +92,51 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [importDialog, setImportDialog] = useState<'file' | 'npxFind' | 'npx' | 'repository' | null>(null)
   const [addSkillMenuOpen, setAddSkillMenuOpen] = useState(false)
   const [activeTag, setActiveTag] = useState<TagType | null>(null)
+  const [isDraggingOverSkillArea, setIsDraggingOverSkillArea] = useState(false)
 
   const selectedSkill = skills.find(s => s.id === selectedSkillId) || null
+
+  const collisionDetection = useCallback((args: Parameters<typeof closestCenter>[0]) => {
+    if (args.active.data.current?.type !== 'tag-for-skill') {
+      return closestCenter(args)
+    }
+
+    const skillAreaRect = args.droppableRects.get('skill-area')
+    const pointer = args.pointerCoordinates
+
+    if (!skillAreaRect || !pointer) {
+      return []
+    }
+
+    const isPointerInSkillArea =
+      pointer.x >= skillAreaRect.left &&
+      pointer.x <= skillAreaRect.right &&
+      pointer.y >= skillAreaRect.top &&
+      pointer.y <= skillAreaRect.bottom
+
+    if (!isPointerInSkillArea) {
+      return []
+    }
+
+    const skillContainers = args.droppableContainers.filter((container) => {
+      const id = String(container.id)
+      return id === 'skill-area' || id.startsWith('skill-card-') || id.startsWith('skill-list-')
+    })
+
+    const pointerHits = pointerWithin({
+      ...args,
+      droppableContainers: skillContainers,
+    })
+
+    if (pointerHits.length > 0) {
+      return pointerHits
+    }
+
+    return closestCenter({
+      ...args,
+      droppableContainers: skillContainers,
+    })
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -106,12 +151,20 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     const tagData = active.data.current
     if (tagData?.type === 'tag-for-skill') {
       setActiveTag(tagData.tag)
+      setIsDraggingOverSkillArea(false)
     }
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const overId = typeof event.over?.id === 'string' ? event.over.id : ''
+    const isOverSkillArea = overId === 'skill-area' || overId.startsWith('skill-card-') || overId.startsWith('skill-list-')
+    setIsDraggingOverSkillArea(isOverSkillArea)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveTag(null)
+    setIsDraggingOverSkillArea(false)
 
     if (!over) return
 
@@ -188,8 +241,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="skill-center-page">
@@ -271,6 +325,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                           depth={0} 
                           selectedTagId={selectedTagId}
                           onSelectTag={handleSelectTag}
+                          activeDragTagId={activeTag?.id ?? null}
+                          highlightDragged={isDraggingOverSkillArea}
                         />
                       ))}
                     </div>
@@ -354,6 +410,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                           onClick={() => handleSkillClick(skill)}
                           style={{ animationDelay: `${index * 30}ms` }}
                           language={language}
+                          enableDropHighlight={isDraggingOverSkillArea}
                         />
                       ))}
                     </div>
@@ -366,6 +423,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                           searchKeyword={searchKeyword}
                           onSkillClick={handleSkillClick}
                           language={language}
+                          enableDropHighlight={isDraggingOverSkillArea}
                         />
                       ))}
                     </div>
