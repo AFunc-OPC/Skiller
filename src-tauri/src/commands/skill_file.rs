@@ -190,8 +190,8 @@ fn prepare_npx_skill_import_impl(
             None => {
                 let _ = fs::remove_dir_all(&session_dir);
                 return Err(format!(
-                    "未找到技能目录：{}。已搜索匹配模式：skills/*/{}, .*/skills/{}, {}",
-                    parsed.skill_name, parsed.skill_name, parsed.skill_name, parsed.skill_name
+                    "未找到技能目录：{}。已搜索所有包含 SKILL.md 的目录",
+                    parsed.skill_name
                 ));
             }
         }
@@ -279,94 +279,75 @@ fn prepare_npx_skill_import_impl(
 }
 
 fn find_skill_directory_by_regex(repo_dir: &Path, skill_name: &str) -> Option<(String, PathBuf)> {
-    let escaped = regex::escape(skill_name);
-    let dir_pattern = regex::Regex::new(&format!(
-        r"^(?:skills/{}|\.[^/]+/skills/{}|{})$",
-        escaped, escaped, escaped
-    )).ok()?;
-
-    fn scan_by_dir_name(
-        base: &Path,
-        repo_root: &Path,
-        pattern: &regex::Regex,
-        depth: usize,
-    ) -> Option<(String, PathBuf)> {
-        if depth > 3 {
-            return None;
+    fn find_all_skill_md_files(base: &Path, repo_root: &Path, depth: usize, max_depth: usize) -> Vec<(String, PathBuf)> {
+        let mut results = Vec::new();
+        
+        if depth > max_depth {
+            return results;
         }
-
+        
         if let Ok(entries) = fs::read_dir(base) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if !path.is_dir() {
-                    continue;
-                }
-
-                if let Ok(relative) = path.strip_prefix(repo_root) {
-                    let relative_str = relative.to_string_lossy();
-
-                    if pattern.is_match(&relative_str) && path.join("SKILL.md").exists() {
-                        return Some((relative_str.to_string(), path));
-                    }
-                }
-
-                if let Some(found) = scan_by_dir_name(&path, repo_root, pattern, depth + 1) {
-                    return Some(found);
-                }
-            }
-        }
-        None
-    }
-
-    if let Some(found) = scan_by_dir_name(repo_dir, repo_dir, &dir_pattern, 0) {
-        return Some(found);
-    }
-
-    let skill_md_pattern = regex::Regex::new(&format!(
-        r"^(?:skills/[^/]+|\.[^/]+/skills/[^/]+|[^/]+)$"
-    )).ok()?;
-
-    fn scan_by_skill_name(
-        base: &Path,
-        repo_root: &Path,
-        pattern: &regex::Regex,
-        skill_name: &str,
-        depth: usize,
-    ) -> Option<(String, PathBuf)> {
-        if depth > 3 {
-            return None;
-        }
-
-        if let Ok(entries) = fs::read_dir(base) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if !path.is_dir() {
-                    continue;
-                }
-
-                let skill_md = path.join("SKILL.md");
-                if skill_md.exists() {
-                    if let Ok(relative) = path.strip_prefix(repo_root) {
-                        let relative_str = relative.to_string_lossy();
-                        if pattern.is_match(&relative_str) {
-                            if let Ok((Some(name), _)) = crate::utils::markdown::parse_skill_markdown(&skill_md) {
-                                if name == skill_name {
-                                    return Some((relative_str.to_string(), path));
-                                }
-                            }
+                
+                if path.is_dir() {
+                    let skill_md = path.join("SKILL.md");
+                    if skill_md.exists() {
+                        if let Ok(relative) = path.strip_prefix(repo_root) {
+                            results.push((relative.to_string_lossy().to_string(), path.clone()));
                         }
                     }
+                    results.extend(find_all_skill_md_files(&path, repo_root, depth + 1, max_depth));
                 }
-
-                if let Some(found) = scan_by_skill_name(&path, repo_root, pattern, skill_name, depth + 1) {
+            }
+        }
+        
+        results
+    }
+    
+    fn scan_by_dir_name(base: &Path, repo_root: &Path, skill_name: &str, depth: usize, max_depth: usize) -> Option<(String, PathBuf)> {
+        if depth > max_depth {
+            return None;
+        }
+        
+        if let Ok(entries) = fs::read_dir(base) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if !path.is_dir() {
+                    continue;
+                }
+                
+                let dir_name = path.file_name()?.to_string_lossy();
+                if dir_name == skill_name && path.join("SKILL.md").exists() {
+                    if let Ok(relative) = path.strip_prefix(repo_root) {
+                        return Some((relative.to_string_lossy().to_string(), path));
+                    }
+                }
+                
+                if let Some(found) = scan_by_dir_name(&path, repo_root, skill_name, depth + 1, max_depth) {
                     return Some(found);
                 }
             }
         }
         None
     }
-
-    scan_by_skill_name(repo_dir, repo_dir, &skill_md_pattern, skill_name, 0)
+    
+    if let Some(found) = scan_by_dir_name(repo_dir, repo_dir, skill_name, 0, 10) {
+        return Some(found);
+    }
+    
+    let all_skill_dirs = find_all_skill_md_files(repo_dir, repo_dir, 0, 10);
+    
+    for (relative_path, skill_dir) in all_skill_dirs {
+        let skill_md = skill_dir.join("SKILL.md");
+        if let Ok((Some(name), _)) = parse_skill_markdown(&skill_md) {
+            if name == skill_name {
+                return Some((relative_path, skill_dir));
+            }
+        }
+    }
+    
+    None
 }
 
 fn get_skiller_root_dir() -> Result<PathBuf, SkillerError> {
