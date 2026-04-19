@@ -227,13 +227,15 @@ pub fn toggle_project_skill_status(
     let normal_path = skill_dir.join(&skill_name);
     let disabled_path = skill_dir.join(format!(".disable.{}", skill_name));
 
-    let (source_path, target_path, action) = if normal_path.exists() {
-        (normal_path, disabled_path, "禁用")
+    let (source_path, target_path, is_disabling) = if normal_path.exists() {
+        (normal_path, disabled_path, true)
     } else if disabled_path.exists() {
-        (disabled_path, normal_path, "启用")
+        (disabled_path, normal_path, false)
     } else {
         return Err(format!("Skill '{}' not found in project", skill_name));
     };
+
+    let action = if is_disabling { "禁用" } else { "启用" };
 
     log_action(
         &app,
@@ -243,6 +245,19 @@ pub fn toggle_project_skill_status(
     );
 
     fs::rename(&source_path, &target_path).map_err(|e| e.to_string())?;
+
+    let skill_md_old = target_path.join("SKILL.md");
+    let skill_md_new = target_path.join(".disable.SKILL.md");
+
+    if is_disabling {
+        if skill_md_old.exists() {
+            fs::rename(&skill_md_old, &skill_md_new).map_err(|e| e.to_string())?;
+        }
+    } else {
+        if skill_md_new.exists() {
+            fs::rename(&skill_md_new, &skill_md_old).map_err(|e| e.to_string())?;
+        }
+    }
 
     Ok(())
 }

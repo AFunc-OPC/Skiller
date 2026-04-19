@@ -22,8 +22,10 @@ pub fn get_shell_path() -> Result<String, String> {
     let shell = std::env::var("SHELL").unwrap_or_else(|_| {
         if cfg!(target_os = "windows") {
             "cmd".to_string()
-        } else {
+        } else if cfg!(target_os = "macos") {
             "/bin/zsh".to_string()
+        } else {
+            "/bin/bash".to_string()
         }
     });
 
@@ -43,7 +45,6 @@ pub fn get_shell_path() -> Result<String, String> {
 
     if output.status.success() {
         let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        log_debug(&format!("Got PATH: {}", path));
         log_debug(&format!("Got PATH length: {} chars", path.len()));
         Ok(path)
     } else {
@@ -94,7 +95,13 @@ pub fn check_command_available(program: &str, version_arg: &str) -> bool {
             }
         }
     } else {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
         let cmd = format!("{} {}", program, version_arg);
         let result = Command::new(&shell)
             .args(&["-i", "-l", "-c", &cmd])
@@ -130,7 +137,13 @@ pub fn create_shell_command_for_npx(args: &[&str]) -> Command {
         cmd.args(args);
         cmd
     } else {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
         let npx_cmd = format!("npx {}", args.join(" "));
         let mut cmd = Command::new(&shell);
         cmd.args(&["-i", "-l", "-c", &npx_cmd]);
@@ -147,7 +160,13 @@ pub fn create_shell_command_for_npx_str(npx_args_str: &str) -> Command {
         cmd.args(npx_args_str.split_whitespace());
         cmd
     } else {
-        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
         let npx_cmd = format!("npx {}", npx_args_str);
         let mut cmd = Command::new(&shell);
         cmd.args(&["-i", "-l", "-c", &npx_cmd]);
