@@ -41,6 +41,7 @@ fn main() {
             skiller::commands::skill_file::distribute_skill,
             skiller::commands::skill_file::check_git_available,
             skiller::commands::skill_file::check_npx_available,
+            skiller::commands::skill_file::diagnose_shell_env,
             skiller::commands::skill_file::prepare_npx_skill_import,
             skiller::commands::skill_file::confirm_npx_skill_import,
             skiller::commands::skill_file::cancel_npx_skill_import,

@@ -33,6 +33,14 @@
     "icon": [
       "icons/icon.png",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "minimumSystemVersion": "10.13",
+      "entitlements": "skiller.entitlements",
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": "",
+      "signingIdentity": "-"
+    }
   }
 }

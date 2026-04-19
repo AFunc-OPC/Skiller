@@ -1,7 +1,6 @@
 use dirs::home_dir;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use tauri::{Emitter, Manager, State};
 
 use crate::db::connection::{get_connection, DbConnection};
@@ -16,6 +15,7 @@ use crate::models::skill::Skill;
 use crate::services::{distribution_service, skill_file_service, skill_service, LogService};
 use crate::utils::git;
 use crate::utils::markdown::parse_skill_markdown;
+use crate::utils::shell::{check_command_available, create_shell_command_for_npx, create_shell_command_for_npx_str};
 
 const NPX_IMPORT_PROGRESS_EVENT: &str = "npx-import-progress";
 const NATIVE_NPX_PROGRESS_EVENT: &str = "native-npx-progress";
@@ -712,16 +712,30 @@ pub fn toggle_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), Strin
         .and_then(|n| n.to_str())
         .ok_or("Invalid skill name")?;
 
-    let new_name = if name.starts_with(".disable.") {
-        name.strip_prefix(".disable.").unwrap_or(name)
-    } else {
+    let is_disabling = !name.starts_with(".disable.");
+    let new_name = if is_disabling {
         &format!(".disable.{}", name)
+    } else {
+        name.strip_prefix(".disable.").unwrap_or(name)
     };
 
     let new_path = parent.join(new_name);
     fs::rename(&path, &new_path).map_err(|e| e.to_string())?;
-    
-    let action = if name.starts_with(".disable.") { "启用" } else { "禁用" };
+
+    let skill_md_old = new_path.join("SKILL.md");
+    let skill_md_new = new_path.join(".disable.SKILL.md");
+
+    if is_disabling {
+        if skill_md_old.exists() {
+            fs::rename(&skill_md_old, &skill_md_new).map_err(|e| e.to_string())?;
+        }
+    } else {
+        if skill_md_new.exists() {
+            fs::rename(&skill_md_new, &skill_md_old).map_err(|e| e.to_string())?;
+        }
+    }
+
+    let action = if is_disabling { "禁用" } else { "启用" };
     log_action(&app, "INFO", "skill", &format!("{}技能: {}", action, name));
 
     Ok(())
@@ -955,22 +969,69 @@ pub fn distribute_skill(
 
 #[tauri::command]
 pub fn check_git_available() -> Result<bool, String> {
-    let output = Command::new("git").arg("--version").output();
-
-    match output {
-        Ok(output) => Ok(output.status.success()),
-        Err(_) => Ok(false),
-    }
+    Ok(check_command_available("git", "--version"))
 }
 
 #[tauri::command]
 pub fn check_npx_available() -> Result<bool, String> {
-    let output = Command::new("npx").arg("--version").output();
+    Ok(check_command_available("npx", "--version"))
+}
 
-    match output {
-        Ok(output) => Ok(output.status.success()),
-        Err(_) => Ok(false),
-    }
+#[tauri::command]
+pub fn diagnose_shell_env() -> Result<serde_json::Value, String> {
+    use crate::utils::shell::get_shell_path;
+    use std::process::Command;
+    
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "unknown".to_string());
+    let path_env = std::env::var("PATH").unwrap_or_else(|_| "unknown".to_string());
+    let shell_path = get_shell_path();
+    
+    let git_check = check_command_available("git", "--version");
+    let npx_check = check_command_available("npx", "--version");
+    let node_check = check_command_available("node", "--version");
+    
+    let which_npx = if git_check {
+        let path = shell_path.clone().unwrap_or_else(|_| path_env.clone());
+        Command::new("which")
+            .env("PATH", &path)
+            .arg("npx")
+            .output()
+            .ok()
+            .and_then(|o| if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            })
+    } else {
+        None
+    };
+    
+    let which_node = if git_check {
+        let path = shell_path.clone().unwrap_or_else(|_| path_env.clone());
+        Command::new("which")
+            .env("PATH", &path)
+            .arg("node")
+            .output()
+            .ok()
+            .and_then(|o| if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            })
+    } else {
+        None
+    };
+    
+    Ok(serde_json::json!({
+        "shell": shell,
+        "env_PATH": path_env,
+        "shell_PATH": shell_path.unwrap_or_else(|e| format!("error: {}", e)),
+        "git_available": git_check,
+        "npx_available": npx_check,
+        "node_available": node_check,
+        "which_npx": which_npx,
+        "which_node": which_node,
+    }))
 }
 
 #[tauri::command]
@@ -1057,8 +1118,7 @@ pub fn execute_npx_command(command: String) -> Result<String, String> {
         return Err("Empty command".to_string());
     }
 
-    let output = Command::new("npx")
-        .args(&parts[1..])
+    let output = create_shell_command_for_npx(&parts[1..])
         .output()
         .map_err(|e| format!("Failed to execute command: {}", e))?;
 
@@ -1165,10 +1225,11 @@ pub async fn execute_npx_skills_add_native(
 
     let logs = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
 
-    let mut child = Command::new("npx")
+    let mut child = create_shell_command_for_npx_str(
+        command_with_flags.strip_prefix("npx ").unwrap_or(&command_with_flags)
+    )
         .env("NO_COLOR", "1")
         .env("FORCE_COLOR", "0")
-        .args(command_with_flags.strip_prefix("npx ").unwrap_or(&command_with_flags).split_whitespace())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
@@ -1510,10 +1571,9 @@ pub async fn execute_npx_skills_find(
     let request_id_clone = request_id.clone();
     let keyword_clone = keyword.clone();
 
-    let mut child = Command::new("npx")
+    let mut child = create_shell_command_for_npx(&["skills", "find", &keyword_clone])
         .env("NO_COLOR", "1")
         .env("FORCE_COLOR", "0")
-        .args(["skills", "find", &keyword_clone])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()

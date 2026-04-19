@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { invoke } from '@tauri-apps/api/core'
 import { X, Terminal as TerminalIcon, AlertCircle, CheckCircle2, Info, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react'
 import type {
   ConfirmNpxSkillImportResponse,
@@ -154,7 +155,27 @@ export function NpxImportDialog({
       setToolHint(localTools)
 
       if (!localTools.npx) {
-        throw new Error(language === 'zh' ? '未检测到 npx，请先安装 Node.js 后再导入' : 'npx not detected. Please install Node.js before importing.')
+        let diagnoseInfo = ''
+        try {
+          const diagnose = await invoke<{
+            shell: string
+            env_PATH: string
+            shell_PATH: string
+            git_available: boolean
+            npx_available: boolean
+            node_available: boolean
+            which_npx: string | null
+            which_node: string | null
+          }>('diagnose_shell_env')
+          diagnoseInfo = language === 'zh'
+            ? `\n\n诊断信息:\n- Shell: ${diagnose.shell}\n- Node: ${diagnose.node_available ? '可用' : '不可用'} (${diagnose.which_node || '未找到'})\n- npx: ${diagnose.npx_available ? '可用' : '不可用'} (${diagnose.which_npx || '未找到'})\n- git: ${diagnose.git_available ? '可用' : '不可用'}\n- PATH: ${diagnose.shell_PATH.substring(0, 200)}...`
+            : `\n\nDiagnosis:\n- Shell: ${diagnose.shell}\n- Node: ${diagnose.node_available ? 'available' : 'unavailable'} (${diagnose.which_node || 'not found'})\n- npx: ${diagnose.npx_available ? 'available' : 'unavailable'} (${diagnose.which_npx || 'not found'})\n- git: ${diagnose.git_available ? 'available' : 'unavailable'}\n- PATH: ${diagnose.shell_PATH.substring(0, 200)}...`
+        } catch {
+          diagnoseInfo = language === 'zh' ? '\n\n无法获取诊断信息' : '\n\nFailed to get diagnosis info'
+        }
+        throw new Error(
+          (language === 'zh' ? '未检测到 npx，请先安装 Node.js 后再导入' : 'npx not detected. Please install Node.js before importing.') + diagnoseInfo
+        )
       }
 
       setLogs((prev) => [

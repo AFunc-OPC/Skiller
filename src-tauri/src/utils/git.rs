@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 use crate::error::SkillerError;
+use crate::utils::shell::get_shell_command;
 
 #[derive(Debug, Clone, Default)]
 pub struct GitAuthConfig {
@@ -199,7 +200,7 @@ fn run_git_command(
     action: &str,
     mut on_stderr_line: Option<&mut dyn FnMut(String)>,
 ) -> Result<(), SkillerError> {
-    let mut command = Command::new("git");
+    let mut command = get_shell_command("git");
     command
         .args(args)
         .stdout(Stdio::null())
