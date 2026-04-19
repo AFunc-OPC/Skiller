@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core'
+import { t } from '../../i18n'
 import { Skill } from '../../types'
 import { SkillCard } from './SkillCard'
 import './DroppableSkill.css'
@@ -39,7 +40,7 @@ export function DroppableSkillCard({
       {showDropIndicator && (
         <div className="drop-tag-indicator">
           <span className="drop-tag-text">
-            {language === 'zh' ? '松开添加标签到技能' : 'Drop to add tag to skill'}
+            {t('dropToAddTagToSkill', language)}
           </span>
         </div>
       )}

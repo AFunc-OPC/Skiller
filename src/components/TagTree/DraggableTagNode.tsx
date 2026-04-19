@@ -1,6 +1,8 @@
 import { useDraggable } from '@dnd-kit/core'
 import { memo } from 'react'
+import { t } from '../../i18n'
 import type { TreeNode as TreeNodeType } from '../../types'
+import { useAppStore } from '../../stores/appStore'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
 import './TreeTheme.css'
 
@@ -30,6 +32,7 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
   activeDragTagId = null,
   highlightDragged = false,
 }) => {
+  const { language } = useAppStore()
   const { expandedIds, toggleExpanded } = useTagTreeStore()
   const isExpanded = expandedIds.has(node.tag.id)
   const isSelected = selectedTagId === node.tag.id
@@ -38,6 +41,7 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
   const shouldHighlight = isDraggingThisTag ? isActiveDraggedTag : isSelected
   const hasChildren = node.children.length > 0
   const skillCount = node.tag.skill_count || 0
+  const dragHint = t('dragTagToSkillHint', language)
 
   const {
     attributes,
@@ -67,7 +71,7 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
       <div
         ref={setNodeRef}
         className={`
-          flex items-center gap-1 px-3 py-2 cursor-pointer rounded-lg transition-colors
+          tag-drag-node flex items-center gap-1 px-3 py-2 cursor-pointer rounded-lg transition-colors
           ${isDragging ? 'opacity-40' : ''}
           ${shouldHighlight
             ? 'bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]'
@@ -75,6 +79,7 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
         `}
         style={{ paddingLeft: `${depth * 16 + 12}px` }}
         onClick={handleClick}
+        aria-label={dragHint}
         {...attributes}
         {...listeners}
       >
@@ -97,6 +102,9 @@ export const DraggableTagNode = memo<DraggableTagNodeProps>(({
             {skillCount}
           </span>
         )}
+        <span className="tag-drag-tooltip" role="tooltip">
+          {dragHint}
+        </span>
       </div>
 
       {isExpanded && hasChildren && (

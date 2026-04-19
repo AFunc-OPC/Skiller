@@ -1,5 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { Clock, Folder, Tag } from 'lucide-react'
+import { t } from '../../i18n'
 import { Skill } from '../../types'
 import { HighlightText } from './HighlightText'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
@@ -73,7 +74,7 @@ export function DroppableSkillListItem({
     >
       {showDropIndicator && (
         <div className="drop-tag-indicator-list">
-          {language === 'zh' ? '松开添加标签到技能' : 'Drop to add tag to skill'}
+          {t('dropToAddTagToSkill', language)}
         </div>
       )}
       <div className="pm-list-content">

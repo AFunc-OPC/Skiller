@@ -241,6 +241,8 @@ export const zh = {
   importSelected: '导入选中项',
   notConfiguredGlobalPath: '未配置全局目录',
   notSelectedProject: '未选择目标项目',
+  dragTagToSkillHint: '拖动到技能上添加标签',
+  dropToAddTagToSkill: '松开添加标签到技能',
 }
 
 export const en = {
@@ -486,6 +488,8 @@ export const en = {
   importSelected: 'Import Selected',
   notConfiguredGlobalPath: 'Global path not configured',
   notSelectedProject: 'No target project selected',
+  dragTagToSkillHint: 'Drag onto a skill to add this tag',
+  dropToAddTagToSkill: 'Drop to add tag to skill',
 }
 
 export type Labels = typeof zh
