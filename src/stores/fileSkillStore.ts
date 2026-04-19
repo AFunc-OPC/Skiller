@@ -7,6 +7,7 @@ interface FileSkillState {
   loading: boolean
   error: string | null
   fetchSkills: () => Promise<void>
+  updateSkillLocally: (skillId: string, updates: Partial<Skill>) => void
 }
 
 export const useFileSkillStore = create<FileSkillState>((set) => ({
@@ -22,5 +23,13 @@ export const useFileSkillStore = create<FileSkillState>((set) => ({
     } catch (error) {
       set({ error: String(error), loading: false })
     }
+  },
+
+  updateSkillLocally: (skillId, updates) => {
+    set((state) => ({
+      skills: state.skills.map((skill) => (
+        skill.id === skillId ? { ...skill, ...updates } : skill
+      )),
+    }))
   },
 }))

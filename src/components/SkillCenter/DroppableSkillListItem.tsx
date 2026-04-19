@@ -70,8 +70,13 @@ export function DroppableSkillListItem({
       ref={setNodeRef}
       onClick={() => onSkillClick(skill)}
       className={`droppable-skill-list-item pm-list-item ${isDisabled ? 'opacity-60' : ''} ${showDropIndicator ? 'drag-over' : ''}`}
-      >
-        <div className="pm-list-content">
+    >
+      {showDropIndicator && (
+        <div className="drop-tag-indicator-list">
+          {language === 'zh' ? '松开添加标签到技能' : 'Drop to add tag to skill'}
+        </div>
+      )}
+      <div className="pm-list-content">
         <div className="pm-list-row">
           <span className="pm-list-name">
             <HighlightText text={skill.name} keyword={searchKeyword} />

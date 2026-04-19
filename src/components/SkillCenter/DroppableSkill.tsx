@@ -36,6 +36,13 @@ export function DroppableSkillCard({
       ref={setNodeRef}
       className={`droppable-skill-wrapper ${showDropIndicator ? 'drag-over' : ''}`}
     >
+      {showDropIndicator && (
+        <div className="drop-tag-indicator">
+          <span className="drop-tag-text">
+            {language === 'zh' ? '松开添加标签到技能' : 'Drop to add tag to skill'}
+          </span>
+        </div>
+      )}
       <SkillCard
         skill={skill}
         searchKeyword={searchKeyword}

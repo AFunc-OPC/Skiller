@@ -340,7 +340,6 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
 
             <DroppableSkillArea
               isDraggingTag={activeTag !== null}
-              language={language}
             >
               {loading ? (
                 <div className="flex items-center justify-center h-full">

@@ -56,7 +56,7 @@ interface SkillContextValue extends SkillCenterState {
 const SkillContext = createContext<SkillContextValue | undefined>(undefined)
 
 export function SkillProvider({ children }: { children: ReactNode }) {
-  const { skills, loading: skillsLoading, fetchSkills } = useFileSkillStore()
+  const { skills, loading: skillsLoading, fetchSkills, updateSkillLocally } = useFileSkillStore()
   const { fetchTree: fetchTagTree } = useTagTreeStore()
   
   const [state, setState] = useState<Omit<SkillCenterState, 'skills' | 'loading'>>({
@@ -202,12 +202,14 @@ export function SkillProvider({ children }: { children: ReactNode }) {
   const updateSkillTags = useCallback(async (skillId: string, tags: string[]) => {
     try {
       await invoke('update_file_skill_tags', { skillPath: skillId, tags })
-      await loadSkills()
+      updateSkillLocally(skillId, {
+        tags,
+      })
       await fetchTagTree()
     } catch (error) {
       throw new Error('更新技能标签失败: ' + (error as Error).message)
     }
-  }, [loadSkills, fetchTagTree])
+  }, [updateSkillLocally, fetchTagTree])
 
   const distributeSkill = useCallback(async (request: DistributeSkillRequest) => {
     try {

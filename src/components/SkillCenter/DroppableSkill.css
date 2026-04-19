@@ -11,36 +11,9 @@
   background: rgba(52, 211, 153, 0.06);
 }
 
-.skill-area-drop-hint {
-  position: sticky;
-  top: 0;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-  z-index: 20;
-  pointer-events: none;
-  animation: drop-area-pulse 0.8s ease infinite;
-}
-
 @keyframes drop-area-pulse {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
-}
-
-.skill-area-drop-text {
-  padding: 0.5rem 0.875rem;
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px dashed rgba(16, 185, 129, 0.45);
-  color: var(--accent-mint);
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
-}
-
-[data-theme="dark"] .skill-area-drop-text {
-  background: rgba(52, 211, 153, 0.14);
-  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .droppable-skill-wrapper {
@@ -65,6 +38,38 @@
     0 8px 24px -8px rgba(52, 211, 153, 0.35);
 }
 
+.drop-tag-indicator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 16px;
+  z-index: 10;
+  pointer-events: none;
+  animation: drop-pulse 0.6s ease infinite;
+}
+
+[data-theme="dark"] .drop-tag-indicator {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+@keyframes drop-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.drop-tag-text {
+  padding: 0.5rem 1rem;
+  background: rgba(16, 185, 129, 0.82);
+  color: rgba(10, 10, 10, 0.86);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.24);
+}
+
 .droppable-skill-list-item {
   position: relative;
   transition: all 0.2s ease;
@@ -80,6 +85,24 @@
 
 .droppable-skill-list-item.drag-over .pm-list-content {
   border-color: var(--accent-mint);
+}
+
+.drop-tag-indicator-list {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: rgba(16, 185, 129, 0.82);
+  color: rgba(10, 10, 10, 0.86);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.24);
 }
 
 .tag-drag-overlay {
