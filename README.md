@@ -1,6 +1,6 @@
 # Skiller - 跨平台 Skill 管理工具
 
-**版本**: v0.1.0
+**版本**: v0.1.1
 **状态**: Production Ready
 **开源地址**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 **主页**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)
@@ -282,8 +282,8 @@ npm run tauri:build:mac-x64    # Intel
 
 1. 创建 Git 标签并推送：
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag v0.1.1
+   git push origin v0.1.1
    ```
 
 2. GitHub Actions 自动构建以下产物：
@@ -441,8 +441,8 @@ Tauri 依赖平台原生库：
 
 ```bash
 # 创建并推送标签
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 ### 构建产物
