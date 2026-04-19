@@ -108,12 +108,43 @@ jobs:
           prerelease: false
           args: --target ${{ matrix.target }}
 
+      - name: Resolve macOS binary path
+        if: runner.os == 'macOS'
+        id: macos-binary
+        shell: bash
+        run: |
+          binary_path="src-tauri/target/${{ matrix.target }}/release/skiller"
+
+          if [ -f "$binary_path" ]; then
+            echo "path=$binary_path" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          shopt -s nullglob
+          bundle_binaries=(src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app/Contents/MacOS/*)
+
+          if [ ${#bundle_binaries[@]} -gt 0 ]; then
+            echo "path=${bundle_binaries[0]}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "No macOS binary found for target ${{ matrix.target }}" >&2
+          exit 1
+
+      - name: Normalize macOS binary name
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          cp "${{ steps.macos-binary.outputs.path }}" "release-artifacts/skiller"
+
       - name: Upload macOS binary artifact
-        if: startsWith(matrix.target, 'aarch64-apple-darwin') || startsWith(matrix.target, 'x86_64-apple-darwin')
+        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}
-          path: src-tauri/target/${{ matrix.target }}/release/skiller
+          path: release-artifacts/skiller
+          if-no-files-found: error
 
   build-mac-universal:
     needs: build
@@ -139,6 +170,8 @@ jobs:
       - name: Create universal binary
         run: |
           mkdir -p release
+          test -f artifacts/aarch64/skiller
+          test -f artifacts/x64/skiller
           lipo -create \
             artifacts/aarch64/skiller \
             artifacts/x64/skiller \
