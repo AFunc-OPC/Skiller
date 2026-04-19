@@ -373,14 +373,7 @@ fn scan_and_create_skills(conn: &Connection, repo: &Repo) -> Result<usize, Skill
     let mut skills_created = 0;
     let mut found_skill_dirs: Vec<PathBuf> = Vec::new();
 
-    let has_explicit_path = skill_relative_path.is_some();
-    find_all_skill_directories(
-        &scan_base_path,
-        &local_path,
-        &mut found_skill_dirs,
-        0,
-        has_explicit_path,
-    );
+    find_all_skill_directories(&scan_base_path, &mut found_skill_dirs, 0);
 
     for skill_dir in found_skill_dirs {
         let skill_name = skill_dir
@@ -445,13 +438,7 @@ fn scan_and_create_skills(conn: &Connection, repo: &Repo) -> Result<usize, Skill
 
 const MAX_SCAN_DEPTH: usize = 5;
 
-fn find_all_skill_directories(
-    base: &Path,
-    repo_root: &Path,
-    results: &mut Vec<PathBuf>,
-    depth: usize,
-    has_explicit_path: bool,
-) {
+fn find_all_skill_directories(base: &Path, results: &mut Vec<PathBuf>, depth: usize) {
     if depth > MAX_SCAN_DEPTH {
         return;
     }
@@ -486,37 +473,13 @@ fn find_all_skill_directories(
             }
 
             if path.join("SKILL.md").exists() {
-                if has_explicit_path {
-                    results.push(path.clone());
-                    continue;
-                }
-
-                if let Ok(relative) = path.strip_prefix(repo_root) {
-                    let relative_str = relative.to_string_lossy();
-                    if is_valid_skill_path(&relative_str) {
-                        results.push(path.clone());
-                        continue;
-                    }
-                }
+                results.push(path.clone());
+                continue;
             }
 
-            find_all_skill_directories(&path, repo_root, results, depth + 1, has_explicit_path);
+            find_all_skill_directories(&path, results, depth + 1);
         }
     }
-}
-
-fn is_valid_skill_path(relative_path: &str) -> bool {
-    let patterns = [r"^skills/[^/]+$", r"^\.[^/]+/skills/[^/]+$", r"^[^/]+$"];
-
-    for pattern in &patterns {
-        if let Ok(re) = regex::Regex::new(pattern) {
-            if re.is_match(relative_path) {
-                return true;
-            }
-        }
-    }
-
-    false
 }
 
 #[cfg(test)]
