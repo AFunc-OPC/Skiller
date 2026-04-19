@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { X, Search, CheckSquare, Square, ArrowRight, AlertCircle, CheckCircle2, Loader2, ExternalLink, Download, Copy } from 'lucide-react'
+import { X, Search, CheckSquare, Square, ArrowRight, AlertCircle, CheckCircle2, Loader2, ExternalLink, Download, Copy, AlertTriangle } from 'lucide-react'
 import { useAppStore } from '../../stores/appStore'
-import type { PrepareNpxSkillImportResponse, ConfirmNpxSkillImportResponse } from '../../types'
+import type { NativeNpxImportResponse, SyncToSkillerResponse } from '../../types'
 import './SkillCenter.css'
 
 export interface FoundSkill {
@@ -45,10 +45,10 @@ interface NpxFindDialogProps {
   onClose: () => void
   onSearchApi: (keyword: string) => Promise<NpxFindResponse>
   onExecuteFind: (keyword: string, requestId: string) => Promise<NpxFindResponse>
-  onPrepareImport: (command: string, requestId: string) => Promise<PrepareNpxSkillImportResponse>
-  onConfirmImport: (sessionId: string) => Promise<ConfirmNpxSkillImportResponse>
-  onCancelImport: (sessionId: string) => Promise<void>
+  onExecuteNative: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
+  onSyncToSkiller: (skillName: string) => Promise<SyncToSkillerResponse>
   checkNpx: () => Promise<boolean>
+  existingSkillNames: string[]
 }
 
 const NPX_FIND_PROGRESS_EVENT = 'npx-find-progress'
@@ -79,10 +79,10 @@ export function NpxFindDialog({
   onClose,
   onSearchApi,
   onExecuteFind,
-  onPrepareImport,
-  onConfirmImport,
-  onCancelImport,
+  onExecuteNative,
+  onSyncToSkiller,
   checkNpx,
+  existingSkillNames,
 }: NpxFindDialogProps) {
   const [mode, setMode] = useState<SearchMode>('api')
   const [keyword, setKeyword] = useState('')
@@ -94,6 +94,8 @@ export function NpxFindDialog({
   const [successMessage, setSuccessMessage] = useState('')
   const [logs, setLogs] = useState<string[]>([])
   const [npxAvailable, setNpxAvailable] = useState<boolean | null>(null)
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
+  const [pendingImport, setPendingImport] = useState<Set<string> | null>(null)
   const activeRequestIdRef = useRef<string | null>(null)
   const unlistenRef = useRef<UnlistenFn | null>(null)
   const bodyRef = useRef<HTMLDivElement | null>(null)
@@ -137,6 +139,8 @@ export function NpxFindDialog({
     setError('')
     setSuccessMessage('')
     setLogs([])
+    setShowOverwriteConfirm(false)
+    setPendingImport(null)
 
     if (nextMode) {
       setMode(nextMode)
@@ -156,6 +160,8 @@ export function NpxFindDialog({
       setError('')
       setSuccessMessage('')
       setLogs([])
+      setShowOverwriteConfirm(false)
+      setPendingImport(null)
       
       checkNpx().then(setNpxAvailable)
     }
@@ -300,8 +306,52 @@ export function NpxFindDialog({
     }
   }
 
+  const extractSkillName = (command: string): string => {
+    const match = command.match(/@([a-zA-Z0-9_-]+)/)
+    if (match) return match[1]
+    const skillMatch = command.match(/--skill\s+([a-zA-Z0-9_-]+)/)
+    if (skillMatch) return skillMatch[1]
+    return ''
+  }
+
   const handleImport = async () => {
     if (selectedSkills.size === 0) return
+
+    const existingToInstall: string[] = []
+    const newToInstall: string[] = []
+
+    for (const command of selectedSkills) {
+      const skillName = extractSkillName(command)
+      if (skillName && existingSkillNames.includes(skillName)) {
+        existingToInstall.push(command)
+      } else {
+        newToInstall.push(command)
+      }
+    }
+
+    if (existingToInstall.length > 0) {
+      setPendingImport(new Set(selectedSkills))
+      setShowOverwriteConfirm(true)
+      return
+    }
+
+    await executeImport(selectedSkills)
+  }
+
+  const handleConfirmOverwrite = async () => {
+    if (!pendingImport) return
+    setShowOverwriteConfirm(false)
+    await executeImport(pendingImport)
+    setPendingImport(null)
+  }
+
+  const handleCancelOverwrite = () => {
+    setShowOverwriteConfirm(false)
+    setPendingImport(null)
+  }
+
+  const executeImport = async (commandsToImport: Set<string>) => {
+    if (commandsToImport.size === 0) return
 
     setImporting(true)
     setError('')
@@ -309,51 +359,48 @@ export function NpxFindDialog({
     setLogs((prev) => [
       ...prev,
       language === 'zh' 
-        ? `开始导入 ${selectedSkills.size} 个技能...` 
-        : `Starting to import ${selectedSkills.size} skills...`,
+        ? `开始导入 ${commandsToImport.size} 个技能...` 
+        : `Starting to import ${commandsToImport.size} skills...`,
     ])
 
-    const commands = Array.from(selectedSkills)
+    const commands = Array.from(commandsToImport)
     let successCount = 0
     let failCount = 0
-    const sessionsToCancel: string[] = []
 
     for (const command of commands) {
       const requestId = crypto.randomUUID()
-      let sessionId: string | null = null
       
       try {
         setLogs((prev) => [
           ...prev,
           language === 'zh' 
-            ? `准备导入: ${command}` 
-            : `Preparing: ${command}`,
+            ? `执行安装: ${command}` 
+            : `Executing: ${command}`,
         ])
         
-        const prepared = await onPrepareImport(command, requestId)
-        sessionId = prepared.session_id
-        sessionsToCancel.push(sessionId)
+        const result = await onExecuteNative(command, requestId)
         
-        const skillName = prepared.summary?.skill_name || command
+        if (!result.success) {
+          throw new Error(language === 'zh' ? 'npx skills add 执行失败' : 'npx skills add failed')
+        }
+        
+        const skillName = result.skill_name
         
         setLogs((prev) => [
           ...prev,
           language === 'zh' 
-            ? `确认导入: ${skillName}` 
-            : `Confirming: ${skillName}`,
+            ? `同步到 Skiller: ${skillName}` 
+            : `Syncing to Skiller: ${skillName}`,
         ])
         
-        await onConfirmImport(sessionId)
-        
-        const idx = sessionsToCancel.indexOf(sessionId)
-        if (idx > -1) sessionsToCancel.splice(idx, 1)
+        const syncResult = await onSyncToSkiller(skillName)
         
         successCount++
         setLogs((prev) => [
           ...prev,
           language === 'zh' 
-            ? `✓ 导入成功: ${skillName}` 
-            : `✓ Imported: ${skillName}`,
+            ? `✓ 导入成功: ${skillName}${syncResult.is_update ? ' (已更新)' : ''}` 
+            : `✓ Imported: ${skillName}${syncResult.is_update ? ' (updated)' : ''}`,
         ])
       } catch (err) {
         failCount++
@@ -393,6 +440,62 @@ export function NpxFindDialog({
   return (
     <>
       <div className="sc-import-overlay" onClick={handleClose} />
+      
+      {showOverwriteConfirm && (
+        <div className="sc-import-overlay" style={{ zIndex: 100 }} onClick={handleCancelOverwrite} />
+      )}
+      
+      {showOverwriteConfirm && pendingImport && (
+        <div className="sc-import-dialog sc-overwrite-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="overwrite-title">
+          <div className="sc-import-header">
+            <div className="sc-import-title">
+              <div className="sc-import-title-icon" style={{ color: '#f59e0b' }}>
+                <AlertTriangle />
+              </div>
+              <h3 id="overwrite-title">
+                {language === 'zh' ? '确认覆盖已有技能' : 'Confirm Overwrite Existing Skills'}
+              </h3>
+            </div>
+          </div>
+          <div className="sc-import-body">
+            <div className="sc-overwrite-warning">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <p>
+                {language === 'zh'
+                  ? `已选择的技能中有 ${Array.from(pendingImport).filter(cmd => {
+                      const name = extractSkillName(cmd)
+                      return name && existingSkillNames.includes(name)
+                    }).length} 个已存在于 Skiller 中。继续导入将覆盖这些技能。`
+                  : `${Array.from(pendingImport).filter(cmd => {
+                      const name = extractSkillName(cmd)
+                      return name && existingSkillNames.includes(name)
+                    }).length} of the selected skills already exist in Skiller. Continuing will overwrite these skills.`}
+              </p>
+            </div>
+            <div className="sc-overwrite-list">
+              {Array.from(pendingImport)
+                .filter(cmd => {
+                  const name = extractSkillName(cmd)
+                  return name && existingSkillNames.includes(name)
+                })
+                .map((cmd, idx) => (
+                  <div key={idx} className="sc-overwrite-item">
+                    <code>{extractSkillName(cmd)}</code>
+                  </div>
+                ))}
+            </div>
+          </div>
+          <div className="sc-import-footer">
+            <button onClick={handleCancelOverwrite} className="sc-btn sc-btn-ghost">
+              {language === 'zh' ? '取消' : 'Cancel'}
+            </button>
+            <button onClick={handleConfirmOverwrite} className="sc-btn sc-btn-primary" style={{ backgroundColor: '#f59e0b' }}>
+              {language === 'zh' ? '确认覆盖' : 'Confirm Overwrite'}
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="sc-import-dialog sc-import-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="npx-find-title">
         <div className="sc-import-header">
           <div className="sc-import-title">

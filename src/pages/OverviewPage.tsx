@@ -431,13 +431,13 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
             }
           }
         }}
-        onPrepareImport={prepareSkillImportFromNpx}
-        onConfirmImport={confirmSkillImportFromNpx}
-        onCancelImport={cancelSkillImportFromNpx}
+        onExecuteNative={executeNativeNpxSkillsAdd}
+        onSyncToSkiller={syncToSkiller}
         checkNpx={async () => {
           const tools = await checkToolAvailability()
           return tools.npx
         }}
+        existingSkillNames={fileSkills.map(s => s.name)}
       />
     </div>
   )

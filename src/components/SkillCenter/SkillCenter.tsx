@@ -399,13 +399,13 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
             }
           }
         }}
-        onPrepareImport={prepareSkillImportFromNpx}
-        onConfirmImport={confirmSkillImportFromNpx}
-        onCancelImport={cancelSkillImportFromNpx}
+        onExecuteNative={executeNativeNpxSkillsAdd}
+        onSyncToSkiller={syncToSkiller}
         checkNpx={async () => {
           const tools = await checkToolAvailability()
           return tools.npx
         }}
+        existingSkillNames={skills.map(s => s.name)}
       />
     </div>
   )
