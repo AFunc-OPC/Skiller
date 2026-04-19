@@ -16,6 +16,7 @@ import {
 import { invoke } from '../api/tauri'
 import { distributionApi } from '../api/distribution'
 import { useFileSkillStore } from '../stores/fileSkillStore'
+import { useTagTreeStore } from '../stores/tagTreeStore'
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error && error.message.trim()) {
@@ -56,6 +57,7 @@ const SkillContext = createContext<SkillContextValue | undefined>(undefined)
 
 export function SkillProvider({ children }: { children: ReactNode }) {
   const { skills, loading: skillsLoading, fetchSkills } = useFileSkillStore()
+  const { fetchTree: fetchTagTree } = useTagTreeStore()
   
   const [state, setState] = useState<Omit<SkillCenterState, 'skills' | 'loading'>>({
     tags: [],
@@ -201,10 +203,11 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     try {
       await invoke('update_file_skill_tags', { skillPath: skillId, tags })
       await loadSkills()
+      await fetchTagTree()
     } catch (error) {
       throw new Error('更新技能标签失败: ' + (error as Error).message)
     }
-  }, [loadSkills])
+  }, [loadSkills, fetchTagTree])
 
   const distributeSkill = useCallback(async (request: DistributeSkillRequest) => {
     try {
