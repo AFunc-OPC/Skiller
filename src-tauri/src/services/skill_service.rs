@@ -88,6 +88,7 @@ pub fn get_skills(
             status: "available".to_string(),
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
+            is_symlink: false,
         };
         skill.tags = get_skill_tags(conn, &skill.id)?;
         skills.push(skill);
@@ -146,6 +147,7 @@ pub fn create_skill(conn: &Connection, request: CreateSkillRequest) -> Result<Sk
         status: "available".to_string(),
         created_at: now.clone(),
         updated_at: now,
+        is_symlink: false,
     })
 }
 
@@ -212,6 +214,7 @@ pub fn get_skill_by_id(conn: &Connection, id: &str) -> Result<Skill, SkillerErro
                 status: "available".to_string(),
                 created_at: row.get(7)?,
                 updated_at: row.get(8)?,
+                is_symlink: false,
             })
         })
         .map_err(|_| SkillerError::SkillNotFound(id.to_string()))?;
@@ -243,6 +246,7 @@ pub fn get_skills_by_repo_id(conn: &Connection, repo_id: &str) -> Result<Vec<Ski
             status: "available".to_string(),
             created_at: row.get(7)?,
             updated_at: row.get(8)?,
+            is_symlink: false,
         })
     })?;
 

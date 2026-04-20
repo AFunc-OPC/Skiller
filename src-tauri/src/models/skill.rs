@@ -13,6 +13,7 @@ pub struct Skill {
     pub status: String,
     pub created_at: String,
     pub updated_at: String,
+    pub is_symlink: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

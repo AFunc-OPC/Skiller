@@ -55,6 +55,10 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     })
                     .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
+                let is_symlink = fs::symlink_metadata(&path)
+                    .map(|m| m.file_type().is_symlink())
+                    .unwrap_or(false);
+
                 let skill_id = format!("project:{}:{}:{}", project_id, preset_id, actual_name);
 
                 let skill_md = path.join("SKILL.md");
@@ -85,6 +89,7 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     },
                     created_at: updated_at.clone(),
                     updated_at,
+                    is_symlink,
                 };
 
                 skills.push(skill);

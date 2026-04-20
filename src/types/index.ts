@@ -29,6 +29,7 @@ export interface Skill {
   status: 'available' | 'disabled'
   created_at: string
   updated_at: string
+  is_symlink?: boolean
 }
 
 export interface CreateSkillRequest {

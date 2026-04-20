@@ -641,6 +641,10 @@ pub fn get_file_skills(db: State<'_, DbConnection>) -> Result<Vec<Skill>, String
                     })
                     .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
+                let is_symlink = fs::symlink_metadata(&path)
+                    .map(|m| m.file_type().is_symlink())
+                    .unwrap_or(false);
+
                 let skill_id = path.to_string_lossy().to_string();
 
                 let tags =
@@ -674,6 +678,7 @@ pub fn get_file_skills(db: State<'_, DbConnection>) -> Result<Vec<Skill>, String
                     },
                     created_at: updated_at.clone(),
                     updated_at,
+                    is_symlink,
                 };
 
                 skills.push(skill);
@@ -1129,20 +1134,28 @@ pub fn update_file_skill_tags(
     skill_file_service::update_file_skill_tags(&conn, &skill_path, tags).map_err(|e| e.to_string())
 }
 
+fn is_likely_file_path(path: &str) -> bool {
+    path.starts_with('/') 
+        || path.starts_with('~')
+        || (path.len() > 2 && path.chars().nth(1) == Some(':'))
+}
+
 #[tauri::command]
 pub fn read_skill_md_content(
     app: tauri::AppHandle,
     skill_id: String,
 ) -> Result<String, String> {
-    let db = app.state::<DbConnection>();
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
-    
-    let skill = skill_service::get_skill_by_id(&conn, &skill_id);
-    
-    let skill_md_path = if let Ok(skill) = skill {
-        resolve_skill_md_path(&skill.file_path)
-    } else {
+    let skill_md_path = if is_likely_file_path(&skill_id) {
         resolve_skill_md_path(&skill_id)
+    } else {
+        let db = app.state::<DbConnection>();
+        let conn = get_connection(&db).map_err(|e| e.to_string())?;
+        
+        if let Ok(skill) = skill_service::get_skill_by_id(&conn, &skill_id) {
+            resolve_skill_md_path(&skill.file_path)
+        } else {
+            resolve_skill_md_path(&skill_id)
+        }
     };
 
     let display_path = display_absolute_path(&skill_md_path);
