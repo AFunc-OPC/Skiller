@@ -14,6 +14,8 @@ pub struct Skill {
     pub created_at: String,
     pub updated_at: String,
     pub is_symlink: bool,
+    pub symlink_valid: bool,
+    pub symlink_target_disabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

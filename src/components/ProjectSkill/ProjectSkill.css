@@ -391,6 +391,20 @@
   color: #dc2626;
 }
 
+.ps-card-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ps-list-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .ps-card-desc {
   font-size: 11px;
   color: var(--text-secondary);

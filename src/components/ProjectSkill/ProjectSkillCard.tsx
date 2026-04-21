@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trash2, Ban, CheckCircle, Folder, Link, FileText, FolderOpen } from 'lucide-react'
+import { Trash2, Ban, CheckCircle, Folder, Link, FileText, FolderOpen, Link2Off } from 'lucide-react'
 import { Skill } from '../../types'
 import { useAppStore } from '../../stores/appStore'
 import { desktopApi } from '../../api/desktop'
@@ -86,17 +86,29 @@ export function ProjectSkillCard({
             </label>
             <div className="ps-card-title">
               <HighlightText text={skill.name} keyword={searchKeyword} />
+            </div>
+            <div className="ps-card-status-wrap">
               {skill.is_symlink && (
-                <span title={language === 'zh' ? '软链接' : 'Symlink'}>
-                  <Link className="w-3.5 h-3.5 ml-1.5 text-blue-500 inline-block" />
+                <span title={
+                  skill.symlink_target_disabled
+                    ? (language === 'zh' ? '软链接目标已禁用' : 'Symlink target disabled')
+                    : skill.symlink_valid
+                      ? (language === 'zh' ? '软链接正常' : 'Symlink valid')
+                      : (language === 'zh' ? '软链接失效' : 'Symlink broken')
+                }>
+                  {skill.symlink_valid ? (
+                    <Link className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <Link2Off className="w-3.5 h-3.5 text-red-500" />
+                  )}
                 </span>
               )}
+              <span className={`ps-status-badge ${isDisabled ? 'disabled' : 'available'}`}>
+                {isDisabled
+                  ? (language === 'zh' ? '已禁用' : 'Disabled')
+                  : (language === 'zh' ? '可用' : 'Available')}
+              </span>
             </div>
-            <span className={`ps-status-badge ${isDisabled ? 'disabled' : 'available'}`}>
-              {isDisabled
-                ? (language === 'zh' ? '已禁用' : 'Disabled')
-                : (language === 'zh' ? '可用' : 'Available')}
-            </span>
           </div>
 
           {skill.description && (

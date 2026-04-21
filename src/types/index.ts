@@ -30,6 +30,8 @@ export interface Skill {
   created_at: string
   updated_at: string
   is_symlink?: boolean
+  symlink_valid?: boolean
+  symlink_target_disabled?: boolean
 }
 
 export interface CreateSkillRequest {

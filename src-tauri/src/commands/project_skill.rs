@@ -32,7 +32,13 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_dir() {
+            let symlink_metadata = fs::symlink_metadata(&path).ok();
+            let is_symlink = symlink_metadata
+                .as_ref()
+                .map(|m| m.file_type().is_symlink())
+                .unwrap_or(false);
+
+            if path.is_dir() || is_symlink {
                 let name = path
                     .file_name()
                     .and_then(|n| n.to_str())
@@ -55,9 +61,46 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     })
                     .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
-                let is_symlink = fs::symlink_metadata(&path)
-                    .map(|m| m.file_type().is_symlink())
-                    .unwrap_or(false);
+                let (symlink_valid, target_disabled) = if is_symlink {
+                    let target_path = fs::read_link(&path).ok();
+
+                    let resolved_target = target_path.as_ref().and_then(|t| {
+                        if t.is_absolute() {
+                            Some(t.clone())
+                        } else {
+                            path.parent().map(|parent| parent.join(t))
+                        }
+                    });
+
+                    let target_exists = resolved_target
+                        .as_ref()
+                        .map(|t| t.exists())
+                        .unwrap_or(false);
+
+                    let target_is_disabled = if target_exists {
+                        resolved_target
+                            .and_then(|t| t.file_name().map(|n| n.to_string_lossy().to_string()))
+                            .map(|n| n.starts_with(".disable."))
+                            .unwrap_or(false)
+                    } else {
+                        resolved_target
+                            .as_ref()
+                            .and_then(|target| {
+                                let target_name = target.file_name()?.to_string_lossy().to_string();
+                                let target_parent = target.parent()?;
+                                Some(
+                                    target_parent
+                                        .join(format!(".disable.{}", target_name))
+                                        .exists(),
+                                )
+                            })
+                            .unwrap_or(false)
+                    };
+
+                    (target_exists && !target_is_disabled, target_is_disabled)
+                } else {
+                    (true, false)
+                };
 
                 let skill_id = format!("project:{}:{}:{}", project_id, preset_id, actual_name);
 
@@ -82,7 +125,7 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     source_metadata: Some(format!("preset:{}", preset_id)),
                     repo_id: Some(project_id.to_string()),
                     tags: vec![],
-                    status: if is_disabled {
+                    status: if is_disabled || target_disabled {
                         "disabled".to_string()
                     } else {
                         "available".to_string()
@@ -90,6 +133,8 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     created_at: updated_at.clone(),
                     updated_at,
                     is_symlink,
+                    symlink_valid,
+                    symlink_target_disabled: target_disabled,
                 };
 
                 skills.push(skill);
