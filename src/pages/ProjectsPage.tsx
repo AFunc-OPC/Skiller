@@ -9,6 +9,7 @@ import { SortDropdown } from '../components/shared'
 import { ProjectSkillList, ProjectSkillImportDialog } from '../components/ProjectSkill'
 import { distributionApi } from '../api/distribution'
 import { configApi } from '../api/config'
+import { t } from '../i18n'
 import type { Project, DistributeSkillRequest, SkillDistributionMode } from '../types'
 
 type ViewMode = 'card' | 'list'
@@ -226,6 +227,24 @@ export function ProjectsPage() {
   const [copied, setCopied] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [skillActionError, setSkillActionError] = useState<string | null>(null)
+
+  const normalizeSkillActionError = useCallback((error: unknown) => {
+    const rawMessage = error instanceof Error ? error.message : String(error)
+    const message = rawMessage.replace(/^Error:\s*/, '')
+
+    if (
+      message.includes('not found in project') ||
+      message.includes('未找到') ||
+      message.includes('不存在于项目中')
+    ) {
+      return t('projectSkillSourceUnavailable', language)
+    }
+
+    return language === 'zh'
+      ? message.replace('Failed to invoke', '调用失败').replace('failed', '失败')
+      : message
+  }, [language])
   
   const filteredProjects = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -289,6 +308,7 @@ export function ProjectsPage() {
     setSelectedProject(project)
     setDrawerOpen(true)
     setIconError(null)
+    setSkillActionError(null)
     setDescExpanded(false)
     setCopied(false)
     fetchToolPresets()
@@ -301,6 +321,7 @@ export function ProjectsPage() {
     setEditingField(null)
     setIconDragOver(false)
     setIconError(null)
+    setSkillActionError(null)
     setDescExpanded(false)
     clearProjectSkills()
   }, [clearProjectSkills])
@@ -485,23 +506,39 @@ export function ProjectsPage() {
 
   const handleRemoveSkill = useCallback(async (skillId: string) => {
     if (!selectedProject) return
-    await removeProjectSkill(selectedProject.id, skillId)
-  }, [selectedProject, removeProjectSkill])
+    try {
+      await removeProjectSkill(selectedProject.id, skillId)
+    } catch (error) {
+      setSkillActionError(normalizeSkillActionError(error))
+    }
+  }, [selectedProject, removeProjectSkill, normalizeSkillActionError])
 
   const handleToggleSkillStatus = useCallback(async (skillId: string) => {
     if (!selectedProject) return
-    await toggleProjectSkillStatus(selectedProject.id, skillId)
-  }, [selectedProject, toggleProjectSkillStatus])
+    try {
+      await toggleProjectSkillStatus(selectedProject.id, skillId)
+    } catch (error) {
+      setSkillActionError(normalizeSkillActionError(error))
+    }
+  }, [selectedProject, toggleProjectSkillStatus, normalizeSkillActionError])
 
   const handleBatchRemoveSkills = useCallback(async (skillIds: string[]) => {
     if (!selectedProject) return
-    await batchRemoveProjectSkills(selectedProject.id, skillIds)
-  }, [selectedProject, batchRemoveProjectSkills])
+    try {
+      await batchRemoveProjectSkills(selectedProject.id, skillIds)
+    } catch (error) {
+      setSkillActionError(normalizeSkillActionError(error))
+    }
+  }, [selectedProject, batchRemoveProjectSkills, normalizeSkillActionError])
 
   const handleBatchToggleSkills = useCallback(async (skillIds: string[]) => {
     if (!selectedProject) return
-    await batchToggleProjectSkills(selectedProject.id, skillIds)
-  }, [selectedProject, batchToggleProjectSkills])
+    try {
+      await batchToggleProjectSkills(selectedProject.id, skillIds)
+    } catch (error) {
+      setSkillActionError(normalizeSkillActionError(error))
+    }
+  }, [selectedProject, batchToggleProjectSkills, normalizeSkillActionError])
 
   const handleImportSkills = useCallback(async (skillIds: string[], presetIds: string[], forceOverwrite: boolean) => {
     if (!selectedProject) return
@@ -943,6 +980,27 @@ export function ProjectsPage() {
               </button>
               <button className="pm-btn-danger" onClick={handleDeleteProject}>
                 {language === 'zh' ? '删除' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {skillActionError && (
+        <>
+          <div className="pm-overlay" onClick={() => setSkillActionError(null)} />
+          <div className="pm-confirm-modal">
+            <div className="pm-confirm-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+            </div>
+            <h3>{t('projectSkillActionFailed', language)}</h3>
+            <p>{skillActionError}</p>
+            <div className="pm-confirm-actions">
+              <button className="pm-btn-primary" onClick={() => setSkillActionError(null)}>
+                {t('projectSkillActionAcknowledge', language)}
               </button>
             </div>
           </div>

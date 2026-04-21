@@ -146,7 +146,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const allSkills = Object.values(skillsByPreset).flat()
       set({ projectSkillsByPreset: skillsByPreset, projectSkills: allSkills })
     } catch (error) {
-      set({ projectSkillsError: String(error) })
       throw error
     }
   },
@@ -158,7 +157,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const allSkills = Object.values(skillsByPreset).flat()
       set({ projectSkillsByPreset: skillsByPreset, projectSkills: allSkills })
     } catch (error) {
-      set({ projectSkillsError: String(error) })
       throw error
     }
   },
@@ -170,7 +168,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const allSkills = Object.values(skillsByPreset).flat()
       set({ projectSkillsByPreset: skillsByPreset, projectSkills: allSkills })
     } catch (error) {
-      set({ projectSkillsError: String(error) })
       throw error
     }
   },
@@ -182,7 +179,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const allSkills = Object.values(skillsByPreset).flat()
       set({ projectSkillsByPreset: skillsByPreset, projectSkills: allSkills })
     } catch (error) {
-      set({ projectSkillsError: String(error) })
       throw error
     }
   },

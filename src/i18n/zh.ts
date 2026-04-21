@@ -243,6 +243,9 @@ export const zh = {
   notSelectedProject: '未选择目标项目',
   dragTagToSkillHint: '拖动到技能上添加标签',
   dropToAddTagToSkill: '松开添加标签到技能',
+  projectSkillActionFailed: '操作失败',
+  projectSkillActionAcknowledge: '知道了',
+  projectSkillSourceUnavailable: '该技能的源文件夹已被禁用或移除，当前引用无法直接启用，请先恢复源技能。',
 }
 
 export const en = {
@@ -490,6 +493,9 @@ export const en = {
   notSelectedProject: 'No target project selected',
   dragTagToSkillHint: 'Drag onto a skill to add this tag',
   dropToAddTagToSkill: 'Drop to add tag to skill',
+  projectSkillActionFailed: 'Action Failed',
+  projectSkillActionAcknowledge: 'OK',
+  projectSkillSourceUnavailable: 'The source skill folder is disabled or removed. Restore the source skill before enabling this reference.',
 }
 
 export type Labels = typeof zh
