@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 
 use crate::error::SkillerError;
-use crate::models::config::ToolPreset;
+use crate::models::config::{ProxyConfig, ToolPreset};
 
 pub fn get_config(conn: &Connection, key: &str) -> Result<Option<String>, SkillerError> {
     let result = conn.query_row(
@@ -132,4 +132,30 @@ pub fn delete_tool_preset(conn: &Connection, id: &str) -> Result<(), SkillerErro
     )?;
 
     Ok(())
+}
+
+const PROXY_CONFIG_KEY: &str = "proxy_config";
+
+pub fn get_proxy_config(conn: &Connection) -> Result<ProxyConfig, SkillerError> {
+    let result = conn.query_row(
+        "SELECT value FROM config WHERE key = ?1",
+        rusqlite::params![PROXY_CONFIG_KEY],
+        |row| row.get::<_, String>(0),
+    );
+
+    match result {
+        Ok(value) => {
+            let config: ProxyConfig = serde_json::from_str(&value).unwrap_or_default();
+            Ok(config)
+        }
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(ProxyConfig::default()),
+        Err(e) => Err(SkillerError::DatabaseError(e)),
+    }
+}
+
+pub fn set_proxy_config(conn: &Connection, config: &ProxyConfig) -> Result<(), SkillerError> {
+    let value = serde_json::to_string(config).map_err(|e| {
+        SkillerError::ValidationError(format!("Failed to serialize proxy config: {}", e))
+    })?;
+    set_config(conn, PROXY_CONFIG_KEY, &value)
 }

@@ -2,8 +2,11 @@ use tauri::State;
 
 use crate::db::connection::get_connection;
 use crate::db::connection::DbConnection;
-use crate::models::config::{CreateToolPresetRequest, ToolPreset, UpdateToolPresetRequest};
+use crate::models::config::{
+    CreateToolPresetRequest, ProxyConfig, ToolPreset, UpdateToolPresetRequest,
+};
 use crate::services::config_service;
+use crate::services::proxy_service;
 
 #[tauri::command]
 pub fn get_config(db: State<'_, DbConnection>, key: String) -> Result<Option<String>, String> {
@@ -51,4 +54,23 @@ pub fn delete_tool_preset(db: State<'_, DbConnection>, id: String) -> Result<(),
 pub fn get_storage_path() -> String {
     let home = dirs::home_dir().expect("Unable to get home directory");
     home.join(".skiller").to_string_lossy().to_string()
+}
+
+#[tauri::command]
+pub fn get_proxy_config(db: State<'_, DbConnection>) -> Result<ProxyConfig, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    config_service::get_proxy_config(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_proxy_config(db: State<'_, DbConnection>, config: ProxyConfig) -> Result<(), String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    config_service::set_proxy_config(&conn, &config).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_effective_proxy(db: State<'_, DbConnection>) -> Result<Option<String>, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    let config = config_service::get_proxy_config(&conn).map_err(|e| e.to_string())?;
+    Ok(proxy_service::get_effective_proxy_url(&config))
 }
