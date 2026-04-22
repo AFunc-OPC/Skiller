@@ -540,7 +540,7 @@ export function ProjectsPage() {
     }
   }, [selectedProject, batchToggleProjectSkills, normalizeSkillActionError])
 
-  const handleImportSkills = useCallback(async (skillIds: string[], presetIds: string[], forceOverwrite: boolean) => {
+  const handleImportSkills = useCallback(async (skillIds: string[], presetIds: string[], forceOverwrite: boolean, mode: SkillDistributionMode) => {
     if (!selectedProject) return
 
     const presets = await configApi.getToolPresets()
@@ -557,7 +557,7 @@ export function ProjectsPage() {
           target: 'project',
           preset_id: presetId,
           project_id: selectedProject.id,
-          mode: 'copy' as SkillDistributionMode,
+          mode,
         }
         await distributionApi.distribute(request)
       }

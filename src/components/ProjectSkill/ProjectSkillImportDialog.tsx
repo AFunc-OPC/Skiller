@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { X, Search, Check, ArrowRight, AlertCircle, Download, AlertTriangle, Layers, Tag, Circle } from 'lucide-react'
-import { Skill, ToolPreset, TreeNode } from '../../types'
+import { X, Search, Check, ArrowRight, AlertCircle, Download, AlertTriangle, Layers, Tag, Circle, Copy, Link } from 'lucide-react'
+import { Skill, ToolPreset, TreeNode, SkillDistributionMode } from '../../types'
 import { useAppStore } from '../../stores/appStore'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { useSkillContext } from '../../contexts/SkillContext'
@@ -13,7 +13,7 @@ interface ProjectSkillImportDialogProps {
   isOpen: boolean
   onClose: () => void
   projectId: string
-  onImport: (skillIds: string[], presetIds: string[], forceOverwrite: boolean) => Promise<void>
+  onImport: (skillIds: string[], presetIds: string[], forceOverwrite: boolean, mode: SkillDistributionMode) => Promise<void>
 }
 
 function HighlightText({ text, keyword }: { text: string; keyword: string }) {
@@ -53,6 +53,7 @@ export function ProjectSkillImportDialog({
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [toolPresets, setToolPresets] = useState<ToolPreset[]>([])
   const [selectedPresetIds, setSelectedPresetIds] = useState<Set<string>>(new Set())
+  const [importMode, setImportMode] = useState<SkillDistributionMode>('symlink')
   const [stage, setStage] = useState<'idle' | 'checking' | 'conflict' | 'importing' | 'success' | 'error'>('idle')
   const [error, setError] = useState('')
   const [existingSkills, setExistingSkills] = useState<string[]>([])
@@ -244,7 +245,7 @@ export function ProjectSkillImportDialog({
     setError('')
 
     try {
-      await onImport(Array.from(selectedSkillIds), Array.from(selectedPresetIds), forceOverwrite)
+      await onImport(Array.from(selectedSkillIds), Array.from(selectedPresetIds), forceOverwrite, importMode)
       setStage('success')
       setTimeout(() => onClose(), 800)
     } catch (err) {
@@ -486,22 +487,41 @@ export function ProjectSkillImportDialog({
         )}
 
         <div className="psi-footer">
-          <div className="psi-footer-info">
-            {selectedSkillIds.size > 0
-              ? (language === 'zh'
-                  ? `已选择 ${selectedSkillIds.size} 个技能`
-                  : `${selectedSkillIds.size} skills selected`)
-              : (language === 'zh' ? '请选择要导入的技能' : 'Select skills to import')}
-            {selectedPresetIds.size > 0 && (
-              <span className="psi-footer-divider">·</span>
-            )}
-            {selectedPresetIds.size > 0 && (
-              <span className="psi-footer-preset-count">
-                {language === 'zh' 
-                  ? `${selectedPresetIds.size} 个预设` 
-                  : `${selectedPresetIds.size} presets`}
-              </span>
-            )}
+          <div className="psi-footer-left">
+            <div className="psi-footer-info">
+              {selectedSkillIds.size > 0
+                ? (language === 'zh'
+                    ? `已选择 ${selectedSkillIds.size} 个技能`
+                    : `${selectedSkillIds.size} skills selected`)
+                : (language === 'zh' ? '请选择要导入的技能' : 'Select skills to import')}
+              {selectedPresetIds.size > 0 && (
+                <span className="psi-footer-divider">·</span>
+              )}
+              {selectedPresetIds.size > 0 && (
+                <span className="psi-footer-preset-count">
+                  {language === 'zh' 
+                    ? `${selectedPresetIds.size} 个预设` 
+                    : `${selectedPresetIds.size} presets`}
+                </span>
+              )}
+            </div>
+
+            <div className="psi-footer-mode">
+              <button
+                onClick={() => setImportMode('copy')}
+                className={`psi-mode-toggle ${importMode === 'copy' ? 'active' : ''}`}
+              >
+                <Copy className="w-3 h-3" />
+                <span>{language === 'zh' ? '复制' : 'Copy'}</span>
+              </button>
+              <button
+                onClick={() => setImportMode('symlink')}
+                className={`psi-mode-toggle ${importMode === 'symlink' ? 'active' : ''}`}
+              >
+                <Link className="w-3 h-3" />
+                <span>{language === 'zh' ? '软链接' : 'Symlink'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="psi-footer-actions">

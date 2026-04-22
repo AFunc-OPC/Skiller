@@ -741,6 +741,12 @@
   background: var(--bg-base);
 }
 
+.psi-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .psi-footer-info {
   display: flex;
   align-items: center;
@@ -756,6 +762,40 @@
 .psi-footer-preset-count {
   color: var(--accent-mint);
   font-weight: 500;
+}
+
+.psi-footer-mode {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.psi-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.psi-mode-toggle:hover {
+  color: var(--text-primary);
+}
+
+.psi-mode-toggle.active {
+  background: var(--accent-mint);
+  color: #fff;
 }
 
 .psi-footer-actions {
