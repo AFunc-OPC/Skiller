@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ToolPresetSettings } from './ToolPresetSettings'
 import { LogPanel } from './LogPanel'
 import { About } from './About'
+import { ProxySettings } from './ProxySettings'
 import { t } from '../../i18n'
 
 interface SettingsTabsProps {
@@ -11,7 +12,7 @@ interface SettingsTabsProps {
   setTheme: (theme: 'light' | 'dark') => void
 }
 
-type TabKey = 'general' | 'presets' | 'logs' | 'about'
+type TabKey = 'general' | 'presets' | 'proxy' | 'logs' | 'about'
 
 const TAB_ICONS: Record<TabKey, JSX.Element> = {
   general: (
@@ -25,6 +26,13 @@ const TAB_ICONS: Record<TabKey, JSX.Element> = {
       <path d="M3.5 5.5h13v11a2 2 0 01-2 2h-9a2 2 0 01-2-2v-11z"/>
       <path d="M3.5 5.5l2-3h9l2 3"/>
       <path d="M8 9.5v5M12 9.5v5"/>
+    </svg>
+  ),
+  proxy: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="3"/>
+      <path d="M10 2v2M10 16v2M18 10h-2M4 10H2"/>
+      <path d="M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/>
     </svg>
   ),
   logs: (
@@ -47,6 +55,7 @@ export function SettingsTabs({ language, setLanguage, theme, setTheme }: Setting
   const tabs: Array<{ key: TabKey; label: string; labelEn: string }> = [
     { key: 'general', label: '通用设置', labelEn: 'General' },
     { key: 'presets', label: '路径预设', labelEn: 'Path Presets' },
+    { key: 'proxy', label: '代理', labelEn: 'Proxy' },
     { key: 'logs', label: '运行日志', labelEn: 'Logs' },
     { key: 'about', label: '关于', labelEn: 'About' },
   ]
@@ -168,6 +177,8 @@ export function SettingsTabs({ language, setLanguage, theme, setTheme }: Setting
           )}
           
           {activeTab === 'presets' && <ToolPresetSettings language={language} />}
+          
+          {activeTab === 'proxy' && <ProxySettings language={language} />}
           
           {activeTab === 'logs' && <LogPanel language={language} />}
           

@@ -1,5 +1,5 @@
 import { invoke } from './tauri'
-import type { ToolPreset, CreateToolPresetRequest, UpdateToolPresetRequest } from '../types'
+import type { ToolPreset, CreateToolPresetRequest, UpdateToolPresetRequest, ProxyConfig } from '../types'
 
 export const configApi = {
   get: async (key: string): Promise<string | null> => {
@@ -32,5 +32,13 @@ export const configApi = {
 
   getStoragePath: async (): Promise<string> => {
     return await invoke('get_storage_path')
+  },
+
+  getProxyConfig: async (): Promise<ProxyConfig> => {
+    return await invoke('get_proxy_config')
+  },
+
+  setProxyConfig: async (config: ProxyConfig): Promise<void> => {
+    return await invoke('set_proxy_config', { config })
   },
 }

@@ -9583,3 +9583,253 @@ body {
 .tp-dialog-btn--danger:hover:not(:disabled) {
   filter: brightness(1.05);
 }
+
+/* Proxy Settings Styles */
+.proxy-mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.proxy-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.proxy-mode-option:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.proxy-mode-option.selected {
+  border-color: var(--accent-mint);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-mint) 8%, var(--bg-elevated)) 0%, var(--bg-elevated) 100%);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--accent-mint), 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.proxy-mode-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.2s;
+}
+
+.proxy-mode-option.selected .proxy-mode-radio {
+  border-color: var(--accent-mint);
+}
+
+.proxy-mode-radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.proxy-mode-radio-inner.checked {
+  background: var(--accent-mint);
+}
+
+.proxy-mode-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.proxy-mode-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.proxy-mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.proxy-env-hint {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--accent-ink) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-ink) 20%, transparent);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.settings-card-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.settings-card-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-form-group {
+  margin-bottom: 1rem;
+}
+
+.settings-form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.settings-form-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.settings-form-row .settings-form-label {
+  min-width: 100px;
+  margin-bottom: 0;
+}
+
+.settings-form-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.settings-form-input:focus {
+  border-color: var(--accent-mint);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.settings-form-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.settings-form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+  margin-left: 116px;
+}
+
+.settings-form-section {
+  padding: 1rem;
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.settings-form-section-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.settings-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.settings-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-mint);
+}
+
+.settings-checkbox-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.settings-error-message {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--accent-amber) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 30%, transparent);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--accent-amber);
+  margin-top: 1rem;
+}
+
+.settings-success-message {
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--accent-mint) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-mint) 30%, transparent);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: var(--accent-mint);
+  margin-top: 1rem;
+}
+
+.settings-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settings-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-mint);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-save-button:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.settings-save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}

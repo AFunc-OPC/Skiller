@@ -317,4 +317,27 @@ export interface AgentsSkillInfo {
   has_skill_md: boolean
 }
 
+export type ProxyMode = 'none' | 'system' | 'custom'
+
+export interface SystemProxyConfig {
+  prefer_https: boolean
+  username?: string
+  password?: string
+}
+
+export interface CustomProxyConfig {
+  protocols: string[]
+  host: string
+  port: number
+  username?: string
+  password?: string
+  bypass: string[]
+}
+
+export interface ProxyConfig {
+  mode: ProxyMode
+  system?: SystemProxyConfig
+  custom?: CustomProxyConfig
+}
+
 export * from './sort'
