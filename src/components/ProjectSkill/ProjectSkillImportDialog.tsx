@@ -50,6 +50,7 @@ export function ProjectSkillImportDialog({
 
   const [tagSearchKeyword, setTagSearchKeyword] = useState('')
   const [skillSearchKeyword, setSkillSearchKeyword] = useState('')
+  const [presetSearchKeyword, setPresetSearchKeyword] = useState('')
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [toolPresets, setToolPresets] = useState<ToolPreset[]>([])
   const [selectedPresetIds, setSelectedPresetIds] = useState<Set<string>>(new Set())
@@ -62,6 +63,7 @@ export function ProjectSkillImportDialog({
     if (isOpen) {
       setTagSearchKeyword('')
       setSkillSearchKeyword('')
+      setPresetSearchKeyword('')
       setSelectedSkillIds(new Set())
       setSelectedPresetIds(new Set())
       setSelectedTag(null)
@@ -153,6 +155,16 @@ export function ProjectSkillImportDialog({
       })
     }
   }, [expandIdsToOpen])
+
+  const filteredPresets = useMemo(() => {
+    if (!presetSearchKeyword.trim()) return toolPresets
+    const keyword = presetSearchKeyword.toLowerCase()
+    return toolPresets.filter(
+      (preset) =>
+        preset.name.toLowerCase().includes(keyword) ||
+        preset.skill_path.toLowerCase().includes(keyword)
+    )
+  }, [toolPresets, presetSearchKeyword])
 
   const allFilteredSelected =
     filteredSkills.length > 0 && filteredSkills.every((skill) => selectedSkillIds.has(skill.id))
@@ -336,19 +348,38 @@ export function ProjectSkillImportDialog({
 
             <div className="psi-preset-panel">
               <div className="psi-preset-header">
-                <Layers className="psi-preset-header-icon" />
-                <span>{language === 'zh' ? '目标预设' : 'Target Presets'}</span>
-                {selectedPresetIds.size > 0 && (
-                  <span className="psi-preset-badge">{selectedPresetIds.size}</span>
-                )}
+                <div className="psi-preset-header-left">
+                  <Layers className="psi-preset-header-icon" />
+                  <span>{language === 'zh' ? '目标预设' : 'Target Presets'}</span>
+                  {selectedPresetIds.size > 0 && (
+                    <span className="psi-preset-badge">{selectedPresetIds.size}</span>
+                  )}
+                </div>
+                <div className="psi-preset-search">
+                  <Search className="psi-preset-search-icon" />
+                  <input
+                    type="text"
+                    placeholder={language === 'zh' ? '搜索...' : 'Search...'}
+                    value={presetSearchKeyword}
+                    onChange={(e) => setPresetSearchKeyword(e.target.value)}
+                    className="psi-preset-search-input"
+                  />
+                  {presetSearchKeyword && (
+                    <button className="psi-preset-search-clear" onClick={() => setPresetSearchKeyword('')}>
+                      <X className="w-2 h-2" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="psi-preset-list">
-                {toolPresets.length === 0 ? (
+                {filteredPresets.length === 0 ? (
                   <div className="psi-preset-empty">
-                    {language === 'zh' ? '暂无预设' : 'No presets'}
+                    {toolPresets.length === 0
+                      ? (language === 'zh' ? '暂无预设' : 'No presets')
+                      : (language === 'zh' ? '没有匹配的预设' : 'No matching presets')}
                   </div>
                 ) : (
-                  toolPresets.map((preset) => {
+                  filteredPresets.map((preset) => {
                     const isSelected = selectedPresetIds.has(preset.id)
                     return (
                       <button
@@ -361,8 +392,12 @@ export function ProjectSkillImportDialog({
                           {isSelected && <Check className="w-2.5 h-2.5" />}
                         </div>
                         <div className="psi-preset-info">
-                          <span className="psi-preset-name">{preset.name}</span>
-                          <span className="psi-preset-path">{preset.skill_path}</span>
+                          <span className="psi-preset-name">
+                            <HighlightText text={preset.name} keyword={presetSearchKeyword} />
+                          </span>
+                          <span className="psi-preset-path">
+                            <HighlightText text={preset.skill_path} keyword={presetSearchKeyword} />
+                          </span>
                         </div>
                       </button>
                     )
