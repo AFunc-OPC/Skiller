@@ -234,11 +234,12 @@
   white-space: nowrap;
   padding: 0.375rem 0.625rem;
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.92);
-  color: rgba(255, 255, 255, 0.92);
+  background: rgba(15, 23, 42, 0.42);
+  color: rgba(255, 255, 255, 0.62);
   font-size: 0.6875rem;
   line-height: 1.2;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(4px);
   transition: opacity 0.16s ease, transform 0.16s ease;
   z-index: 30;
 }
@@ -249,9 +250,9 @@
 }
 
 [data-theme="dark"] .tag-drag-tooltip {
-  background: rgba(248, 250, 252, 0.92);
-  color: rgba(15, 23, 42, 0.9);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  background: rgba(248, 250, 252, 0.24);
+  color: rgba(248, 250, 252, 0.68);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
