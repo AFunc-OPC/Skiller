@@ -731,7 +731,7 @@ pub fn get_file_skills(db: State<'_, DbConnection>) -> Result<Vec<Skill>, String
 }
 
 #[tauri::command]
-pub fn toggle_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), String> {
+pub fn toggle_skill(app: tauri::AppHandle, db: State<'_, DbConnection>, skill_id: String) -> Result<(), String> {
     let path = PathBuf::from(&skill_id);
     let parent = path.parent().ok_or("Invalid skill path")?;
     let name = path
@@ -747,6 +747,9 @@ pub fn toggle_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), Strin
     };
 
     let new_path = parent.join(new_name);
+    let old_skill_id = path.to_string_lossy().to_string();
+    let new_skill_id = new_path.to_string_lossy().to_string();
+
     fs::rename(&path, &new_path).map_err(|e| e.to_string())?;
 
     let skill_md_old = new_path.join("SKILL.md");
@@ -761,6 +764,12 @@ pub fn toggle_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), Strin
             fs::rename(&skill_md_new, &skill_md_old).map_err(|e| e.to_string())?;
         }
     }
+
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    conn.execute(
+        "UPDATE skill_tags SET skill_id = ?1 WHERE skill_id = ?2",
+        rusqlite::params![&new_skill_id, &old_skill_id],
+    ).map_err(|e| e.to_string())?;
 
     let action = if is_disabling { "禁用" } else { "启用" };
     log_action(&app, "INFO", "skill", &format!("{}技能: {}", action, name));
