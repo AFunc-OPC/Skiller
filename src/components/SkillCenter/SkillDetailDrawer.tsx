@@ -91,7 +91,7 @@ export function SkillDetailDrawer({
   const [toolPresets, setToolPresets] = useState<ToolPreset[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [distributionTarget, setDistributionTarget] = useState<SkillDistributionTarget>('global')
-  const [distributionMode, setDistributionMode] = useState<SkillDistributionMode>('copy')
+  const [distributionMode, setDistributionMode] = useState<SkillDistributionMode>('symlink')
   const [selectedPresetIds, setSelectedPresetIds] = useState<string[]>([])
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
   const [distributionLoading, setDistributionLoading] = useState(false)
@@ -149,7 +149,7 @@ export function SkillDetailDrawer({
     if (!isOpen) return
 
     setDistributionTarget('global')
-    setDistributionMode('copy')
+    setDistributionMode('symlink')
     setSelectedPresetIds([])
     setSelectedProjectIds([])
     setDistributionError('')
