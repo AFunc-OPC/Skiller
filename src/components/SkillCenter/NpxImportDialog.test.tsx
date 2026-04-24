@@ -48,10 +48,6 @@ const preparedResponse: PrepareNpxSkillImportResponse = {
 
 describe('NpxImportDialog', () => {
   beforeEach(() => {
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-      configurable: true,
-      value: vi.fn(),
-    })
     mocks.listen.mockReset()
     mocks.onPrepareImport.mockReset()
     mocks.onConfirmImport.mockReset()

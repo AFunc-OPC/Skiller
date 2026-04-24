@@ -95,7 +95,17 @@ pub fn check_command_available(program: &str, version_arg: &str) -> bool {
             }
         }
     } else {
-        let result = Command::new(program).arg(version_arg).output();
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
+        let cmd = format!("{} {}", program, version_arg);
+        let result = Command::new(&shell)
+            .args(&["-i", "-l", "-c", &cmd])
+            .output();
 
         match result {
             Ok(output) => {
@@ -127,8 +137,16 @@ pub fn create_shell_command_for_npx(args: &[&str]) -> Command {
         cmd.args(args);
         cmd
     } else {
-        let mut cmd = Command::new("npx");
-        cmd.args(args);
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
+        let npx_cmd = format!("npx {}", args.join(" "));
+        let mut cmd = Command::new(&shell);
+        cmd.args(&["-i", "-l", "-c", &npx_cmd]);
         cmd
     }
 }
@@ -142,8 +160,16 @@ pub fn create_shell_command_for_npx_str(npx_args_str: &str) -> Command {
         cmd.args(npx_args_str.split_whitespace());
         cmd
     } else {
-        let mut cmd = Command::new("npx");
-        cmd.args(npx_args_str.split_whitespace());
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
+        let npx_cmd = format!("npx {}", npx_args_str);
+        let mut cmd = Command::new(&shell);
+        cmd.args(&["-i", "-l", "-c", &npx_cmd]);
         cmd
     }
 }

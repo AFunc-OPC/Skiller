@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { X, Search, CheckSquare, Square, ArrowRight, AlertCircle, CheckCircle2, Loader2, ExternalLink, Download, Copy, AlertTriangle } from 'lucide-react'
@@ -52,8 +52,6 @@ interface NpxFindDialogProps {
 }
 
 const NPX_FIND_PROGRESS_EVENT = 'npx-find-progress'
-const LOG_FLUSH_INTERVAL_MS = 80
-const LOG_FLUSH_BATCH_SIZE = 20
 
 function HighlightText({ text, highlight }: { text: string; highlight: string }) {
   if (!highlight.trim()) {
@@ -99,73 +97,30 @@ export function NpxFindDialog({
   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false)
   const [pendingImport, setPendingImport] = useState<Set<string> | null>(null)
   const activeRequestIdRef = useRef<string | null>(null)
-  const searchInFlightRef = useRef(false)
   const unlistenRef = useRef<UnlistenFn | null>(null)
-  const checkNpxRef = useRef(checkNpx)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
   const logsFieldRef = useRef<HTMLDivElement | null>(null)
   const logsBodyRef = useRef<HTMLDivElement | null>(null)
-  const bufferedLogsRef = useRef<string[]>([])
-  const flushIntervalRef = useRef<number | null>(null)
   const { language } = useAppStore()
-
-  useEffect(() => {
-    checkNpxRef.current = checkNpx
-  }, [checkNpx])
-
-  const clearBufferedLogs = () => {
-    bufferedLogsRef.current = []
-  }
-
-  const flushBufferedLogs = () => {
-    if (bufferedLogsRef.current.length === 0) {
-      return
-    }
-
-    const nextLines = bufferedLogsRef.current
-    bufferedLogsRef.current = []
-
-    startTransition(() => {
-      setLogs((prev) => [...prev, ...nextLines])
-    })
-  }
-
-  const stopLogFlush = () => {
-    if (flushIntervalRef.current !== null) {
-      window.clearInterval(flushIntervalRef.current)
-      flushIntervalRef.current = null
-    }
-  }
-
-  const startLogFlush = () => {
-    stopLogFlush()
-    flushIntervalRef.current = window.setInterval(() => {
-      flushBufferedLogs()
-    }, LOG_FLUSH_INTERVAL_MS)
-  }
-
-  const appendBufferedLog = (line: string) => {
-    bufferedLogsRef.current.push(line)
-    if (bufferedLogsRef.current.length >= LOG_FLUSH_BATCH_SIZE) {
-      flushBufferedLogs()
-    }
-  }
-
-  const appendLogs = (...nextLines: string[]) => {
-    flushBufferedLogs()
-    startTransition(() => {
-      setLogs((prev) => [...prev, ...nextLines])
-    })
-  }
-
-  const ensureNpxAvailability = async () => {
-    const available = await checkNpxRef.current()
-    setNpxAvailable(available)
-    return available
-  }
 
   const scrollLogsIntoView = () => {
     requestAnimationFrame(() => {
       logsFieldRef.current?.scrollIntoView({ block: 'nearest' })
+
+      requestAnimationFrame(() => {
+        if (logsBodyRef.current) {
+          logsBodyRef.current.scrollTop = logsBodyRef.current.scrollHeight
+        }
+
+        if (bodyRef.current) {
+          const body = bodyRef.current
+          const logsField = logsFieldRef.current
+          if (logsField) {
+            const targetTop = logsField.offsetTop + logsField.offsetHeight - body.clientHeight
+            body.scrollTop = Math.max(0, targetTop)
+          }
+        }
+      })
     })
   }
 
@@ -175,10 +130,7 @@ export function NpxFindDialog({
       unlistenRef.current = null
     }
 
-    stopLogFlush()
-    clearBufferedLogs()
     activeRequestIdRef.current = null
-    searchInFlightRef.current = false
     setKeyword('')
     setSkills([])
     setSelectedSkills(new Set())
@@ -200,7 +152,6 @@ export function NpxFindDialog({
       setMode('api')
       setNpxAvailable(null)
       activeRequestIdRef.current = null
-      searchInFlightRef.current = false
       setKeyword('')
       setSkills([])
       setSelectedSkills(new Set())
@@ -211,12 +162,13 @@ export function NpxFindDialog({
       setLogs([])
       setShowOverwriteConfirm(false)
       setPendingImport(null)
+      
+      checkNpx().then(setNpxAvailable)
     }
-  }, [isOpen])
+  }, [isOpen, checkNpx])
 
   useEffect(() => {
     return () => {
-      stopLogFlush()
       if (unlistenRef.current) {
         void unlistenRef.current()
         unlistenRef.current = null
@@ -225,9 +177,7 @@ export function NpxFindDialog({
   }, [])
 
   useEffect(() => {
-    if (logsBodyRef.current) {
-      logsBodyRef.current.scrollTop = logsBodyRef.current.scrollHeight
-    }
+    scrollLogsIntoView()
   }, [logs])
 
   const output = useMemo(() => logs.join('\n'), [logs])
@@ -247,20 +197,14 @@ export function NpxFindDialog({
   if (!isOpen) return null
 
   const handleSearch = async () => {
-    if (!keyword.trim() || searchInFlightRef.current) return
-
-    searchInFlightRef.current = true
+    if (!keyword.trim()) return
 
     setSearching(true)
     setError('')
     setSuccessMessage('')
     setSkills([])
     setSelectedSkills(new Set())
-    stopLogFlush()
-    clearBufferedLogs()
     setLogs([language === 'zh' ? '正在搜索技能...' : 'Searching skills...'])
-    scrollLogsIntoView()
-    startLogFlush()
     
     const requestId = crypto.randomUUID()
     activeRequestIdRef.current = requestId
@@ -274,27 +218,23 @@ export function NpxFindDialog({
       let result: NpxFindResponse
 
       if (mode === 'npx') {
-        const npxReady = npxAvailable ?? (await ensureNpxAvailability())
-        if (!npxReady) {
-          throw new Error(language === 'zh' ? '未检测到 npx，请先安装 Node.js 后再使用此功能' : 'npx not detected. Please install Node.js before using this feature.')
-        }
-
         unlistenRef.current = await listen<NpxFindProgressEvent>(NPX_FIND_PROGRESS_EVENT, (event) => {
           const payload = event.payload
           if (!payload || payload.request_id !== activeRequestIdRef.current) {
             return
           }
           const prefix = payload.is_error ? '[error] ' : ''
-          appendBufferedLog(`${prefix}${payload.line}`)
+          setLogs((prev) => [...prev, `${prefix}${payload.line}`])
         })
 
         result = await onExecuteFind(keyword.trim(), requestId)
       } else {
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh'
             ? `通过 skills.sh API 搜索: ${keyword.trim()}`
             : `Searching via skills.sh API: ${keyword.trim()}`,
-        )
+        ])
         result = await onSearchApi(keyword.trim())
       }
       
@@ -304,17 +244,19 @@ export function NpxFindDialog({
 
       if (result.success && result.skills.length > 0) {
         setSkills(result.skills)
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? `找到 ${result.skills.length} 个匹配的技能` 
             : `Found ${result.skills.length} matching skills`,
-        )
+        ])
       } else if (result.success && result.skills.length === 0) {
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? '未找到匹配的技能，请尝试其他关键词' 
             : 'No matching skills found, try different keywords',
-        )
+        ])
       } else {
         setError(result.error || (language === 'zh' ? '搜索失败' : 'Search failed'))
       }
@@ -325,20 +267,15 @@ export function NpxFindDialog({
 
       const errorMsg = err instanceof Error ? err.message : String(err)
       setError(errorMsg)
-      appendLogs(`${language === 'zh' ? '错误' : 'Error'}: ${errorMsg}`)
+      setLogs((prev) => [...prev, `${language === 'zh' ? '错误' : 'Error'}: ${errorMsg}`])
     } finally {
-      stopLogFlush()
-      flushBufferedLogs()
       if (unlistenRef.current) {
         await unlistenRef.current()
         unlistenRef.current = null
       }
       if (activeRequestIdRef.current === requestId) {
         activeRequestIdRef.current = null
-        searchInFlightRef.current = false
         setSearching(false)
-      } else if (activeRequestIdRef.current === null) {
-        searchInFlightRef.current = false
       }
     }
   }
@@ -349,15 +286,6 @@ export function NpxFindDialog({
     }
 
     await resetState(nextMode)
-
-    if (nextMode === 'npx') {
-      try {
-        await ensureNpxAvailability()
-      } catch (err) {
-        setNpxAvailable(false)
-        setError(err instanceof Error ? err.message : String(err))
-      }
-    }
   }
 
   const handleToggleSkill = (installCommand: string) => {
@@ -428,11 +356,12 @@ export function NpxFindDialog({
     setImporting(true)
     setError('')
     setSuccessMessage('')
-    appendLogs(
+    setLogs((prev) => [
+      ...prev,
       language === 'zh' 
         ? `开始导入 ${commandsToImport.size} 个技能...` 
         : `Starting to import ${commandsToImport.size} skills...`,
-    )
+    ])
 
     const commands = Array.from(commandsToImport)
     let successCount = 0
@@ -442,11 +371,12 @@ export function NpxFindDialog({
       const requestId = crypto.randomUUID()
       
       try {
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? `执行安装: ${command}` 
             : `Executing: ${command}`,
-        )
+        ])
         
         const result = await onExecuteNative(command, requestId)
         
@@ -456,36 +386,40 @@ export function NpxFindDialog({
         
         const skillName = result.skill_name
         
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? `同步到 Skiller: ${skillName}` 
             : `Syncing to Skiller: ${skillName}`,
-        )
+        ])
         
         const syncResult = await onSyncToSkiller(skillName)
         
         successCount++
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? `✓ 导入成功: ${skillName}${syncResult.is_update ? ' (已更新)' : ''}` 
             : `✓ Imported: ${skillName}${syncResult.is_update ? ' (updated)' : ''}`,
-        )
+        ])
       } catch (err) {
         failCount++
         const errorMsg = err instanceof Error ? err.message : String(err)
-        appendLogs(
+        setLogs((prev) => [
+          ...prev,
           language === 'zh' 
             ? `✗ 导入失败: ${command} - ${errorMsg}` 
             : `✗ Failed: ${command} - ${errorMsg}`,
-        )
+        ])
       }
     }
 
-    appendLogs(
+    setLogs((prev) => [
+      ...prev,
       language === 'zh' 
         ? `导入完成: 成功 ${successCount} 个，失败 ${failCount} 个` 
         : `Import completed: ${successCount} succeeded, ${failCount} failed`,
-    )
+    ])
 
     if (successCount > 0) {
       setSuccessMessage(
@@ -577,7 +511,7 @@ export function NpxFindDialog({
           </button>
         </div>
 
-        <div className="sc-import-body">
+        <div ref={bodyRef} className="sc-import-body">
           <div className="sc-mode-switch">
             <label className={`sc-mode-option api ${mode === 'api' ? 'active' : ''}`}>
               <input
@@ -632,12 +566,7 @@ export function NpxFindDialog({
                 type="text"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    void handleSearch()
-                  }
-                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder={language === 'zh' ? '输入技能名称或关键词...' : 'Enter skill name or keyword...'}
                 className="sc-input"
                 disabled={searchDisabled}
