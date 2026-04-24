@@ -1,6 +1,9 @@
 use dirs::home_dir;
+use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
+use std::sync::Mutex;
 use tauri::{Emitter, Manager, State};
 
 use crate::db::connection::{get_connection, DbConnection};
@@ -19,6 +22,13 @@ use crate::utils::shell::{check_command_available, create_shell_command_for_npx,
 
 const NPX_IMPORT_PROGRESS_EVENT: &str = "npx-import-progress";
 const NATIVE_NPX_PROGRESS_EVENT: &str = "native-npx-progress";
+static ACTIVE_NPX_FIND_REQUEST: Mutex<Option<String>> = Mutex::new(None);
+static ANSI_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]|\x1b\][^\x07]*\x07|\x1b[()][AB012]|\x1b[MX]|\x1b\[?[0-9;]*[a-zA-Z]|\[[\?0-9;]*[hl]",
+    )
+    .expect("invalid ANSI regex")
+});
 
 fn log_action(app: &tauri::AppHandle, level: &str, source: &str, message: &str) {
     if let Some(log_service) = app.try_state::<LogService>() {
@@ -1280,10 +1290,7 @@ pub async fn execute_npx_skills_add_native(
         .map_err(|e| format!("启动 npx 命令失败: {}", e))?;
 
     fn strip_ansi_codes(s: &str) -> String {
-        let ansi_regex = regex::Regex::new(
-            r"\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]|\x1b\][^\x07]*\x07|\x1b[()][AB012]|\x1b[MX]|\x1b\[?[0-9;]*[a-zA-Z]|\[[\?0-9;]*[hl]"
-        ).unwrap();
-        let mut result = ansi_regex.replace_all(s, "").to_string();
+        let mut result = ANSI_REGEX.replace_all(s, "").to_string();
         result = result.replace("│", "|").replace("─", "-").replace("╭", "+").replace("╮", "+").replace("╰", "+").replace("╯", "+");
         result
     }
@@ -1335,8 +1342,12 @@ pub async fn execute_npx_skills_add_native(
         }
     });
 
-    stdout_thread.join().expect("stdout thread panicked");
-    stderr_thread.join().expect("stderr thread panicked");
+    stdout_thread
+        .join()
+        .map_err(|_| "读取 npx stdout 输出时发生异常".to_string())?;
+    stderr_thread
+        .join()
+        .map_err(|_| "读取 npx stderr 输出时发生异常".to_string())?;
 
     let status = child.wait().map_err(|e| format!("等待命令完成失败: {}", e))?;
 
@@ -1611,29 +1622,69 @@ pub async fn execute_npx_skills_find(
         return Err("搜索关键词不能为空".to_string());
     }
 
+    {
+        let mut active_request = ACTIVE_NPX_FIND_REQUEST
+            .lock()
+            .map_err(|_| "无法获取搜索状态锁".to_string())?;
+
+        if let Some(current) = active_request.as_ref() {
+            return Err(format!("已有搜索正在执行中: {}", current));
+        }
+
+        *active_request = Some(request_id.clone());
+    }
+
     let app = Arc::new(app);
     let request_id_clone = request_id.clone();
     let keyword_clone = keyword.clone();
 
-    let mut child = create_shell_command_for_npx(&["skills", "find", &keyword_clone])
+    let child_result = create_shell_command_for_npx(&["skills", "find", &keyword_clone])
         .env("NO_COLOR", "1")
         .env("FORCE_COLOR", "0")
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("启动 npx skills find 命令失败: {}", e))?;
+        .spawn();
+
+    let mut child = match child_result {
+        Ok(child) => child,
+        Err(e) => {
+            if let Ok(mut active_request) = ACTIVE_NPX_FIND_REQUEST.lock() {
+                if active_request.as_deref() == Some(request_id.as_str()) {
+                    *active_request = None;
+                }
+            }
+            return Err(format!("启动 npx skills find 命令失败: {}", e));
+        }
+    };
 
     fn strip_ansi_codes(s: &str) -> String {
-        let ansi_regex = regex::Regex::new(
-            r"\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]|\x1b\][^\x07]*\x07|\x1b[()][AB012]|\x1b[MX]|\x1b\[?[0-9;]*[a-zA-Z]|\[[\?0-9;]*[hl]"
-        ).unwrap();
-        let mut result = ansi_regex.replace_all(s, "").to_string();
+        let mut result = ANSI_REGEX.replace_all(s, "").to_string();
         result = result.replace("│", "|").replace("─", "-").replace("╭", "+").replace("╮", "+").replace("╰", "+").replace("╯", "+");
         result
     }
 
-    let stdout = child.stdout.take().ok_or("无法获取 stdout")?;
-    let stderr = child.stderr.take().ok_or("无法获取 stderr")?;
+    let stdout = match child.stdout.take() {
+        Some(stdout) => stdout,
+        None => {
+            if let Ok(mut active_request) = ACTIVE_NPX_FIND_REQUEST.lock() {
+                if active_request.as_deref() == Some(request_id.as_str()) {
+                    *active_request = None;
+                }
+            }
+            return Err("无法获取 stdout".to_string());
+        }
+    };
+    let stderr = match child.stderr.take() {
+        Some(stderr) => stderr,
+        None => {
+            if let Ok(mut active_request) = ACTIVE_NPX_FIND_REQUEST.lock() {
+                if active_request.as_deref() == Some(request_id.as_str()) {
+                    *active_request = None;
+                }
+            }
+            return Err("无法获取 stderr".to_string());
+        }
+    };
 
     let app_clone = Arc::clone(&app);
     let request_id_clone_stdout = request_id_clone.clone();
@@ -1677,29 +1728,43 @@ pub async fn execute_npx_skills_find(
         lines
     });
 
-    let stdout_lines = stdout_thread.join().expect("stdout thread panicked");
-    let stderr_lines = stderr_thread.join().expect("stderr thread panicked");
+    let result = (|| -> Result<NpxFindResponse, String> {
+        let stdout_lines = stdout_thread
+            .join()
+            .map_err(|_| "读取 npx skills find stdout 输出时发生异常".to_string())?;
+        let stderr_lines = stderr_thread
+            .join()
+            .map_err(|_| "读取 npx skills find stderr 输出时发生异常".to_string())?;
 
-    let status = child.wait().map_err(|e| format!("等待命令完成失败: {}", e))?;
+        let status = child.wait().map_err(|e| format!("等待命令完成失败: {}", e))?;
 
-    if !status.success() {
-        let error_msg = stderr_lines.join("\n");
+        if !status.success() {
+            let error_msg = stderr_lines.join("\n");
+            return Ok(NpxFindResponse {
+                success: false,
+                skills: Vec::new(),
+                error: Some(if error_msg.is_empty() {
+                    "npx skills find 命令执行失败".to_string()
+                } else {
+                    error_msg
+                }),
+            });
+        }
+
         return Ok(NpxFindResponse {
-            success: false,
-            skills: Vec::new(),
-            error: Some(if error_msg.is_empty() {
-                "npx skills find 命令执行失败".to_string()
-            } else {
-                error_msg
-            }),
+            success: true,
+            skills: parse_npx_find_output(&stdout_lines),
+            error: None,
         });
+    })();
+
+    if let Ok(mut active_request) = ACTIVE_NPX_FIND_REQUEST.lock() {
+        if active_request.as_deref() == Some(request_id.as_str()) {
+            *active_request = None;
+        }
     }
 
-    Ok(NpxFindResponse {
-        success: true,
-        skills: parse_npx_find_output(&stdout_lines),
-        error: None,
-    })
+    result
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
