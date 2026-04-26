@@ -1,6 +1,7 @@
 pub mod config_service;
 pub mod distribution_service;
 pub mod log_service;
+pub mod openspec_service;
 pub mod project_service;
 pub mod proxy_service;
 pub mod repo_service;

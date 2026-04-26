@@ -340,4 +340,74 @@ export interface ProxyConfig {
   custom?: CustomProxyConfig
 }
 
+export type OpenSpecProjectState = 'cli_unavailable' | 'not_initialized' | 'ready_empty' | 'ready'
+
+export interface OpenSpecArtifactSummary {
+  id: 'proposal' | 'design' | 'tasks' | 'specs'
+  label: string
+  exists: boolean
+  path: string | null
+  updated_at: string | null
+}
+
+export interface OpenSpecTaskProgress {
+  total: number
+  completed: number
+}
+
+export interface OpenSpecValidationSummary {
+  level: 'ok' | 'warning' | 'critical' | 'error'
+  message: string
+}
+
+export interface OpenSpecChangeSummary {
+  id: string
+  title: string
+  archived: boolean
+  path: string
+  updated_at: string | null
+  summary: string
+  task_progress: OpenSpecTaskProgress
+  artifacts: OpenSpecArtifactSummary[]
+  validation: OpenSpecValidationSummary | null
+}
+
+export interface OpenSpecDocumentPreview {
+  kind: 'markdown'
+  title: string
+  path: string
+  updated_at: string | null
+  content: string
+}
+
+export interface OpenSpecSpecFileSummary {
+  path: string
+  title: string
+  updated_at: string | null
+}
+
+export interface OpenSpecChangeDetail {
+  change: OpenSpecChangeSummary
+  overview_markdown: string
+  proposal: OpenSpecDocumentPreview | null
+  design: OpenSpecDocumentPreview | null
+  tasks: OpenSpecDocumentPreview | null
+  specs: OpenSpecSpecFileSummary[]
+}
+
+export interface OpenSpecBoardSnapshot {
+  project_id: string
+  project_path: string
+  state: OpenSpecProjectState
+  cli_message: string | null
+  changes: OpenSpecChangeSummary[]
+  archived_changes: OpenSpecChangeSummary[]
+}
+
+export interface OpenSpecTerminalResult {
+  stdout: string
+  stderr: string
+  success: boolean
+}
+
 export * from './sort'

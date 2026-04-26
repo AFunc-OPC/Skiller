@@ -2,9 +2,30 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsPage } from './ProjectsPage'
+import type { Project } from '../types'
 
 const mocks = vi.hoisted(() => {
   const dragDropHandlers: Array<(event: { payload: { type: string; paths?: string[] } }) => void> = []
+  const defaultProjectStore = {
+    projects: [] as Project[],
+    createProject: vi.fn(),
+    updateProject: vi.fn(),
+    deleteProject: vi.fn(),
+    projectSkills: [],
+    projectSkillsByPreset: {},
+    projectSkillsLoading: false,
+    projectSkillsError: null,
+    toolPresets: [],
+    selectedPresetId: null,
+    fetchProjectSkillsByPresets: vi.fn(),
+    fetchToolPresets: vi.fn(),
+    selectPreset: vi.fn(),
+    removeProjectSkill: vi.fn(),
+    toggleProjectSkillStatus: vi.fn(),
+    batchRemoveProjectSkills: vi.fn(),
+    batchToggleProjectSkills: vi.fn(),
+    clearProjectSkills: vi.fn(),
+  }
 
   return {
     dragDropHandlers,
@@ -20,6 +41,15 @@ const mocks = vi.hoisted(() => {
     createProject: vi.fn(),
     updateProject: vi.fn(),
     deleteProject: vi.fn(),
+    fetchProjectSkillsByPresets: vi.fn(),
+    fetchToolPresets: vi.fn(),
+    selectPreset: vi.fn(),
+    removeProjectSkill: vi.fn(),
+    toggleProjectSkillStatus: vi.fn(),
+    batchRemoveProjectSkills: vi.fn(),
+    batchToggleProjectSkills: vi.fn(),
+    clearProjectSkills: vi.fn(),
+    projectStoreState: defaultProjectStore,
   }
 })
 
@@ -39,16 +69,36 @@ vi.mock('../api/desktop', () => ({
 }))
 
 vi.mock('../stores/projectStore', () => ({
-  useProjectStore: () => ({
-    projects: [],
-    createProject: mocks.createProject,
-    updateProject: mocks.updateProject,
-    deleteProject: mocks.deleteProject,
-  }),
+  useProjectStore: () => mocks.projectStoreState,
+}))
+
+vi.mock('../components/ProjectSkill', () => ({
+  ProjectSkillList: () => <div>project skills</div>,
+  ProjectSkillImportDialog: () => null,
 }))
 
 describe('ProjectsPage', () => {
   beforeEach(() => {
+    mocks.projectStoreState = {
+      projects: [],
+      createProject: mocks.createProject,
+      updateProject: mocks.updateProject,
+      deleteProject: mocks.deleteProject,
+      projectSkills: [],
+      projectSkillsByPreset: {},
+      projectSkillsLoading: false,
+      projectSkillsError: null,
+      toolPresets: [],
+      selectedPresetId: null,
+      fetchProjectSkillsByPresets: mocks.fetchProjectSkillsByPresets,
+      fetchToolPresets: mocks.fetchToolPresets,
+      selectPreset: mocks.selectPreset,
+      removeProjectSkill: mocks.removeProjectSkill,
+      toggleProjectSkillStatus: mocks.toggleProjectSkillStatus,
+      batchRemoveProjectSkills: mocks.batchRemoveProjectSkills,
+      batchToggleProjectSkills: mocks.batchToggleProjectSkills,
+      clearProjectSkills: mocks.clearProjectSkills,
+    }
     mocks.dragDropHandlers.length = 0
     mocks.listen.mockClear()
     mocks.getCurrentWindow.mockClear()
@@ -57,6 +107,14 @@ describe('ProjectsPage', () => {
     mocks.createProject.mockReset()
     mocks.updateProject.mockReset()
     mocks.deleteProject.mockReset()
+    mocks.fetchProjectSkillsByPresets.mockReset()
+    mocks.fetchToolPresets.mockReset()
+    mocks.selectPreset.mockReset()
+    mocks.removeProjectSkill.mockReset()
+    mocks.toggleProjectSkillStatus.mockReset()
+    mocks.batchRemoveProjectSkills.mockReset()
+    mocks.batchToggleProjectSkills.mockReset()
+    mocks.clearProjectSkills.mockReset()
     localStorage.clear()
   })
 
@@ -100,5 +158,38 @@ describe('ProjectsPage', () => {
         '第一行\n第二行',
       )
     })
+  })
+
+  it('shows an OpenSpec board entry in the project detail drawer', async () => {
+    const user = userEvent.setup()
+
+    mocks.projectStoreState = {
+      ...mocks.projectStoreState,
+      projects: [
+        {
+          id: 'project-1',
+          name: 'OpenSpec Demo',
+          path: '/Users/demo/project',
+          skill_path: '.skills',
+          tool_preset_id: null,
+          description: 'demo',
+          icon: null,
+          is_builtin: false,
+          created_at: '2026-04-01T00:00:00Z',
+          updated_at: '2026-04-01T00:00:00Z',
+        },
+      ],
+    }
+
+    const onOpenOpenSpecBoard = vi.fn()
+
+    render(<ProjectsPage onOpenOpenSpecBoard={onOpenOpenSpecBoard} />)
+
+    await user.click(await screen.findByText('OpenSpec Demo'))
+    await user.click(screen.getByRole('button', { name: '打开 OpenSpec 看板' }))
+
+    expect(onOpenOpenSpecBoard).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'project-1', name: 'OpenSpec Demo' }),
+    )
   })
 })

@@ -38,3 +38,6 @@ custom-protocol = ["tauri/custom-protocol"]
 [[example]]
 name = "tag_tree_test"
 path = "examples/tag_tree_test.rs"
+
+[dev-dependencies]
+tempfile = "3.13"

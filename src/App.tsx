@@ -10,6 +10,7 @@ import { SkillCenter } from './components/SkillCenter'
 import { t } from './i18n'
 import { TagGovernancePage } from './pages/TagGovernancePage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { OpenSpecBoardPage } from './pages/OpenSpecBoardPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { RepositoryManagementPage, RepositoryAddDialog } from './components/RepositoryManagement'
 import { isTauriEnvironment } from './api/tauri'
@@ -17,6 +18,7 @@ import { ToolPresetSettings, SettingsTabs } from './components/Settings'
 import { desktopApi } from './api/desktop'
 import { SkillMarkdownPreview } from './components/SkillCenter/SkillMarkdownPreview'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from './data/userGuide'
+import type { Project } from './types'
 
 type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'settings'
 type IconName = ModuleKey | 'sun' | 'moon' | 'search' | 'grid' | 'list' | 'plus' | 'x' | 'chevron-left' | 'chevron-right'
@@ -228,6 +230,7 @@ function App() {
   const [newProjectPath, setNewProjectPath] = useState('')
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
+  const [activeOpenSpecProject, setActiveOpenSpecProject] = useState<Project | null>(null)
 
   const tagCount = useMemo(() => {
     const countAll = (nodes: typeof tree): number => {
@@ -301,7 +304,17 @@ function App() {
   }, [])
 
   const handleModuleChange = useCallback((module: ModuleKey) => {
+    setActiveOpenSpecProject(null)
     setActiveModule(module)
+  }, [])
+
+  const handleOpenOpenSpecBoard = useCallback((project: Project) => {
+    setActiveModule('projects')
+    setActiveOpenSpecProject(project)
+  }, [])
+
+  const handleCloseOpenSpecBoard = useCallback(() => {
+    setActiveOpenSpecProject(null)
   }, [])
 
   const handleCreateProjectFromOverview = useCallback(() => {
@@ -331,6 +344,15 @@ function App() {
   }, [])
 
   const renderContent = () => {
+    if (activeOpenSpecProject) {
+      return (
+        <OpenSpecBoardPage
+          project={activeOpenSpecProject}
+          onBack={handleCloseOpenSpecBoard}
+        />
+      )
+    }
+
     switch (activeModule) {
       case 'skills':
         return (
@@ -345,7 +367,7 @@ function App() {
       case 'projects':
         return (
           <SkillProvider>
-            <ProjectsPage />
+            <ProjectsPage onOpenOpenSpecBoard={handleOpenOpenSpecBoard} />
           </SkillProvider>
         )
       

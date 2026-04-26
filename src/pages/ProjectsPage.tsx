@@ -14,6 +14,10 @@ import type { Project, DistributeSkillRequest, SkillDistributionMode } from '../
 
 type ViewMode = 'card' | 'list'
 
+interface ProjectsPageProps {
+  onOpenOpenSpecBoard?: (project: Project) => void
+}
+
 const SUPPORTED_IMAGE_FORMATS = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp']
 const MAX_ICON_SIZE = 10 * 1024 * 1024
 
@@ -183,7 +187,7 @@ function ProjectListItem({ project, query, onClick }: { project: Project; query:
   )
 }
 
-export function ProjectsPage() {
+export function ProjectsPage({ onOpenOpenSpecBoard }: ProjectsPageProps) {
   const { language } = useAppStore()
   const {
     projects,
@@ -881,11 +885,11 @@ export function ProjectsPage() {
                 </div>
               )}
               
-              <div className="pm-drawer-path-section">
-                <label>{language === 'zh' ? '路径' : 'Path'}</label>
-                <div className="pm-drawer-path-row">
-                  <code className="pm-drawer-path">{selectedProject.path}</code>
-                  <div className="pm-drawer-actions">
+               <div className="pm-drawer-path-section">
+                 <label>{language === 'zh' ? '路径' : 'Path'}</label>
+                 <div className="pm-drawer-path-row">
+                   <code className="pm-drawer-path">{selectedProject.path}</code>
+                   <div className="pm-drawer-actions">
                     <button 
                       onClick={handleCopyPath} 
                       className={copied ? 'pm-action-copied' : ''}
@@ -908,12 +912,21 @@ export function ProjectsPage() {
                         <path d="M3 7l2-2h4" />
                       </svg>
                     </button>
-                  </div>
-                </div>
-              </div>
+                   </div>
+                 </div>
+               </div>
 
-              <div className="sk-meta-grid">
-                <div className="sk-meta-item">
+               {onOpenOpenSpecBoard && (
+                 <button
+                   className="pm-btn-primary"
+                   onClick={() => onOpenOpenSpecBoard(selectedProject)}
+                 >
+                   {language === 'zh' ? '打开 OpenSpec 看板' : 'Open OpenSpec Board'}
+                 </button>
+               )}
+
+               <div className="sk-meta-grid">
+                 <div className="sk-meta-item">
                   <span className="sk-meta-label">{language === 'zh' ? '添加时间' : 'Created'}</span>
                   <span className="sk-meta-value">{new Date(selectedProject.created_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}</span>
                 </div>
