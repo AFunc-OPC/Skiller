@@ -82,10 +82,9 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
   const syncing = repository ? syncingRepositoryIds.includes(repository.id) : false
   
   useEffect(() => {
-    if (repository) {
-      fetchRepositorySkills(repository.id)
-    }
-  }, [repository, fetchRepositorySkills])
+    if (!repository?.id) return
+    fetchRepositorySkills(repository.id)
+  }, [repository?.id, fetchRepositorySkills])
   
   useEffect(() => {
     if (!isOpen) return

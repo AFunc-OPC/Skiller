@@ -30,6 +30,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             skiller::commands::skill::get_skills,
+            skiller::commands::skill::get_skills_by_repo_id,
             skiller::commands::skill::create_skill,
             skiller::commands::skill::update_skill,
             skiller::commands::skill::delete_skill,

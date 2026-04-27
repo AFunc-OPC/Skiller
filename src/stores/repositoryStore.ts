@@ -186,8 +186,7 @@ export const useRepositoryStore = create<RepositoryState>((set, get) => ({
   
   fetchRepositorySkills: async (repoId: string) => {
     try {
-      const allSkills = await skillApi.list()
-      const repoSkills = allSkills.filter(skill => skill.repo_id === repoId)
+      const repoSkills = await skillApi.listByRepoId(repoId)
       set({ repositorySkills: repoSkills })
     } catch (error) {
       set({ error: String(error) })

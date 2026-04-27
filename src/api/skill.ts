@@ -5,6 +5,10 @@ export const skillApi = {
   list: async (tagIds?: string[]): Promise<Skill[]> => {
     return await invoke('get_skills', { tagIds })
   },
+
+  listByRepoId: async (repoId: string): Promise<Skill[]> => {
+    return await invoke('get_skills_by_repo_id', { repoId })
+  },
   
   create: async (request: CreateSkillRequest): Promise<Skill> => {
     return await invoke('create_skill', { request })

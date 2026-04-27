@@ -15,6 +15,15 @@ pub fn get_skills(
 }
 
 #[tauri::command]
+pub fn get_skills_by_repo_id(
+    db: State<'_, DbConnection>,
+    repo_id: String,
+) -> Result<Vec<Skill>, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    skill_service::get_skills_by_repo_id(&conn, &repo_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn create_skill(
     db: State<'_, DbConnection>,
     request: CreateSkillRequest,
