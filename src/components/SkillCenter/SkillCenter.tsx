@@ -11,7 +11,7 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle } from 'lucide-react'
+import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle, Square, CheckSquare } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
@@ -237,6 +237,27 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     const selected = new Set(selectedSkillIds)
     return skills.filter(skill => selected.has(skill.id))
   }, [selectedSkillIds, skills])
+
+  const allFilteredSelected = useMemo(() => {
+    if (filteredSkills.length === 0) return false
+    return filteredSkills.every(skill => selectedSkillIds.has(skill.id))
+  }, [filteredSkills, selectedSkillIds])
+
+  const handleToggleSelectAll = useCallback(() => {
+    if (filteredSkills.length === 0) return
+
+    setSelectedSkillIds(prev => {
+      if (filteredSkills.every(skill => prev.has(skill.id))) {
+        const next = new Set(prev)
+        filteredSkills.forEach(skill => next.delete(skill.id))
+        return next
+      }
+
+      const next = new Set(prev)
+      filteredSkills.forEach(skill => next.add(skill.id))
+      return next
+    })
+  }, [filteredSkills])
 
   const handleRequestBatchDelete = useCallback(() => {
     if (selectedSkillIds.size === 0 || batchDeleting) return
@@ -498,6 +519,20 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
 
                 {multiSelectMode && (
                   <div className="skill-multi-inline-actions">
+                    <button
+                      className={`skill-multi-action-btn ${allFilteredSelected ? 'selected' : 'neutral'}`}
+                      onClick={handleToggleSelectAll}
+                      disabled={filteredSkills.length === 0}
+                      title={allFilteredSelected
+                        ? (language === 'zh' ? '取消全选' : 'Deselect all')
+                        : (language === 'zh' ? '全选' : 'Select all')}
+                      aria-label={allFilteredSelected
+                        ? (language === 'zh' ? '取消全选' : 'Deselect all')
+                        : (language === 'zh' ? '全选' : 'Select all')}
+                    >
+                      {allFilteredSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                    </button>
+
                     <button
                       ref={tagActionButtonRef}
                       className="skill-multi-action-btn tag"

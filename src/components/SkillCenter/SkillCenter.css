@@ -1811,6 +1811,28 @@ code.sc-prepared-value {
   transition: all 0.2s;
 }
 
+.skill-multi-action-btn.neutral {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+
+.skill-multi-action-btn.neutral:hover:not(:disabled) {
+  background: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.skill-multi-action-btn.selected {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-mint);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.skill-multi-action-btn.selected:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: var(--accent-mint);
+}
+
 .skill-multi-action-btn.tag {
   background: rgba(16, 185, 129, 0.1);
   color: var(--accent-mint);
