@@ -58,7 +58,7 @@ function gitUrlToHttps(url: string): string {
 export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigateToSkill }: RepositoryDetailDrawerProps) {
   const { language } = useAppStore()
   const { deleteRepository, syncRepository, updateRepository, repairRepository, fetchRepositorySkills, repositorySkills, syncingRepositoryIds, markRepositorySyncCompleted, markRepositorySyncFailed } = useRepositoryStore()
-  const { importSkillFromRepository } = useSkillContext()
+  const { importSkillFromRepository, skills: existingSkills, deleteSkill } = useSkillContext()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -72,6 +72,11 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
   const [importingSkills, setImportingSkills] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [importSuccess, setImportSuccess] = useState<string | null>(null)
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false)
+  const [importConfirmData, setImportConfirmData] = useState<{
+    existing: Skill[]
+    newSkills: Skill[]
+  }>({ existing: [], newSkills: [] })
   const [previewSkill, setPreviewSkill] = useState<Skill | null>(null)
   const [copiedSkillId, setCopiedSkillId] = useState<string | null>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -394,19 +399,52 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
     }
   }, [selectedSkillIds.size, filteredSkills])
   
-  const handleImportSkills = useCallback(async () => {
+  const checkAndConfirmImport = useCallback(() => {
     if (!repository || selectedSkillIds.size === 0) return
-    
+
+    const skillsToImport = repositorySkills.filter(s => selectedSkillIds.has(s.id))
+    const existingNames = new Set(existingSkills.map(s => s.name))
+    const existing: Skill[] = []
+    const newSkills: Skill[] = []
+
+    for (const skill of skillsToImport) {
+      if (existingNames.has(skill.name)) {
+        existing.push(skill)
+      } else {
+        newSkills.push(skill)
+      }
+    }
+
+    if (existing.length > 0) {
+      setImportConfirmData({ existing, newSkills })
+      setImportConfirmOpen(true)
+    } else {
+      executeImport(skillsToImport, false)
+    }
+  }, [repository, selectedSkillIds, repositorySkills, existingSkills])
+
+  const executeImport = useCallback(async (
+    skillsToImport: Skill[],
+    overwrite: boolean
+  ) => {
+    if (!repository) return
+
     setImportingSkills(true)
     setImportError(null)
     setImportSuccess(null)
-    
-    const skillsToImport = repositorySkills.filter(s => selectedSkillIds.has(s.id))
+    setImportConfirmOpen(false)
+
     let successCount = 0
     const failedSkills: { name: string; reason: string }[] = []
-    
+
     for (const skill of skillsToImport) {
       try {
+        if (overwrite) {
+          const existingSkill = existingSkills.find(s => s.name === skill.name)
+          if (existingSkill) {
+            await deleteSkill(existingSkill.id)
+          }
+        }
         await importSkillFromRepository(repository.id, skill.file_path)
         successCount++
       } catch (error) {
@@ -415,12 +453,12 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
         console.error(`Failed to import skill ${skill.name}:`, error)
       }
     }
-    
+
     setImportingSkills(false)
-    
+
     if (failedSkills.length === 0) {
-      setImportSuccess(language === 'zh' 
-        ? `成功导入 ${successCount} 个技能` 
+      setImportSuccess(language === 'zh'
+        ? `成功导入 ${successCount} 个技能`
         : `Successfully imported ${successCount} skill${successCount > 1 ? 's' : ''}`)
       setSelectedSkillIds(new Set())
     } else {
@@ -429,12 +467,12 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
         ? `成功 ${successCount} 个，失败 ${failedSkills.length} 个\n${failedNames}`
         : `Succeeded ${successCount}, failed ${failedSkills.length}\n${failedNames}`)
     }
-    
+
     setTimeout(() => {
       setImportSuccess(null)
       setImportError(null)
     }, 8000)
-  }, [repository, selectedSkillIds, repositorySkills, importSkillFromRepository, language])
+  }, [repository, existingSkills, deleteSkill, importSkillFromRepository, language])
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return language === 'zh' ? '未同步' : 'Not synced'
@@ -859,7 +897,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
                       </label>
                       <button
                         className="repo-btn-import"
-                        onClick={handleImportSkills}
+                        onClick={checkAndConfirmImport}
                         disabled={importingSkills || selectedSkillIds.size === 0}
                       >
                         {importingSkills ? (
@@ -1047,6 +1085,65 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
               </button>
               <button className="repo-btn-danger" onClick={handleDeleteRepository}>
                 {language === 'zh' ? '删除' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {importConfirmOpen && (
+        <>
+          <div className="repo-overlay" onClick={() => setImportConfirmOpen(false)} />
+          <div className="repo-confirm-modal repo-import-confirm-modal">
+            <div className="repo-confirm-icon repo-confirm-icon-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+            </div>
+            <h3>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h3>
+            <div className="repo-import-confirm-content">
+              {importConfirmData.existing.length > 0 && (
+                <div className="repo-import-existing">
+                  <p className="repo-import-section-title">
+                    {language === 'zh' 
+                      ? `以下 ${importConfirmData.existing.length} 个技能已存在，导入后将覆盖：`
+                      : `${importConfirmData.existing.length} skill(s) already exist and will be overwritten:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {importConfirmData.existing.map(skill => (
+                      <li key={skill.id}>{skill.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {importConfirmData.newSkills.length > 0 && (
+                <div className="repo-import-new">
+                  <p className="repo-import-section-title">
+                    {language === 'zh'
+                      ? `以下 ${importConfirmData.newSkills.length} 个技能将新增：`
+                      : `${importConfirmData.newSkills.length} skill(s) will be added:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {importConfirmData.newSkills.map(skill => (
+                      <li key={skill.id}>{skill.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="repo-confirm-actions">
+              <button className="repo-btn-ghost" onClick={() => setImportConfirmOpen(false)}>
+                {language === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button 
+                className="repo-btn-primary" 
+                onClick={() => {
+                  const skillsToImport = [...importConfirmData.existing, ...importConfirmData.newSkills]
+                  executeImport(skillsToImport, true)
+                }}
+              >
+                {language === 'zh' ? '确认导入' : 'Confirm Import'}
               </button>
             </div>
           </div>
