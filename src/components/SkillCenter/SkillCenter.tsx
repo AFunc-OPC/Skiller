@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -11,7 +11,8 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag, Tags, X, Check } from 'lucide-react'
+import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
@@ -96,12 +97,18 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [isDraggingOverSkillArea, setIsDraggingOverSkillArea] = useState(false)
 
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
+  const [multiSelectMode, setMultiSelectMode] = useState(false)
   const [showBatchTagPicker, setShowBatchTagPicker] = useState(false)
   const [batchTagIds, setBatchTagIds] = useState<Set<string>>(new Set())
   const [batchTagSearch, setBatchTagSearch] = useState('')
   const [batchExpandedTagIds, setBatchExpandedTagIds] = useState<Set<string>>(new Set())
   const [batchTagLoading, setBatchTagLoading] = useState(false)
+  const [batchDeleting, setBatchDeleting] = useState(false)
+  const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false)
+  const multiSelectPanelRef = useRef<HTMLDivElement>(null)
+  const tagActionButtonRef = useRef<HTMLButtonElement>(null)
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
+  const [batchTagPickerPosition, setBatchTagPickerPosition] = useState({ top: 0, left: 0, maxHeight: 360 })
 
   const selectedSkill = skills.find(s => s.id === selectedSkillId) || null
 
@@ -212,7 +219,45 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     setShowBatchTagPicker(false)
     setBatchTagIds(new Set())
     setBatchTagSearch('')
+    setBatchExpandedTagIds(new Set())
   }, [])
+
+  const handleToggleMultiSelectMode = useCallback(() => {
+    setMultiSelectMode(prev => {
+      const next = !prev
+      if (!next) {
+        handleClearSelection()
+      }
+      return next
+    })
+  }, [handleClearSelection])
+
+  const selectedSkillsForDelete = useMemo(() => {
+    if (selectedSkillIds.size === 0) return [] as Skill[]
+    const selected = new Set(selectedSkillIds)
+    return skills.filter(skill => selected.has(skill.id))
+  }, [selectedSkillIds, skills])
+
+  const handleRequestBatchDelete = useCallback(() => {
+    if (selectedSkillIds.size === 0 || batchDeleting) return
+    setConfirmBatchDeleteOpen(true)
+  }, [batchDeleting, selectedSkillIds])
+
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedSkillsForDelete.length === 0 || batchDeleting) return
+
+    setBatchDeleting(true)
+    try {
+      for (const skill of selectedSkillsForDelete) {
+        await deleteSkill(skill.id)
+      }
+      setConfirmBatchDeleteOpen(false)
+      handleClearSelection()
+      setMultiSelectMode(false)
+    } finally {
+      setBatchDeleting(false)
+    }
+  }, [batchDeleting, deleteSkill, handleClearSelection, selectedSkillsForDelete])
 
   const handleBatchAssignTags = useCallback(async () => {
     if (batchTagIds.size === 0 || selectedSkillIds.size === 0) return
@@ -311,11 +356,14 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     )
   }, [batchExpandedTagIds, batchTagIds, batchTagSearch, hasBatchMatchingDescendant, handleBatchToggleExpand, handleBatchToggleTag])
 
-  // Close batch tag picker on outside click
+  // Close tag picker on outside click
   useEffect(() => {
     if (!showBatchTagPicker) return
     const handlePointerDown = (e: MouseEvent) => {
-      if (batchTagPickerRef.current && !batchTagPickerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      const clickedInToolbar = multiSelectPanelRef.current?.contains(target)
+      const clickedInPicker = batchTagPickerRef.current?.contains(target)
+      if (!clickedInToolbar && !clickedInPicker) {
         setShowBatchTagPicker(false)
       }
     }
@@ -323,8 +371,41 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     return () => window.removeEventListener('mousedown', handlePointerDown)
   }, [showBatchTagPicker])
 
+  useEffect(() => {
+    if (!showBatchTagPicker) return
+
+    const updatePickerPosition = () => {
+      const rect = tagActionButtonRef.current?.getBoundingClientRect()
+      if (!rect) return
+
+      const pickerEl = batchTagPickerRef.current
+      const pickerWidth = pickerEl?.offsetWidth ?? 260
+      const viewportPadding = 8
+      const gapFromButton = 8
+      const top = rect.bottom + gapFromButton
+
+      const maxLeft = Math.max(viewportPadding, window.innerWidth - pickerWidth - viewportPadding)
+      const left = Math.min(Math.max(rect.left, viewportPadding), maxLeft)
+      const availableHeight = window.innerHeight - top - viewportPadding
+
+      setBatchTagPickerPosition({
+        top,
+        left,
+        maxHeight: Math.max(120, availableHeight),
+      })
+    }
+
+    updatePickerPosition()
+    window.addEventListener('resize', updatePickerPosition)
+    window.addEventListener('scroll', updatePickerPosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePickerPosition)
+      window.removeEventListener('scroll', updatePickerPosition, true)
+    }
+  }, [showBatchTagPicker])
+
   const handleSkillClick = (skill: Skill) => {
-    if (selectedSkillIds.size > 0) {
+    if (multiSelectMode) {
       handleToggleSkillSelection(skill.id)
       return
     }
@@ -398,6 +479,48 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
           </div>
 
           <div className="skill-actions">
+            <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
+              <div className={`skill-multi-mode-cluster ${multiSelectMode ? 'active' : ''}`}>
+                <button
+                  className={`skill-multi-mode-trigger ${multiSelectMode ? 'active' : ''}`}
+                  onClick={handleToggleMultiSelectMode}
+                >
+                  <ListChecks className="w-4 h-4" />
+                  <span>{language === 'zh' ? '多选模式' : 'Multi-select'}</span>
+                  {multiSelectMode && (
+                    <span className="skill-multi-selected-count">{selectedSkillIds.size}</span>
+                  )}
+                </button>
+
+                {multiSelectMode && (
+                  <div className="skill-multi-inline-actions">
+                    <button
+                      ref={tagActionButtonRef}
+                      className="skill-multi-action-btn tag"
+                      onClick={() => setShowBatchTagPicker(prev => !prev)}
+                      title={language === 'zh' ? '加标签' : 'Add tags'}
+                      aria-label={language === 'zh' ? '加标签' : 'Add tags'}
+                    >
+                      <Tags className="w-3.5 h-3.5" />
+                      {batchTagIds.size > 0 && (
+                        <span className="skill-batch-tag-count">{batchTagIds.size}</span>
+                      )}
+                    </button>
+
+                    <button
+                      className="skill-multi-action-btn danger"
+                      onClick={handleRequestBatchDelete}
+                      disabled={selectedSkillIds.size === 0 || batchDeleting}
+                      title={language === 'zh' ? '批量删除' : 'Batch delete'}
+                      aria-label={language === 'zh' ? '批量删除' : 'Batch delete'}
+                    >
+                      {batchDeleting ? <span className="skill-batch-spinner" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <SortDropdown
               sortOption={sortOption}
               onSortChange={setSortOption}
@@ -420,6 +543,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                 language={language}
               />
             </div>
+
           </div>
         </div>
 
@@ -553,7 +677,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                             language={language}
                             enableDropHighlight={isDraggingOverSkillArea}
                             isSelected={selectedSkillIds.has(skill.id)}
-                            hasSelection={selectedSkillIds.size > 0}
+                            hasSelection={multiSelectMode}
                             onToggleSelect={handleToggleSkillSelection}
                           />
                         ))}
@@ -569,7 +693,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                             language={language}
                             enableDropHighlight={isDraggingOverSkillArea}
                             isSelected={selectedSkillIds.has(skill.id)}
-                            hasSelection={selectedSkillIds.size > 0}
+                            hasSelection={multiSelectMode}
                             onToggleSelect={handleToggleSkillSelection}
                           />
                         ))}
@@ -580,77 +704,6 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
               </DroppableSkillArea>
             </div>
 
-            {/* Batch action bar */}
-            {selectedSkillIds.size > 0 && (
-              <div className="skill-batch-bar">
-                <span className="skill-batch-info">
-                  {language === 'zh' ? `已选择 ${selectedSkillIds.size} 个技能` : `${selectedSkillIds.size} skill${selectedSkillIds.size === 1 ? '' : 's'} selected`}
-                </span>
-                <div className="skill-batch-actions">
-                  <div className="skill-batch-tag-wrap" ref={batchTagPickerRef}>
-                    <button
-                      className="skill-batch-btn skill-batch-btn-tag"
-                      onClick={() => setShowBatchTagPicker(!showBatchTagPicker)}
-                    >
-                      <Tags className="w-3.5 h-3.5" />
-                      {language === 'zh' ? '添加标签' : 'Add Tags'}
-                      {batchTagIds.size > 0 && (
-                        <span className="skill-batch-tag-count">{batchTagIds.size}</span>
-                      )}
-                    </button>
-                    {showBatchTagPicker && (
-                      <div className="skill-batch-tag-picker">
-                        <div className="sk-dropdown-search">
-                          <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
-                            <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                            <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                          <input
-                            type="text"
-                            autoFocus
-                            value={batchTagSearch}
-                            onChange={(e) => setBatchTagSearch(e.target.value)}
-                            placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
-                          />
-                        </div>
-                        <div className="sk-dropdown-tree">
-                          {tree.length > 0 ? (
-                            tree.map(node => renderBatchTagNode(node, 0))
-                          ) : (
-                            <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
-                          )}
-                        </div>
-                        {batchTagIds.size > 0 && (
-                          <div className="skill-batch-picker-footer">
-                            <button
-                              className="skill-batch-apply-btn"
-                              onClick={handleBatchAssignTags}
-                              disabled={batchTagLoading}
-                            >
-                              {batchTagLoading ? (
-                                <span className="skill-batch-spinner" />
-                              ) : (
-                                <Check className="w-3.5 h-3.5" />
-                              )}
-                              {language === 'zh'
-                                ? `应用 ${batchTagIds.size} 个标签`
-                                : `Apply ${batchTagIds.size} tag${batchTagIds.size === 1 ? '' : 's'}`}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    className="skill-batch-btn skill-batch-btn-clear"
-                    onClick={handleClearSelection}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    {language === 'zh' ? '清除选择' : 'Clear'}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -753,6 +806,116 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
           }}
           existingSkillNames={skills.map(s => s.name)}
         />
+
+        {confirmBatchDeleteOpen && (
+          <>
+            <div className="sc-import-overlay" onClick={() => setConfirmBatchDeleteOpen(false)} />
+            <div className="sc-import-dialog sc-overwrite-confirm-dialog">
+              <div className="sc-import-header">
+                <div className="sc-import-title">
+                  <div className="sc-import-title-icon">
+                    <Trash2 />
+                  </div>
+                  <h3>{language === 'zh' ? '确认批量删除' : 'Confirm Batch Delete'}</h3>
+                </div>
+                <button onClick={() => setConfirmBatchDeleteOpen(false)} className="sc-import-close" disabled={batchDeleting}>
+                  <X />
+                </button>
+              </div>
+
+              <div className="sc-import-body">
+                <div className="sc-overwrite-warning">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5" />
+                  <p>
+                    {language === 'zh'
+                      ? `将删除 ${selectedSkillsForDelete.length} 个技能，操作不可撤销。`
+                      : `This will permanently delete ${selectedSkillsForDelete.length} skill(s).`}
+                  </p>
+                </div>
+
+                <div className="sc-overwrite-list">
+                  {selectedSkillsForDelete.map(skill => (
+                    <div key={skill.id} className="sc-overwrite-item">
+                      <code>{skill.name}</code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="sc-import-footer">
+                <button
+                  className="sc-btn sc-btn-ghost"
+                  onClick={() => setConfirmBatchDeleteOpen(false)}
+                  disabled={batchDeleting}
+                >
+                  {language === 'zh' ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  className="sc-btn sc-btn-primary warning"
+                  onClick={handleBatchDelete}
+                  disabled={batchDeleting || selectedSkillsForDelete.length === 0}
+                >
+                  {batchDeleting ? <span className="sc-btn-spinner" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  {language === 'zh' ? '确认删除' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {multiSelectMode && showBatchTagPicker && createPortal(
+          <div className="skill-top-layer">
+            <div
+              ref={batchTagPickerRef}
+              className="skill-batch-tag-picker in-portal"
+              style={{
+                top: `${batchTagPickerPosition.top}px`,
+                left: `${batchTagPickerPosition.left}px`,
+                maxHeight: `${batchTagPickerPosition.maxHeight}px`,
+              }}
+            >
+              <div className="sk-dropdown-search">
+                <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                  <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <input
+                  type="text"
+                  autoFocus
+                  value={batchTagSearch}
+                  onChange={(e) => setBatchTagSearch(e.target.value)}
+                  placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                />
+              </div>
+              <div className="sk-dropdown-tree">
+                {tree.length > 0 ? (
+                  tree.map(node => renderBatchTagNode(node, 0))
+                ) : (
+                  <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
+                )}
+              </div>
+              {batchTagIds.size > 0 && (
+                <div className="skill-batch-picker-footer">
+                  <button
+                    className="skill-batch-apply-btn"
+                    onClick={handleBatchAssignTags}
+                    disabled={batchTagLoading || selectedSkillIds.size === 0}
+                  >
+                    {batchTagLoading ? (
+                      <span className="skill-batch-spinner" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    {language === 'zh'
+                      ? `应用 ${batchTagIds.size} 个标签`
+                      : `Apply ${batchTagIds.size} tag${batchTagIds.size === 1 ? '' : 's'}`}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
 
         <DragOverlay>
           {activeTag && (
