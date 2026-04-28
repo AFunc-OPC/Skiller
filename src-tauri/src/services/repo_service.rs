@@ -373,6 +373,10 @@ fn scan_and_create_skills(conn: &Connection, repo: &Repo) -> Result<usize, Skill
     let mut skills_created = 0;
     let mut found_skill_dirs: Vec<PathBuf> = Vec::new();
 
+    if scan_base_path.join("SKILL.md").exists() {
+        found_skill_dirs.push(scan_base_path.clone());
+    }
+
     find_all_skill_directories(&scan_base_path, &mut found_skill_dirs, 0);
 
     for skill_dir in found_skill_dirs {
@@ -578,6 +582,28 @@ mod tests {
         let skill_names: Vec<&str> = skills.iter().map(|s| s.name.as_str()).collect();
         assert!(skill_names.contains(&"Root Skill"));
         assert!(skill_names.contains(&"Nested Skill"));
+
+        fs::remove_dir_all(&repo_dir).expect("cleanup temp dir");
+    }
+
+    #[test]
+    fn scan_and_create_skills_finds_skill_at_repo_root() {
+        let conn = create_test_connection().expect("create test db");
+        let repo_dir = unique_temp_dir("repo-root-skill");
+
+        fs::write(repo_dir.join("SKILL.md"), "---\nname: Root Skill\n---\n")
+            .expect("write root skill");
+
+        let repo = create_repo(&repo_dir, None);
+        insert_repo(&conn, &repo);
+
+        let created = scan_and_create_skills(&conn, &repo).expect("scan repo skills");
+        let skills =
+            skill_service::get_skills_by_repo_id(&conn, &repo.id).expect("load repo skills");
+
+        assert_eq!(created, 1);
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].name, "Root Skill");
 
         fs::remove_dir_all(&repo_dir).expect("cleanup temp dir");
     }
