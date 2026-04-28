@@ -4851,14 +4851,15 @@ body {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.625rem;
 }
 
 .sk-distribution-select-content strong {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-content span {
@@ -4899,16 +4900,16 @@ body {
 .sk-distribution-select-option {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.625rem;
   border: 0;
-  border-radius: 4px;
+  border-radius: 8px;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.15s ease;
 }
 
 .sk-distribution-select-option:hover,
@@ -4960,11 +4961,27 @@ body {
 
 .sk-distribution-option-content {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
   flex: 1;
+}
+
+.sk-distribution-option-content strong {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.sk-distribution-option-content span {
+  flex: 1;
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sk-distribution-select-empty {
@@ -5018,18 +5035,20 @@ body {
 .sk-distribution-select-content {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .sk-distribution-select-content strong {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-content span {
+  flex: 1;
   font-size: 0.6875rem;
   color: var(--text-secondary);
   overflow: hidden;
@@ -5110,16 +5129,17 @@ body {
 
 .sk-distribution-select-option {
   display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.625rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.1s ease;
 }
 
 .sk-distribution-select-option:hover,
@@ -5135,13 +5155,16 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-option span,
 .sk-distribution-select-empty {
   font-size: 0.6875rem;
   color: var(--text-secondary);
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sk-distribution-select-empty {
