@@ -11,7 +11,7 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag, Tags, X, Plus, Check } from 'lucide-react'
+import { Tag, Tags, X, Check } from 'lucide-react'
 import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
@@ -95,7 +95,6 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [activeTag, setActiveTag] = useState<TagType | null>(null)
   const [isDraggingOverSkillArea, setIsDraggingOverSkillArea] = useState(false)
 
-  // Multi-select state
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [showBatchTagPicker, setShowBatchTagPicker] = useState(false)
   const [batchTagIds, setBatchTagIds] = useState<Set<string>>(new Set())
@@ -218,13 +217,16 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const handleBatchAssignTags = useCallback(async () => {
     if (batchTagIds.size === 0 || selectedSkillIds.size === 0) return
     setBatchTagLoading(true)
+    const skillMap = new Map(skills.map(s => [s.id, s]))
     try {
-      for (const skillId of selectedSkillIds) {
-        const skill = skills.find(s => s.id === skillId)
-        if (!skill) continue
-        const merged = Array.from(new Set([...skill.tags, ...batchTagIds]))
-        await updateSkillTags(skillId, merged)
-      }
+      await Promise.all(
+        Array.from(selectedSkillIds).map(skillId => {
+          const skill = skillMap.get(skillId)
+          if (!skill) return Promise.resolve()
+          const merged = Array.from(new Set([...skill.tags, ...batchTagIds]))
+          return updateSkillTags(skillId, merged)
+        })
+      )
       setShowBatchTagPicker(false)
       setBatchTagIds(new Set())
       setBatchTagSearch('')
@@ -388,24 +390,24 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
       <div className="skill-center-page">
         <div className="skill-center-toolbar">
           <div className="flex-1">
-            <SkillSearchInput 
+            <SkillSearchInput
               value={searchKeyword}
               onChange={setSearchKeyword}
               language={language}
             />
           </div>
-          
+
           <div className="skill-actions">
             <SortDropdown
               sortOption={sortOption}
               onSortChange={setSortOption}
             />
-            
-            <ViewToggle 
+
+            <ViewToggle
               viewMode={viewMode}
               onViewModeChange={setViewMode}
             />
-            
+
             <div data-add-skill-root="true">
               <AddSkillButton
                 open={addSkillMenuOpen}
@@ -423,342 +425,342 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
 
         <div className="skill-center-content">
           <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden min-h-0">
-          <div className="w-[220px] min-w-[220px] flex flex-col border-r border-[var(--border-soft)]">
-            <div className="p-3 border-b border-[var(--border-soft)]">
-              <SearchInput
-                value={tagQuery}
-                onChange={searchTags}
-                placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
-              />
-            </div>
-            <div className="flex-1 overflow-auto p-4">
-              {tagQuery.trim() ? (
-                <SearchResults
-                  query={tagQuery}
-                  results={tagResults}
-                  onSelect={handleTagSearchSelect}
-                />
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleSelectTag(null)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-left mb-2
-                                ${selectedTagId === null
-                                  ? 'bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]'
-                                  : 'hover:bg-[var(--border-soft)] text-[var(--text-secondary)]'}`}
-                  >
-                    <span className="flex-1">{language === 'zh' ? '全部技能' : 'All Skills'}</span>
-                    <span className="text-xs opacity-60">{skills.length}</span>
-                  </button>
-
-                  {tagTreeLoading ? (
-                    <div className="text-sm text-[var(--text-secondary)]">{language === 'zh' ? '标签树加载中...' : 'Loading tag tree...'}</div>
-                  ) : tagTreeError ? (
-                    <div className="text-sm text-red-600 dark:text-red-400">{tagTreeError}</div>
-                  ) : tree.length > 0 ? (
-                    <div className="space-y-1">
-                      {tree.map((node) => (
-                        <DraggableTagNode 
-                          key={node.tag.id} 
-                          node={node} 
-                          depth={0} 
-                          selectedTagId={selectedTagId}
-                          onSelectTag={handleSelectTag}
-                          activeDragTagId={activeTag?.id ?? null}
-                          highlightDragged={isDraggingOverSkillArea}
-                        />
-                      ))}
-                    </div>
+            <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden min-h-0">
+              <div className="w-[220px] min-w-[220px] flex flex-col border-r border-[var(--border-soft)]">
+                <div className="p-3 border-b border-[var(--border-soft)]">
+                  <SearchInput
+                    value={tagQuery}
+                    onChange={searchTags}
+                    placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                  />
+                </div>
+                <div className="flex-1 overflow-auto p-4">
+                  {tagQuery.trim() ? (
+                    <SearchResults
+                      query={tagQuery}
+                      results={tagResults}
+                      onSelect={handleTagSearchSelect}
+                    />
                   ) : (
-                    <div className="text-sm text-[var(--text-secondary)]">{language === 'zh' ? '暂无标签' : 'No tags'}</div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+                    <>
+                      <button
+                        onClick={() => handleSelectTag(null)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-left mb-2
+                                ${selectedTagId === null
+                            ? 'bg-[var(--accent-mint)]/10 text-[var(--accent-mint)]'
+                            : 'hover:bg-[var(--border-soft)] text-[var(--text-secondary)]'}`}
+                      >
+                        <span className="flex-1">{language === 'zh' ? '全部技能' : 'All Skills'}</span>
+                        <span className="text-xs opacity-60">{skills.length}</span>
+                      </button>
 
-            <DroppableSkillArea
-              isDraggingTag={activeTag !== null}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-[var(--text-secondary)]">{language === 'zh' ? '加载中...' : 'Loading...'}</div>
+                      {tagTreeLoading ? (
+                        <div className="text-sm text-[var(--text-secondary)]">{language === 'zh' ? '标签树加载中...' : 'Loading tag tree...'}</div>
+                      ) : tagTreeError ? (
+                        <div className="text-sm text-red-600 dark:text-red-400">{tagTreeError}</div>
+                      ) : tree.length > 0 ? (
+                        <div className="space-y-1">
+                          {tree.map((node) => (
+                            <DraggableTagNode
+                              key={node.tag.id}
+                              node={node}
+                              depth={0}
+                              selectedTagId={selectedTagId}
+                              onSelectTag={handleSelectTag}
+                              activeDragTagId={activeTag?.id ?? null}
+                              highlightDragged={isDraggingOverSkillArea}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-[var(--text-secondary)]">{language === 'zh' ? '暂无标签' : 'No tags'}</div>
+                      )}
+                    </>
+                  )}
                 </div>
-              ) : error ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-red-500">{error}</div>
-                </div>
-              ) : (
-                <>
-                  {selectedTagId && (
-                    <div className="mb-4 rounded-xl border border-[var(--accent-mint)]/20 bg-[var(--accent-mint)]/[0.06] px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]/80">
-                        <span className="uppercase tracking-[0.22em]">{language === 'zh' ? '正在筛选标签' : 'Filtering by tag'}</span>
-                        <span className="whitespace-nowrap">{language === 'zh' ? `找到 ${filteredSkills.length} 个技能` : `${filteredSkills.length} skills found`}</span>
-                      </div>
-                      <div className="mt-2 overflow-x-auto whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1 min-w-max">
-                          {selectedTagPath.length > 0 ? selectedTagPath.map((segment, index) => {
-                            const isCurrent = index === selectedTagPath.length - 1
-                            return (
-                              <span key={`${segment}-${index}`} className="inline-flex items-center gap-1">
-                                <span
-                                  className={isCurrent
-                                    ? 'rounded-full bg-[var(--accent-mint)] px-2 py-0.5 text-xs font-semibold text-slate-950 shadow-sm'
-                                    : 'rounded-full border border-[var(--border-soft)] bg-[var(--bg-elevated)] px-2 py-0.5 text-xs text-[var(--text-secondary)]'}
-                                >
-                                  {segment}
+              </div>
+
+              <DroppableSkillArea
+                isDraggingTag={activeTag !== null}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-[var(--text-secondary)]">{language === 'zh' ? '加载中...' : 'Loading...'}</div>
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-red-500">{error}</div>
+                  </div>
+                ) : (
+                  <>
+                    {selectedTagId && (
+                      <div className="mb-4 rounded-xl border border-[var(--accent-mint)]/20 bg-[var(--accent-mint)]/[0.06] px-4 py-3 shadow-sm">
+                        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]/80">
+                          <span className="uppercase tracking-[0.22em]">{language === 'zh' ? '正在筛选标签' : 'Filtering by tag'}</span>
+                          <span className="whitespace-nowrap">{language === 'zh' ? `找到 ${filteredSkills.length} 个技能` : `${filteredSkills.length} skills found`}</span>
+                        </div>
+                        <div className="mt-2 overflow-x-auto whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1 min-w-max">
+                            {selectedTagPath.length > 0 ? selectedTagPath.map((segment, index) => {
+                              const isCurrent = index === selectedTagPath.length - 1
+                              return (
+                                <span key={`${segment}-${index}`} className="inline-flex items-center gap-1">
+                                  <span
+                                    className={isCurrent
+                                      ? 'rounded-full bg-[var(--accent-mint)] px-2 py-0.5 text-xs font-semibold text-slate-950 shadow-sm'
+                                      : 'rounded-full border border-[var(--border-soft)] bg-[var(--bg-elevated)] px-2 py-0.5 text-xs text-[var(--text-secondary)]'}
+                                  >
+                                    {segment}
+                                  </span>
+                                  {!isCurrent && (
+                                    <span className="text-[var(--text-secondary)]/55">/</span>
+                                  )}
                                 </span>
-                                {!isCurrent && (
-                                  <span className="text-[var(--text-secondary)]/55">/</span>
-                                )}
+                              )
+                            }) : (
+                              <span className="rounded-full bg-[var(--accent-mint)] px-2 py-0.5 text-xs font-semibold text-slate-950 shadow-sm">
+                                {selectedTagId}
                               </span>
-                            )
-                          }) : (
-                            <span className="rounded-full bg-[var(--accent-mint)] px-2 py-0.5 text-xs font-semibold text-slate-950 shadow-sm">
-                              {selectedTagId}
-                            </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {filteredSkills.length === 0 ? (
+                      <EmptyState
+                        message={searchKeyword
+                          ? (language === 'zh' ? '未找到匹配的技能' : 'No matching skills found')
+                          : selectedTagId
+                            ? (language === 'zh' ? '该标签下暂无技能' : 'No skills in this tag')
+                            : (language === 'zh' ? '暂无技能' : 'No skills')
+                        }
+                        description={searchKeyword
+                          ? (language === 'zh' ? '请尝试其他关键词' : 'Try different keywords')
+                          : selectedTagId
+                            ? (language === 'zh' ? '该标签可能没有关联技能，或技能数据中 tags 字段为空' : 'This tag may have no associated skills, or the tags field in skill data is empty')
+                            : (language === 'zh' ? '点击添加按钮导入技能' : 'Click the add button to import skills')
+                        }
+                      />
+                    ) : viewMode === 'card' ? (
+                      <div className="pm-grid">
+                        {filteredSkills.map((skill, index) => (
+                          <DroppableSkillCard
+                            key={skill.id}
+                            skill={skill}
+                            searchKeyword={searchKeyword}
+                            onClick={() => handleSkillClick(skill)}
+                            style={{ animationDelay: `${index * 30}ms` }}
+                            language={language}
+                            enableDropHighlight={isDraggingOverSkillArea}
+                            isSelected={selectedSkillIds.has(skill.id)}
+                            hasSelection={selectedSkillIds.size > 0}
+                            onToggleSelect={handleToggleSkillSelection}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="pm-list">
+                        {filteredSkills.map((skill) => (
+                          <DroppableSkillListItem
+                            key={skill.id}
+                            skill={skill}
+                            searchKeyword={searchKeyword}
+                            onSkillClick={handleSkillClick}
+                            language={language}
+                            enableDropHighlight={isDraggingOverSkillArea}
+                            isSelected={selectedSkillIds.has(skill.id)}
+                            hasSelection={selectedSkillIds.size > 0}
+                            onToggleSelect={handleToggleSkillSelection}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </DroppableSkillArea>
+            </div>
+
+            {/* Batch action bar */}
+            {selectedSkillIds.size > 0 && (
+              <div className="skill-batch-bar">
+                <span className="skill-batch-info">
+                  {language === 'zh' ? `已选择 ${selectedSkillIds.size} 个技能` : `${selectedSkillIds.size} skill${selectedSkillIds.size === 1 ? '' : 's'} selected`}
+                </span>
+                <div className="skill-batch-actions">
+                  <div className="skill-batch-tag-wrap" ref={batchTagPickerRef}>
+                    <button
+                      className="skill-batch-btn skill-batch-btn-tag"
+                      onClick={() => setShowBatchTagPicker(!showBatchTagPicker)}
+                    >
+                      <Tags className="w-3.5 h-3.5" />
+                      {language === 'zh' ? '添加标签' : 'Add Tags'}
+                      {batchTagIds.size > 0 && (
+                        <span className="skill-batch-tag-count">{batchTagIds.size}</span>
+                      )}
+                    </button>
+                    {showBatchTagPicker && (
+                      <div className="skill-batch-tag-picker">
+                        <div className="sk-dropdown-search">
+                          <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                            <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                            <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          <input
+                            type="text"
+                            autoFocus
+                            value={batchTagSearch}
+                            onChange={(e) => setBatchTagSearch(e.target.value)}
+                            placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                          />
+                        </div>
+                        <div className="sk-dropdown-tree">
+                          {tree.length > 0 ? (
+                            tree.map(node => renderBatchTagNode(node, 0))
+                          ) : (
+                            <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
                           )}
                         </div>
-                      </div>
-                    </div>
-                  )}
-                  {filteredSkills.length === 0 ? (
-                    <EmptyState 
-                      message={searchKeyword 
-                        ? (language === 'zh' ? '未找到匹配的技能' : 'No matching skills found')
-                        : selectedTagId 
-                          ? (language === 'zh' ? '该标签下暂无技能' : 'No skills in this tag')
-                          : (language === 'zh' ? '暂无技能' : 'No skills')
-                      }
-                      description={searchKeyword 
-                        ? (language === 'zh' ? '请尝试其他关键词' : 'Try different keywords')
-                        : selectedTagId 
-                          ? (language === 'zh' ? '该标签可能没有关联技能，或技能数据中 tags 字段为空' : 'This tag may have no associated skills, or the tags field in skill data is empty')
-                          : (language === 'zh' ? '点击添加按钮导入技能' : 'Click the add button to import skills')
-                      }
-                    />
-                  ) : viewMode === 'card' ? (
-                    <div className="pm-grid">
-                      {filteredSkills.map((skill, index) => (
-                        <DroppableSkillCard
-                          key={skill.id}
-                          skill={skill}
-                          searchKeyword={searchKeyword}
-                          onClick={() => handleSkillClick(skill)}
-                          style={{ animationDelay: `${index * 30}ms` }}
-                          language={language}
-                          enableDropHighlight={isDraggingOverSkillArea}
-                          isSelected={selectedSkillIds.has(skill.id)}
-                          hasSelection={selectedSkillIds.size > 0}
-                          onToggleSelect={handleToggleSkillSelection}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pm-list">
-                      {filteredSkills.map((skill) => (
-                        <DroppableSkillListItem
-                          key={skill.id}
-                          skill={skill}
-                          searchKeyword={searchKeyword}
-                          onSkillClick={handleSkillClick}
-                          language={language}
-                          enableDropHighlight={isDraggingOverSkillArea}
-                          isSelected={selectedSkillIds.has(skill.id)}
-                          hasSelection={selectedSkillIds.size > 0}
-                          onToggleSelect={handleToggleSkillSelection}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </DroppableSkillArea>
-          </div>
-
-          {/* Batch action bar */}
-          {selectedSkillIds.size > 0 && (
-            <div className="skill-batch-bar">
-              <span className="skill-batch-info">
-                {language === 'zh' ? `已选择 ${selectedSkillIds.size} 个技能` : `${selectedSkillIds.size} skill${selectedSkillIds.size === 1 ? '' : 's'} selected`}
-              </span>
-              <div className="skill-batch-actions">
-                <div className="skill-batch-tag-wrap" ref={batchTagPickerRef}>
-                  <button
-                    className="skill-batch-btn skill-batch-btn-tag"
-                    onClick={() => setShowBatchTagPicker(!showBatchTagPicker)}
-                  >
-                    <Tags className="w-3.5 h-3.5" />
-                    {language === 'zh' ? '添加标签' : 'Add Tags'}
-                    {batchTagIds.size > 0 && (
-                      <span className="skill-batch-tag-count">{batchTagIds.size}</span>
-                    )}
-                  </button>
-                  {showBatchTagPicker && (
-                    <div className="skill-batch-tag-picker">
-                      <div className="sk-dropdown-search">
-                        <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
-                          <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                          <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        <input
-                          type="text"
-                          autoFocus
-                          value={batchTagSearch}
-                          onChange={(e) => setBatchTagSearch(e.target.value)}
-                          placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
-                        />
-                      </div>
-                      <div className="sk-dropdown-tree">
-                        {tree.length > 0 ? (
-                          tree.map(node => renderBatchTagNode(node, 0))
-                        ) : (
-                          <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
+                        {batchTagIds.size > 0 && (
+                          <div className="skill-batch-picker-footer">
+                            <button
+                              className="skill-batch-apply-btn"
+                              onClick={handleBatchAssignTags}
+                              disabled={batchTagLoading}
+                            >
+                              {batchTagLoading ? (
+                                <span className="skill-batch-spinner" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                              {language === 'zh'
+                                ? `应用 ${batchTagIds.size} 个标签`
+                                : `Apply ${batchTagIds.size} tag${batchTagIds.size === 1 ? '' : 's'}`}
+                            </button>
+                          </div>
                         )}
                       </div>
-                      {batchTagIds.size > 0 && (
-                        <div className="skill-batch-picker-footer">
-                          <button
-                            className="skill-batch-apply-btn"
-                            onClick={handleBatchAssignTags}
-                            disabled={batchTagLoading}
-                          >
-                            {batchTagLoading ? (
-                              <span className="skill-batch-spinner" />
-                            ) : (
-                              <Check className="w-3.5 h-3.5" />
-                            )}
-                            {language === 'zh'
-                              ? `应用 ${batchTagIds.size} 个标签`
-                              : `Apply ${batchTagIds.size} tag${batchTagIds.size === 1 ? '' : 's'}`}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <button
+                    className="skill-batch-btn skill-batch-btn-clear"
+                    onClick={handleClearSelection}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    {language === 'zh' ? '清除选择' : 'Clear'}
+                  </button>
                 </div>
-                <button
-                  className="skill-batch-btn skill-batch-btn-clear"
-                  onClick={handleClearSelection}
-                >
-                  <X className="w-3.5 h-3.5" />
-                  {language === 'zh' ? '清除选择' : 'Clear'}
-                </button>
               </div>
-            </div>
-          )}
+            )}
           </div>
         </div>
 
-      <SkillDetailDrawer
-        skill={selectedSkill}
-        isOpen={isDrawerOpen}
-        onClose={() => toggleDrawer(false)}
-        onToggleStatus={toggleSkillStatus}
-        onDelete={deleteSkill}
-        onNavigateToRepository={onNavigateToRepository}
-      />
+        <SkillDetailDrawer
+          skill={selectedSkill}
+          isOpen={isDrawerOpen}
+          onClose={() => toggleDrawer(false)}
+          onToggleStatus={toggleSkillStatus}
+          onDelete={deleteSkill}
+          onNavigateToRepository={onNavigateToRepository}
+        />
 
-      <FileImportDialog
-        isOpen={importDialog === 'file'}
-        onClose={() => setImportDialog(null)}
-        onImport={importSkillFromFile}
-      />
+        <FileImportDialog
+          isOpen={importDialog === 'file'}
+          onClose={() => setImportDialog(null)}
+          onImport={importSkillFromFile}
+        />
 
-      <NpxImportDialog
-        isOpen={importDialog === 'npx'}
-        onClose={() => setImportDialog(null)}
-        onPrepareImport={prepareSkillImportFromNpx}
-        onConfirmImport={confirmSkillImportFromNpx}
-        onCancelImport={cancelSkillImportFromNpx}
-        onExecuteNative={executeNativeNpxSkillsAdd}
-        onSyncToSkiller={syncToSkiller}
-        checkTools={checkToolAvailability}
-      />
+        <NpxImportDialog
+          isOpen={importDialog === 'npx'}
+          onClose={() => setImportDialog(null)}
+          onPrepareImport={prepareSkillImportFromNpx}
+          onConfirmImport={confirmSkillImportFromNpx}
+          onCancelImport={cancelSkillImportFromNpx}
+          onExecuteNative={executeNativeNpxSkillsAdd}
+          onSyncToSkiller={syncToSkiller}
+          checkTools={checkToolAvailability}
+        />
 
-      <RepositorySelectDialog
-        isOpen={importDialog === 'repository'}
-        onClose={() => setImportDialog(null)}
-        onImport={importSkillFromRepository}
-        onUpdateSkillTags={updateSkillTags}
-        repositories={repositories}
-        loading={repositoriesLoading}
-        onLoadRepositories={fetchRepositories}
-        onNavigateToRepository={onNavigateToRepository}
-        onAddRepository={onNavigateToAddRepo}
-      />
+        <RepositorySelectDialog
+          isOpen={importDialog === 'repository'}
+          onClose={() => setImportDialog(null)}
+          onImport={importSkillFromRepository}
+          onUpdateSkillTags={updateSkillTags}
+          repositories={repositories}
+          loading={repositoriesLoading}
+          onLoadRepositories={fetchRepositories}
+          onNavigateToRepository={onNavigateToRepository}
+          onAddRepository={onNavigateToAddRepo}
+        />
 
-      <NpxFindDialog
-        isOpen={importDialog === 'npxFind'}
-        onClose={() => setImportDialog(null)}
-        onSearchApi={async (keyword: string) => {
-          try {
-            const result = await invoke<{ success: boolean; skills: Array<{ name: string; description: string; repo: string; author: string; install_command: string; link: string; installs: number }>; error?: string }>('search_skills_sh_api', { keyword })
-            return {
-              success: result.success,
-              skills: result.skills.map(s => ({
-                name: s.name,
-                description: s.description,
-                repo: s.repo,
-                author: s.author,
-                install_command: s.install_command,
-                link: s.link,
-                installs: s.installs,
-              })),
-              error: result.error,
+        <NpxFindDialog
+          isOpen={importDialog === 'npxFind'}
+          onClose={() => setImportDialog(null)}
+          onSearchApi={async (keyword: string) => {
+            try {
+              const result = await invoke<{ success: boolean; skills: Array<{ name: string; description: string; repo: string; author: string; install_command: string; link: string; installs: number }>; error?: string }>('search_skills_sh_api', { keyword })
+              return {
+                success: result.success,
+                skills: result.skills.map(s => ({
+                  name: s.name,
+                  description: s.description,
+                  repo: s.repo,
+                  author: s.author,
+                  install_command: s.install_command,
+                  link: s.link,
+                  installs: s.installs,
+                })),
+                error: result.error,
+              }
+            } catch (err) {
+              return {
+                success: false,
+                skills: [],
+                error: err instanceof Error ? err.message : String(err),
+              }
             }
-          } catch (err) {
-            return {
-              success: false,
-              skills: [],
-              error: err instanceof Error ? err.message : String(err),
+          }}
+          onExecuteFind={async (keyword, requestId) => {
+            try {
+              const result = await invoke<{ success: boolean; skills: Array<{ name: string; description: string; repo: string; author: string; install_command: string; link: string; installs: number }>; error?: string }>('execute_npx_skills_find', { keyword, requestId })
+              return {
+                success: result.success,
+                skills: result.skills.map(s => ({
+                  name: s.name,
+                  description: s.description,
+                  repo: s.repo,
+                  author: s.author,
+                  install_command: s.install_command,
+                  link: s.link,
+                  installs: s.installs,
+                })),
+                error: result.error,
+              }
+            } catch (err) {
+              return {
+                success: false,
+                skills: [],
+                error: err instanceof Error ? err.message : String(err),
+              }
             }
-          }
-        }}
-        onExecuteFind={async (keyword, requestId) => {
-          try {
-            const result = await invoke<{ success: boolean; skills: Array<{ name: string; description: string; repo: string; author: string; install_command: string; link: string; installs: number }>; error?: string }>('execute_npx_skills_find', { keyword, requestId })
-            return {
-              success: result.success,
-              skills: result.skills.map(s => ({
-                name: s.name,
-                description: s.description,
-                repo: s.repo,
-                author: s.author,
-                install_command: s.install_command,
-                link: s.link,
-                installs: s.installs,
-              })),
-              error: result.error,
-            }
-          } catch (err) {
-            return {
-              success: false,
-              skills: [],
-              error: err instanceof Error ? err.message : String(err),
-            }
-          }
-        }}
-        onExecuteNative={executeNativeNpxSkillsAdd}
-        onSyncToSkiller={syncToSkiller}
-        checkNpx={async () => {
-          const tools = await checkToolAvailability()
-          return tools.npx
-        }}
-        existingSkillNames={skills.map(s => s.name)}
-      />
+          }}
+          onExecuteNative={executeNativeNpxSkillsAdd}
+          onSyncToSkiller={syncToSkiller}
+          checkNpx={async () => {
+            const tools = await checkToolAvailability()
+            return tools.npx
+          }}
+          existingSkillNames={skills.map(s => s.name)}
+        />
 
-      <DragOverlay>
-        {activeTag && (
-          <div className="tag-drag-overlay">
-            <Tag className="w-3.5 h-3.5" />
-            {activeTag.name}
-          </div>
-        )}
-      </DragOverlay>
-    </div>
+        <DragOverlay>
+          {activeTag && (
+            <div className="tag-drag-overlay">
+              <Tag className="w-3.5 h-3.5" />
+              {activeTag.name}
+            </div>
+          )}
+        </DragOverlay>
+      </div>
     </DndContext>
   )
 }

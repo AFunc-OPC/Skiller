@@ -71,7 +71,6 @@ export function RepositorySelectDialog({
   const [error, setError] = useState('')
   const [repoSkillCounts, setRepoSkillCounts] = useState<Map<string, number>>(new Map())
 
-  // Tag picker state
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [tagSearch, setTagSearch] = useState('')
   const [showTagPicker, setShowTagPicker] = useState(false)
@@ -141,7 +140,6 @@ export function RepositorySelectDialog({
     }
   }, [selectedRepo])
 
-  // Close tag picker on outside click
   useEffect(() => {
     if (!showTagPicker) return
     const handlePointerDown = (e: MouseEvent) => {
@@ -153,7 +151,6 @@ export function RepositorySelectDialog({
     return () => window.removeEventListener('mousedown', handlePointerDown)
   }, [showTagPicker])
 
-  // Focus search input when tag picker opens
   useEffect(() => {
     if (showTagPicker) {
       setTimeout(() => tagSearchInputRef.current?.focus(), 50)
@@ -302,10 +299,11 @@ export function RepositorySelectDialog({
 
     try {
       const skillPaths = Array.from(selectedSkills)
+      const tagArray = selectedTagIds.size > 0 ? Array.from(selectedTagIds) : null
       for (const skillPath of skillPaths) {
         await onImport(selectedRepo.id, skillPath)
-        if (selectedTagIds.size > 0 && onUpdateSkillTags) {
-          await onUpdateSkillTags(skillPath, Array.from(selectedTagIds))
+        if (tagArray && onUpdateSkillTags) {
+          await onUpdateSkillTags(skillPath, tagArray)
         }
       }
       setStage('success')
