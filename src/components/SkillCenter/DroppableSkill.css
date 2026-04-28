@@ -70,11 +70,6 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.24);
 }
 
-.droppable-skill-list-item {
-  position: relative;
-  transition: all 0.2s ease;
-}
-
 .droppable-skill-list-item.drag-over {
   background: rgba(16, 185, 129, 0.08);
 }
@@ -103,6 +98,66 @@
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.24);
+}
+
+/* ── Skill Selection Checkbox ─────────────────────────────────── */
+
+.skill-select-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-soft);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.droppable-skill-wrapper:hover .skill-select-checkbox,
+.skill-select-checkbox.visible {
+  opacity: 1;
+}
+
+.skill-select-checkbox.checked {
+  background: var(--accent-mint);
+  border-color: var(--accent-mint);
+  color: white;
+}
+
+.skill-select-checkbox:hover:not(.checked) {
+  border-color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.skill-select-checkbox.list-mode {
+  position: static;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  opacity: 0;
+}
+
+.droppable-skill-list-item:hover .skill-select-checkbox.list-mode,
+.skill-select-checkbox.list-mode.visible {
+  opacity: 1;
+}
+
+.droppable-skill-wrapper.skill-selected .pm-card,
+.droppable-skill-list-item.skill-selected {
+  border-color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+[data-theme="dark"] .droppable-skill-wrapper.skill-selected .pm-card,
+[data-theme="dark"] .droppable-skill-list-item.skill-selected {
+  background: rgba(52, 211, 153, 0.06);
 }
 
 .tag-drag-overlay {

@@ -13,6 +13,9 @@ interface DroppableSkillListItemProps {
   onSkillClick: (skill: Skill) => void
   language: Language
   enableDropHighlight?: boolean
+  isSelected?: boolean
+  hasSelection?: boolean
+  onToggleSelect?: (skillId: string) => void
 }
 
 const STATUS_COLORS = [
@@ -40,6 +43,9 @@ export function DroppableSkillListItem({
   onSkillClick,
   language,
   enableDropHighlight = false,
+  isSelected = false,
+  hasSelection = false,
+  onToggleSelect,
 }: DroppableSkillListItemProps) {
   const { tree } = useTagTreeStore()
   const { isOver, setNodeRef, active } = useDroppable({
@@ -66,17 +72,40 @@ export function DroppableSkillListItem({
     return findTag(tree) || tagId
   }
 
+  const handleItemClick = () => {
+    if (hasSelection && onToggleSelect) {
+      onToggleSelect(skill.id)
+    } else {
+      onSkillClick(skill)
+    }
+  }
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onToggleSelect?.(skill.id)
+  }
+
   return (
     <div
       ref={setNodeRef}
-      onClick={() => onSkillClick(skill)}
-      className={`droppable-skill-list-item pm-list-item ${isDisabled ? 'opacity-60' : ''} ${showDropIndicator ? 'drag-over' : ''}`}
+      onClick={handleItemClick}
+      className={`droppable-skill-list-item pm-list-item ${isDisabled ? 'opacity-60' : ''} ${showDropIndicator ? 'drag-over' : ''} ${isSelected ? 'skill-selected' : ''}`}
     >
       {showDropIndicator && (
         <div className="drop-tag-indicator-list">
           {t('dropToAddTagToSkill', language)}
         </div>
       )}
+      <div
+        className={`skill-select-checkbox list-mode ${isSelected ? 'checked' : ''} ${hasSelection || isSelected ? 'visible' : ''}`}
+        onClick={handleCheckboxClick}
+      >
+        {isSelected ? (
+          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
+            <path fillRule="evenodd" d="M13.707 4.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6 10.586l6.293-6.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        ) : null}
+      </div>
       <div className="pm-list-content">
         <div className="pm-list-row">
           <span className="pm-list-name">
