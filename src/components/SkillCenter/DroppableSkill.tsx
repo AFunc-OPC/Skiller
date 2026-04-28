@@ -46,16 +46,10 @@ export function DroppableSkillCard({
     }
   }
 
-  const handleCheckboxClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onToggleSelect?.(skill.id)
-  }
-
   return (
     <div
       ref={setNodeRef}
       className={`droppable-skill-wrapper ${showDropIndicator ? 'drag-over' : ''} ${isSelected ? 'skill-selected' : ''}`}
-      onClick={handleCardClick}
     >
       {showDropIndicator && (
         <div className="drop-tag-indicator">
@@ -64,16 +58,6 @@ export function DroppableSkillCard({
           </span>
         </div>
       )}
-      <div
-        className={`skill-select-checkbox ${isSelected ? 'checked' : ''} ${hasSelection || isSelected ? 'visible' : ''}`}
-        onClick={handleCheckboxClick}
-      >
-        {isSelected ? (
-          <svg viewBox="0 0 16 16" fill="currentColor" className="w-3 h-3">
-            <path fillRule="evenodd" d="M13.707 4.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6 10.586l6.293-6.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        ) : null}
-      </div>
       <SkillCard
         skill={skill}
         searchKeyword={searchKeyword}
