@@ -463,6 +463,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
         isOpen={importDialog === 'repository'}
         onClose={() => setImportDialog(null)}
         onImport={importSkillFromRepository}
+        onDeleteSkill={deleteSkill}
+        existingSkills={skills}
         repositories={repositories}
         loading={repositoriesLoading}
         onLoadRepositories={fetchRepositories}

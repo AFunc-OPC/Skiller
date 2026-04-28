@@ -58,6 +58,7 @@ describe('RepositorySelectDialog', () => {
   const mocks = {
     onClose: vi.fn(),
     onImport: vi.fn(),
+    onDeleteSkill: vi.fn(),
     onLoadRepositories: vi.fn(),
   }
 
@@ -74,6 +75,8 @@ describe('RepositorySelectDialog', () => {
         isOpen
         onClose={mocks.onClose}
         onImport={mocks.onImport}
+        onDeleteSkill={mocks.onDeleteSkill}
+        existingSkills={[]}
         repositories={mockRepos}
         loading={false}
         onLoadRepositories={mocks.onLoadRepositories}
@@ -290,5 +293,40 @@ describe('RepositorySelectDialog', () => {
     renderDialog({ repositories: [] })
 
     expect(screen.getByText('暂无可用仓库')).toBeInTheDocument()
+  })
+
+  it('shows overwrite confirmation when selected skills already exist', async () => {
+    const user = userEvent.setup()
+    renderDialog({ existingSkills: [{ id: 'existing-1', name: 'skill-1', file_path: '/skills/skill-1', source: 'file', source_metadata: null, repo_id: null, tags: [], status: 'available', created_at: '2024-01-01', updated_at: '2024-01-01', description: null }] })
+
+    const repoButton = getRepoButton('Demo Repository')
+    await user.click(repoButton)
+    await screen.findByText('skill-1')
+
+    const skill1Button = getSkillButton('skill-1')
+    await user.click(skill1Button!)
+    await user.click(screen.getByRole('button', { name: /导入选中项/ }))
+
+    expect(await screen.findByText(/已存在，导入后将覆盖/)).toBeInTheDocument()
+    const confirmModal = document.querySelector('.repo-import-confirm-modal')
+    expect(confirmModal?.textContent).toContain('skill-1')
+  })
+
+  it('overwrites existing skills after confirmation', async () => {
+    const user = userEvent.setup()
+    renderDialog({ existingSkills: [{ id: 'existing-1', name: 'skill-1', file_path: '/skills/skill-1', source: 'file', source_metadata: null, repo_id: null, tags: [], status: 'available', created_at: '2024-01-01', updated_at: '2024-01-01', description: null }] })
+
+    const repoButton = getRepoButton('Demo Repository')
+    await user.click(repoButton)
+    await screen.findByText('skill-1')
+
+    await user.click(getSkillButton('skill-1')!)
+    await user.click(screen.getByRole('button', { name: /导入选中项/ }))
+    await user.click(screen.getByRole('button', { name: /确认导入/ }))
+
+    await waitFor(() => {
+      expect(mocks.onDeleteSkill).toHaveBeenCalledWith('existing-1')
+      expect(mocks.onImport).toHaveBeenCalledWith('repo-1', mockSkills[0].path)
+    })
   })
 })

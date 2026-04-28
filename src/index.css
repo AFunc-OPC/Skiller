@@ -4851,14 +4851,15 @@ body {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.625rem;
 }
 
 .sk-distribution-select-content strong {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-content span {
@@ -4899,16 +4900,16 @@ body {
 .sk-distribution-select-option {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.625rem;
   border: 0;
-  border-radius: 4px;
+  border-radius: 8px;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.15s ease;
 }
 
 .sk-distribution-select-option:hover,
@@ -4960,11 +4961,27 @@ body {
 
 .sk-distribution-option-content {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
   flex: 1;
+}
+
+.sk-distribution-option-content strong {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.sk-distribution-option-content span {
+  flex: 1;
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sk-distribution-select-empty {
@@ -5018,18 +5035,20 @@ body {
 .sk-distribution-select-content {
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .sk-distribution-select-content strong {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-content span {
+  flex: 1;
   font-size: 0.6875rem;
   color: var(--text-secondary);
   overflow: hidden;
@@ -5110,16 +5129,17 @@ body {
 
 .sk-distribution-select-option {
   display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.625rem 0.75rem;
+  padding: 0.5rem 0.625rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.1s ease;
 }
 
 .sk-distribution-select-option:hover,
@@ -5135,13 +5155,16 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .sk-distribution-select-option span,
 .sk-distribution-select-empty {
   font-size: 0.6875rem;
   color: var(--text-secondary);
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sk-distribution-select-empty {
@@ -6637,6 +6660,148 @@ body {
   display: flex;
   justify-content: center;
   gap: 0.75rem;
+}
+
+.repo-import-confirm-modal {
+  width: 440px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding: 0;
+}
+
+.repo-import-confirm-modal .repo-confirm-icon {
+  margin-top: 1.5rem;
+}
+
+.repo-import-confirm-modal h3 {
+  padding: 0 1.5rem;
+}
+
+.repo-import-confirm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.repo-import-existing,
+.repo-import-new {
+  padding: 0.875rem;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-soft);
+}
+
+.repo-import-existing {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(245, 158, 11, 0.02) 100%);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.repo-import-new {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.repo-import-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.625rem;
+  line-height: 1.4;
+}
+
+.repo-import-section-title::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.repo-import-existing .repo-import-section-title {
+  color: #b45309;
+}
+
+.repo-import-existing .repo-import-section-title::before {
+  background: #f59e0b;
+}
+
+.repo-import-new .repo-import-section-title {
+  color: #047857;
+}
+
+.repo-import-new .repo-import-section-title::before {
+  background: #10b981;
+}
+
+.repo-import-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repo-import-skill-list li {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-soft);
+  line-height: 1.3;
+  transition: all 0.15s;
+}
+
+.repo-import-existing .repo-import-skill-list li {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #92400e;
+}
+
+.repo-import-new .repo-import-skill-list li {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #065f46;
+}
+
+.repo-import-confirm-modal .repo-confirm-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-subtle);
+  margin: 0;
+}
+
+.repo-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent-mint);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.repo-btn-primary:hover {
+  background: #059669;
 }
 
 .repo-skills-section {

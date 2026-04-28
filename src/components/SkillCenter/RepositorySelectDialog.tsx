@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink } from 'lucide-react'
-import { Repo } from '../../types'
+import { Repo, Skill } from '../../types'
 import { repoApi, ImportableSkill } from '../../api/repo'
 import { useAppStore } from '../../stores/appStore'
 import './RepositorySelectDialog.css'
@@ -9,6 +9,8 @@ interface RepositorySelectDialogProps {
   isOpen: boolean
   onClose: () => void
   onImport: (repoId: string, skillPath: string) => Promise<void>
+  onDeleteSkill: (skillId: string) => Promise<void>
+  existingSkills: Skill[]
   repositories: Repo[]
   loading?: boolean
   onLoadRepositories?: () => void
@@ -43,6 +45,8 @@ export function RepositorySelectDialog({
   isOpen, 
   onClose, 
   onImport, 
+  onDeleteSkill,
+  existingSkills,
   repositories,
   loading = false,
   onLoadRepositories,
@@ -57,6 +61,11 @@ export function RepositorySelectDialog({
   const [skillsLoading, setSkillsLoading] = useState(false)
   const [stage, setStage] = useState<DialogStage>('idle')
   const [error, setError] = useState('')
+  const [confirmOverwriteOpen, setConfirmOverwriteOpen] = useState(false)
+  const [confirmOverwriteData, setConfirmOverwriteData] = useState<{
+    existing: ImportableSkill[]
+    newSkills: ImportableSkill[]
+  }>({ existing: [], newSkills: [] })
   const [repoSkillCounts, setRepoSkillCounts] = useState<Map<string, number>>(new Map())
   const { language } = useAppStore()
 
@@ -69,6 +78,8 @@ export function RepositorySelectDialog({
       setSelectedSkills(new Set())
       setStage('idle')
       setError('')
+      setConfirmOverwriteOpen(false)
+      setConfirmOverwriteData({ existing: [], newSkills: [] })
       setRepoSkillCounts(new Map())
       if (onLoadRepositories) {
         onLoadRepositories()
@@ -101,6 +112,8 @@ export function RepositorySelectDialog({
       setSkillsLoading(true)
       setSkills([])
       setSelectedSkills(new Set())
+      setConfirmOverwriteOpen(false)
+      setConfirmOverwriteData({ existing: [], newSkills: [] })
       repoApi.listSkills(selectedRepo.id)
         .then(setSkills)
         .catch(err => setError(err instanceof Error ? err.message : String(err)))
@@ -145,23 +158,50 @@ export function RepositorySelectDialog({
     setSelectedSkills(newSelected)
   }
 
-  const handleImport = async () => {
-    if (!selectedRepo || selectedSkills.size === 0) return
-    
+  const executeImport = async (skillsToImport: ImportableSkill[], overwrite: boolean) => {
+    if (!selectedRepo || skillsToImport.length === 0) return
+
     setStage('submitting')
     setError('')
-    
+
     try {
-      const skillPaths = Array.from(selectedSkills)
-      for (const skillPath of skillPaths) {
-        await onImport(selectedRepo.id, skillPath)
+      if (overwrite) {
+        for (const skill of skillsToImport) {
+          const existingSkill = existingSkills.find(item => item.name === skill.name)
+          if (existingSkill) {
+            await onDeleteSkill(existingSkill.id)
+          }
+        }
       }
+
+      for (const skill of skillsToImport) {
+        await onImport(selectedRepo.id, skill.path)
+      }
+
+      setConfirmOverwriteOpen(false)
       setStage('success')
       setTimeout(() => onClose(), 800)
     } catch (err) {
       setError((err as Error).message)
       setStage('error')
     }
+  }
+
+  const handleImport = async () => {
+    if (!selectedRepo || selectedSkills.size === 0) return
+
+    const skillsToImport = skills.filter(skill => selectedSkills.has(skill.path))
+    const existingNames = new Set(existingSkills.map(skill => skill.name))
+    const existing = skillsToImport.filter(skill => existingNames.has(skill.name))
+    const newSkills = skillsToImport.filter(skill => !existingNames.has(skill.name))
+
+    if (existing.length > 0) {
+      setConfirmOverwriteData({ existing, newSkills })
+      setConfirmOverwriteOpen(true)
+      return
+    }
+
+    await executeImport(skillsToImport, false)
   }
 
   const getButtonLabel = () => {
@@ -448,6 +488,59 @@ export function RepositorySelectDialog({
           </div>
         </div>
       </div>
+
+      {confirmOverwriteOpen && (
+        <>
+          <div className="repo-import-confirm-overlay" onClick={() => setConfirmOverwriteOpen(false)} />
+          <div className="repo-import-confirm-modal" role="dialog" aria-modal="true">
+            <h4>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h4>
+            <div className="repo-import-confirm-content">
+              {confirmOverwriteData.existing.length > 0 && (
+                <div className="repo-import-confirm-group repo-import-confirm-existing">
+                  <p>
+                    {language === 'zh'
+                      ? `以下 ${confirmOverwriteData.existing.length} 个技能已存在，导入后将覆盖：`
+                      : `${confirmOverwriteData.existing.length} skill(s) already exist and will be overwritten:`}
+                  </p>
+                  <ul>
+                    {confirmOverwriteData.existing.map(skill => (
+                      <li key={skill.path}>{skill.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {confirmOverwriteData.newSkills.length > 0 && (
+                <div className="repo-import-confirm-group repo-import-confirm-new">
+                  <p>
+                    {language === 'zh'
+                      ? `以下 ${confirmOverwriteData.newSkills.length} 个技能将新增：`
+                      : `${confirmOverwriteData.newSkills.length} skill(s) will be added:`}
+                  </p>
+                  <ul>
+                    {confirmOverwriteData.newSkills.map(skill => (
+                      <li key={skill.path}>{skill.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="repo-import-confirm-actions">
+              <button
+                className="repo-import-btn repo-import-btn-ghost"
+                onClick={() => setConfirmOverwriteOpen(false)}
+              >
+                {language === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button
+                className="repo-import-btn repo-import-btn-primary"
+                onClick={() => executeImport([...confirmOverwriteData.existing, ...confirmOverwriteData.newSkills], true)}
+              >
+                {language === 'zh' ? '确认导入' : 'Confirm Import'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 }

@@ -89,6 +89,8 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
     confirmSkillImportFromNpx,
     cancelSkillImportFromNpx,
     importSkillFromRepository,
+    deleteSkill,
+    skills,
     checkToolAvailability,
     executeNativeNpxSkillsAdd,
     syncToSkiller,
@@ -373,6 +375,8 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
         isOpen={importDialog === 'repository'}
         onClose={() => setImportDialog(null)}
         onImport={importSkillFromRepository}
+        onDeleteSkill={deleteSkill}
+        existingSkills={skills}
         repositories={repositories}
         loading={repositoriesLoading}
         onLoadRepositories={fetchRepositories}

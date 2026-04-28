@@ -1036,6 +1036,112 @@ body:has(.repo-import-overlay) {
   flex-shrink: 0;
 }
 
+/* ── Confirm Overwrite Modal ──────────────────────────────────── */
+
+.repo-import-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.35);
+  z-index: 102;
+}
+
+.repo-import-confirm-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 2rem));
+  max-height: min(78vh, 680px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+  z-index: 103;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.repo-import-confirm-modal h4 {
+  margin: 0;
+  padding: 1rem 1.25rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.repo-import-confirm-content {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.repo-import-confirm-group {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.repo-import-confirm-existing {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.repo-import-confirm-new {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
+  border-color: rgba(16, 185, 129, 0.24);
+}
+
+.repo-import-confirm-group p {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.repo-import-confirm-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.repo-import-confirm-group li {
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.repo-import-confirm-existing li {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.1);
+  color: #9a5a08;
+}
+
+.repo-import-confirm-new li {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.1);
+  color: #046c52;
+}
+
+.repo-import-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem 1rem;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-base);
+}
+
 /* ── Footer ───────────────────────────────────────────────────── */
 
 .repo-import-footer {
