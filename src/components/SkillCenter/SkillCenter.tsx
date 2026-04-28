@@ -484,9 +484,13 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                 <button
                   className={`skill-multi-mode-trigger ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}
+                  title={language === 'zh' ? '多选模式' : 'Multi-select'}
+                  aria-label={language === 'zh' ? '多选模式' : 'Multi-select'}
                 >
                   <ListChecks className="w-4 h-4" />
-                  <span>{language === 'zh' ? '多选模式' : 'Multi-select'}</span>
+                  {multiSelectMode && (
+                    <span>{language === 'zh' ? '多选模式' : 'Multi-select'}</span>
+                  )}
                   {multiSelectMode && (
                     <span className="skill-multi-selected-count">{selectedSkillIds.size}</span>
                   )}

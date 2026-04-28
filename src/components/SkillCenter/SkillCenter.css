@@ -1732,41 +1732,45 @@ code.sc-prepared-value {
 }
 
 .skill-multi-mode-trigger {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 10px;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
   border: 1px solid var(--border-soft);
-  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-base) 100%);
-  color: var(--text-primary);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.15s ease;
 }
 
 .skill-multi-mode-trigger:hover {
-  transform: translateY(-1px);
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 0 6px 18px -8px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: var(--border-soft);
+  color: var(--text-primary);
 }
 
 .skill-multi-mode-trigger.active {
   color: var(--accent-mint);
   border-color: rgba(16, 185, 129, 0.45);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(16, 185, 129, 0.06) 100%);
+  background: rgba(16, 185, 129, 0.08);
+  width: auto;
+  min-width: 36px;
 }
 
 .skill-multi-selected-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
-  border-radius: 9px;
+  border-radius: 999px;
   background: var(--accent-mint);
   color: #ffffff;
   font-size: 0.625rem;
