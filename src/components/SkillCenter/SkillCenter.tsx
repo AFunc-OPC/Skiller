@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -11,7 +11,8 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag } from 'lucide-react'
+import { Tag, Tags, X, Plus, Check } from 'lucide-react'
+import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { useRepositoryStore } from '../../stores/repositoryStore'
@@ -93,6 +94,15 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [addSkillMenuOpen, setAddSkillMenuOpen] = useState(false)
   const [activeTag, setActiveTag] = useState<TagType | null>(null)
   const [isDraggingOverSkillArea, setIsDraggingOverSkillArea] = useState(false)
+
+  // Multi-select state
+  const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
+  const [showBatchTagPicker, setShowBatchTagPicker] = useState(false)
+  const [batchTagIds, setBatchTagIds] = useState<Set<string>>(new Set())
+  const [batchTagSearch, setBatchTagSearch] = useState('')
+  const [batchExpandedTagIds, setBatchExpandedTagIds] = useState<Set<string>>(new Set())
+  const [batchTagLoading, setBatchTagLoading] = useState(false)
+  const batchTagPickerRef = useRef<HTMLDivElement>(null)
 
   const selectedSkill = skills.find(s => s.id === selectedSkillId) || null
 
@@ -186,7 +196,136 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     }
   }
 
+  const handleToggleSkillSelection = useCallback((skillId: string) => {
+    setSelectedSkillIds(prev => {
+      const next = new Set(prev)
+      if (next.has(skillId)) {
+        next.delete(skillId)
+      } else {
+        next.add(skillId)
+      }
+      return next
+    })
+  }, [])
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedSkillIds(new Set())
+    setShowBatchTagPicker(false)
+    setBatchTagIds(new Set())
+    setBatchTagSearch('')
+  }, [])
+
+  const handleBatchAssignTags = useCallback(async () => {
+    if (batchTagIds.size === 0 || selectedSkillIds.size === 0) return
+    setBatchTagLoading(true)
+    try {
+      for (const skillId of selectedSkillIds) {
+        const skill = skills.find(s => s.id === skillId)
+        if (!skill) continue
+        const merged = Array.from(new Set([...skill.tags, ...batchTagIds]))
+        await updateSkillTags(skillId, merged)
+      }
+      setShowBatchTagPicker(false)
+      setBatchTagIds(new Set())
+      setBatchTagSearch('')
+      setSelectedSkillIds(new Set())
+    } finally {
+      setBatchTagLoading(false)
+    }
+  }, [batchTagIds, selectedSkillIds, skills, updateSkillTags])
+
+  const handleBatchToggleTag = useCallback((tagId: string) => {
+    setBatchTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }, [])
+
+  const handleBatchToggleExpand = useCallback((tagId: string) => {
+    setBatchExpandedTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }, [])
+
+  const hasBatchMatchingDescendant = useCallback((node: TreeNode): boolean => {
+    if (!batchTagSearch.trim()) return true
+    const searchLower = batchTagSearch.toLowerCase()
+    for (const child of node.children) {
+      if (child.tag.name.toLowerCase().includes(searchLower)) return true
+      if (hasBatchMatchingDescendant(child)) return true
+    }
+    return false
+  }, [batchTagSearch])
+
+  const renderBatchTagNode = useCallback((node: TreeNode, depth: number): React.ReactNode => {
+    const { tag } = node
+    const isExpanded = batchExpandedTagIds.has(tag.id)
+    const isSelected = batchTagIds.has(tag.id)
+    const hasChildren = node.children.length > 0
+    const matchesSearch = !batchTagSearch.trim() || tag.name.toLowerCase().includes(batchTagSearch.toLowerCase())
+
+    if (batchTagSearch.trim() && !matchesSearch && !hasBatchMatchingDescendant(node)) return null
+
+    return (
+      <div key={tag.id}>
+        <div
+          className={`sk-tree-node ${isSelected ? 'selected' : ''}`}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        >
+          <button
+            className={`sk-tree-toggle ${!hasChildren ? 'invisible' : ''}`}
+            onClick={() => handleBatchToggleExpand(tag.id)}
+          >
+            {hasChildren && (
+              <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                <path fill="currentColor" d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <button className="sk-tree-label" onClick={() => handleBatchToggleTag(tag.id)}>
+            <span className="sk-tree-name">{tag.name}</span>
+            {isSelected && (
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {isExpanded && hasChildren && (
+          <div>{node.children.map(child => renderBatchTagNode(child, depth + 1))}</div>
+        )}
+      </div>
+    )
+  }, [batchExpandedTagIds, batchTagIds, batchTagSearch, hasBatchMatchingDescendant, handleBatchToggleExpand, handleBatchToggleTag])
+
+  // Close batch tag picker on outside click
+  useEffect(() => {
+    if (!showBatchTagPicker) return
+    const handlePointerDown = (e: MouseEvent) => {
+      if (batchTagPickerRef.current && !batchTagPickerRef.current.contains(e.target as Node)) {
+        setShowBatchTagPicker(false)
+      }
+    }
+    window.addEventListener('mousedown', handlePointerDown)
+    return () => window.removeEventListener('mousedown', handlePointerDown)
+  }, [showBatchTagPicker])
+
   const handleSkillClick = (skill: Skill) => {
+    if (selectedSkillIds.size > 0) {
+      handleToggleSkillSelection(skill.id)
+      return
+    }
     selectSkill(skill.id)
     toggleDrawer(true)
   }
@@ -283,7 +422,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
         </div>
 
         <div className="skill-center-content">
-          <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden min-h-0">
           <div className="w-[220px] min-w-[220px] flex flex-col border-r border-[var(--border-soft)]">
             <div className="p-3 border-b border-[var(--border-soft)]">
               <SearchInput
@@ -410,6 +550,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                           style={{ animationDelay: `${index * 30}ms` }}
                           language={language}
                           enableDropHighlight={isDraggingOverSkillArea}
+                          isSelected={selectedSkillIds.has(skill.id)}
+                          hasSelection={selectedSkillIds.size > 0}
+                          onToggleSelect={handleToggleSkillSelection}
                         />
                       ))}
                     </div>
@@ -423,6 +566,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                           onSkillClick={handleSkillClick}
                           language={language}
                           enableDropHighlight={isDraggingOverSkillArea}
+                          isSelected={selectedSkillIds.has(skill.id)}
+                          hasSelection={selectedSkillIds.size > 0}
+                          onToggleSelect={handleToggleSkillSelection}
                         />
                       ))}
                     </div>
@@ -430,6 +576,79 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                 </>
               )}
             </DroppableSkillArea>
+          </div>
+
+          {/* Batch action bar */}
+          {selectedSkillIds.size > 0 && (
+            <div className="skill-batch-bar">
+              <span className="skill-batch-info">
+                {language === 'zh' ? `已选择 ${selectedSkillIds.size} 个技能` : `${selectedSkillIds.size} skill${selectedSkillIds.size === 1 ? '' : 's'} selected`}
+              </span>
+              <div className="skill-batch-actions">
+                <div className="skill-batch-tag-wrap" ref={batchTagPickerRef}>
+                  <button
+                    className="skill-batch-btn skill-batch-btn-tag"
+                    onClick={() => setShowBatchTagPicker(!showBatchTagPicker)}
+                  >
+                    <Tags className="w-3.5 h-3.5" />
+                    {language === 'zh' ? '添加标签' : 'Add Tags'}
+                    {batchTagIds.size > 0 && (
+                      <span className="skill-batch-tag-count">{batchTagIds.size}</span>
+                    )}
+                  </button>
+                  {showBatchTagPicker && (
+                    <div className="skill-batch-tag-picker">
+                      <div className="sk-dropdown-search">
+                        <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                          <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                          <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        <input
+                          type="text"
+                          autoFocus
+                          value={batchTagSearch}
+                          onChange={(e) => setBatchTagSearch(e.target.value)}
+                          placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                        />
+                      </div>
+                      <div className="sk-dropdown-tree">
+                        {tree.length > 0 ? (
+                          tree.map(node => renderBatchTagNode(node, 0))
+                        ) : (
+                          <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
+                        )}
+                      </div>
+                      {batchTagIds.size > 0 && (
+                        <div className="skill-batch-picker-footer">
+                          <button
+                            className="skill-batch-apply-btn"
+                            onClick={handleBatchAssignTags}
+                            disabled={batchTagLoading}
+                          >
+                            {batchTagLoading ? (
+                              <span className="skill-batch-spinner" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            {language === 'zh'
+                              ? `应用 ${batchTagIds.size} 个标签`
+                              : `Apply ${batchTagIds.size} tag${batchTagIds.size === 1 ? '' : 's'}`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button
+                  className="skill-batch-btn skill-batch-btn-clear"
+                  onClick={handleClearSelection}
+                >
+                  <X className="w-3.5 h-3.5" />
+                  {language === 'zh' ? '清除选择' : 'Clear'}
+                </button>
+              </div>
+            </div>
+          )}
           </div>
         </div>
 
@@ -463,6 +682,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
         isOpen={importDialog === 'repository'}
         onClose={() => setImportDialog(null)}
         onImport={importSkillFromRepository}
+        onUpdateSkillTags={updateSkillTags}
         repositories={repositories}
         loading={repositoriesLoading}
         onLoadRepositories={fetchRepositories}

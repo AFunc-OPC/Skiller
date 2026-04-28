@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
-import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink } from 'lucide-react'
-import { Repo } from '../../types'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink, Tag, Plus } from 'lucide-react'
+import { Repo, TreeNode } from '../../types'
 import { repoApi, ImportableSkill } from '../../api/repo'
 import { useAppStore } from '../../stores/appStore'
+import { useTagTreeStore } from '../../stores/tagTreeStore'
 import './RepositorySelectDialog.css'
 
 interface RepositorySelectDialogProps {
   isOpen: boolean
   onClose: () => void
   onImport: (repoId: string, skillPath: string) => Promise<void>
+  onUpdateSkillTags?: (skillId: string, tags: string[]) => Promise<void>
   repositories: Repo[]
   loading?: boolean
   onLoadRepositories?: () => void
@@ -28,7 +30,7 @@ function HighlightText({ text, highlight }: { text: string; highlight: string })
 
   return (
     <>
-      {parts.map((part, i) => 
+      {parts.map((part, i) =>
         regex.test(part) ? (
           <mark key={i} className="highlight">{part}</mark>
         ) : (
@@ -39,10 +41,20 @@ function HighlightText({ text, highlight }: { text: string; highlight: string })
   )
 }
 
-export function RepositorySelectDialog({ 
-  isOpen, 
-  onClose, 
-  onImport, 
+function flattenTree(nodes: TreeNode[]): TreeNode['tag'][] {
+  const result: TreeNode['tag'][] = []
+  for (const node of nodes) {
+    result.push(node.tag)
+    result.push(...flattenTree(node.children))
+  }
+  return result
+}
+
+export function RepositorySelectDialog({
+  isOpen,
+  onClose,
+  onImport,
+  onUpdateSkillTags,
   repositories,
   loading = false,
   onLoadRepositories,
@@ -58,7 +70,24 @@ export function RepositorySelectDialog({
   const [stage, setStage] = useState<DialogStage>('idle')
   const [error, setError] = useState('')
   const [repoSkillCounts, setRepoSkillCounts] = useState<Map<string, number>>(new Map())
+
+  // Tag picker state
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
+  const [tagSearch, setTagSearch] = useState('')
+  const [showTagPicker, setShowTagPicker] = useState(false)
+  const [expandedTagIds, setExpandedTagIds] = useState<Set<string>>(new Set())
+  const [creatingTag, setCreatingTag] = useState(false)
+  const tagPickerRef = useRef<HTMLDivElement>(null)
+  const tagSearchInputRef = useRef<HTMLInputElement>(null)
+
   const { language } = useAppStore()
+  const { tree, createTag, fetchTree } = useTagTreeStore()
+
+  const allTags = useMemo(() => flattenTree(tree), [tree])
+  const getTagName = useCallback((tagId: string): string => {
+    const tag = allTags.find(t => t.id === tagId)
+    return tag?.name ?? tagId
+  }, [allTags])
 
   useEffect(() => {
     if (isOpen) {
@@ -70,6 +99,10 @@ export function RepositorySelectDialog({
       setStage('idle')
       setError('')
       setRepoSkillCounts(new Map())
+      setSelectedTagIds(new Set())
+      setTagSearch('')
+      setShowTagPicker(false)
+      setExpandedTagIds(new Set())
       if (onLoadRepositories) {
         onLoadRepositories()
       }
@@ -108,6 +141,25 @@ export function RepositorySelectDialog({
     }
   }, [selectedRepo])
 
+  // Close tag picker on outside click
+  useEffect(() => {
+    if (!showTagPicker) return
+    const handlePointerDown = (e: MouseEvent) => {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target as Node)) {
+        setShowTagPicker(false)
+      }
+    }
+    window.addEventListener('mousedown', handlePointerDown)
+    return () => window.removeEventListener('mousedown', handlePointerDown)
+  }, [showTagPicker])
+
+  // Focus search input when tag picker opens
+  useEffect(() => {
+    if (showTagPicker) {
+      setTimeout(() => tagSearchInputRef.current?.focus(), 50)
+    }
+  }, [showTagPicker])
+
   if (!isOpen) return null
 
   const filteredRepos = repositories.filter(repo => {
@@ -124,7 +176,7 @@ export function RepositorySelectDialog({
            (skill.description && skill.description.toLowerCase().includes(searchLower))
   })
 
-  const allFilteredSelected = filteredSkills.length > 0 && 
+  const allFilteredSelected = filteredSkills.length > 0 &&
     filteredSkills.every(skill => selectedSkills.has(skill.path))
 
   const handleSelectAll = () => {
@@ -145,16 +197,116 @@ export function RepositorySelectDialog({
     setSelectedSkills(newSelected)
   }
 
+  const handleToggleTag = (tagId: string) => {
+    const newSelected = new Set(selectedTagIds)
+    if (newSelected.has(tagId)) {
+      newSelected.delete(tagId)
+    } else {
+      newSelected.add(tagId)
+    }
+    setSelectedTagIds(newSelected)
+  }
+
+  const handleRemoveTag = (tagId: string) => {
+    const newSelected = new Set(selectedTagIds)
+    newSelected.delete(tagId)
+    setSelectedTagIds(newSelected)
+  }
+
+  const handleToggleExpand = (tagId: string) => {
+    const newExpanded = new Set(expandedTagIds)
+    if (newExpanded.has(tagId)) {
+      newExpanded.delete(tagId)
+    } else {
+      newExpanded.add(tagId)
+    }
+    setExpandedTagIds(newExpanded)
+  }
+
+  const handleCreateTag = async () => {
+    const name = tagSearch.trim()
+    if (!name || creatingTag) return
+    setCreatingTag(true)
+    try {
+      const newTag = await createTag(name, 'group-build', undefined)
+      setSelectedTagIds(prev => new Set([...prev, newTag.id]))
+      setTagSearch('')
+      await fetchTree()
+    } catch (err) {
+      console.error('Failed to create tag:', err)
+    } finally {
+      setCreatingTag(false)
+    }
+  }
+
+  const hasMatchingDescendant = (node: TreeNode): boolean => {
+    if (!tagSearch.trim()) return true
+    const searchLower = tagSearch.toLowerCase()
+    for (const child of node.children) {
+      if (child.tag.name.toLowerCase().includes(searchLower)) return true
+      if (hasMatchingDescendant(child)) return true
+    }
+    return false
+  }
+
+  const renderTreeNode = (node: TreeNode, depth: number): React.ReactNode => {
+    const { tag } = node
+    const isExpanded = expandedTagIds.has(tag.id)
+    const isSelected = selectedTagIds.has(tag.id)
+    const hasChildren = node.children.length > 0
+    const matchesSearch = !tagSearch.trim() || tag.name.toLowerCase().includes(tagSearch.toLowerCase())
+
+    if (tagSearch.trim() && !matchesSearch && !hasMatchingDescendant(node)) return null
+
+    return (
+      <div key={tag.id}>
+        <div
+          className={`sk-tree-node ${isSelected ? 'selected' : ''}`}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        >
+          <button
+            className={`sk-tree-toggle ${!hasChildren ? 'invisible' : ''}`}
+            onClick={() => handleToggleExpand(tag.id)}
+          >
+            {hasChildren && (
+              <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                <path fill="currentColor" d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <button className="sk-tree-label" onClick={() => handleToggleTag(tag.id)}>
+            <span className="sk-tree-name">{tag.name}</span>
+            {isSelected && (
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {isExpanded && hasChildren && (
+          <div>{node.children.map(child => renderTreeNode(child, depth + 1))}</div>
+        )}
+      </div>
+    )
+  }
+
+  // Show "Create" option when search text doesn't match any existing tag
+  const exactMatch = allTags.some(t => t.name.toLowerCase() === tagSearch.trim().toLowerCase())
+  const showCreateOption = tagSearch.trim().length > 0 && !exactMatch
+
   const handleImport = async () => {
     if (!selectedRepo || selectedSkills.size === 0) return
-    
+
     setStage('submitting')
     setError('')
-    
+
     try {
       const skillPaths = Array.from(selectedSkills)
       for (const skillPath of skillPaths) {
         await onImport(selectedRepo.id, skillPath)
+        if (selectedTagIds.size > 0 && onUpdateSkillTags) {
+          await onUpdateSkillTags(skillPath, Array.from(selectedTagIds))
+        }
       }
       setStage('success')
       setTimeout(() => onClose(), 800)
@@ -226,12 +378,12 @@ export function RepositorySelectDialog({
                 <div className="repo-import-empty">
                   <Folder className="repo-import-empty-icon" />
                   <div className="repo-import-empty-text">
-                    {repositories.length === 0 
-                      ? (language === 'zh' ? '暂无可用仓库' : 'No available repositories') 
+                    {repositories.length === 0
+                      ? (language === 'zh' ? '暂无可用仓库' : 'No available repositories')
                       : (language === 'zh' ? '未找到匹配的仓库' : 'No matching repositories')}
                   </div>
                   {repositories.length === 0 && (
-                    <button 
+                    <button
                       className="repo-import-empty-action"
                       onClick={() => {
                         onClose()
@@ -317,15 +469,6 @@ export function RepositorySelectDialog({
                       {selectedRepo.branch}
                     </span>
                     <span className="repo-import-panel-url-compact">{selectedRepo.url}</span>
-                    {/* {selectedRepo.skill_relative_path && (
-                      <>
-                        <span className="repo-import-panel-separator">•</span>
-                        <span className="repo-import-panel-path">
-                          <Folder className="w-3 h-3" />
-                          {selectedRepo.skill_relative_path}
-                        </span>
-                      </>
-                    )} */}
                   </div>
                 </div>
 
@@ -371,8 +514,8 @@ export function RepositorySelectDialog({
                     <div className="repo-import-empty">
                       <Folder className="repo-import-empty-icon" />
                       <div className="repo-import-empty-text">
-                        {skills.length === 0 
-                          ? (language === 'zh' ? '该仓库尚未同步或未找到可导入的技能' : 'Repository not synced or no importable skills found') 
+                        {skills.length === 0
+                          ? (language === 'zh' ? '该仓库尚未同步或未找到可导入的技能' : 'Repository not synced or no importable skills found')
                           : (language === 'zh' ? '未找到匹配的技能' : 'No matching skills')}
                       </div>
                       {skills.length === 0 && (
@@ -425,6 +568,76 @@ export function RepositorySelectDialog({
             <span>{error}</span>
           </div>
         )}
+
+        {/* Tag picker section */}
+        <div className="ri-tag-section">
+          <div className="ri-tag-label">
+            <Tag className="w-3.5 h-3.5" />
+            <span>{language === 'zh' ? '导入后添加标签' : 'Add tags on import'}</span>
+          </div>
+          <div className="ri-tag-content">
+            {selectedTagIds.size > 0 && (
+              <div className="ri-tag-chips">
+                {Array.from(selectedTagIds).map(tagId => (
+                  <span key={tagId} className="ri-tag-chip">
+                    {getTagName(tagId)}
+                    <button className="ri-tag-chip-remove" onClick={() => handleRemoveTag(tagId)}>
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="ri-tag-picker-wrap" ref={tagPickerRef}>
+              <button
+                className="ri-tag-add-btn"
+                onClick={() => setShowTagPicker(!showTagPicker)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{language === 'zh' ? '选择标签' : 'Select tags'}</span>
+              </button>
+              {showTagPicker && (
+                <div className="ri-tag-dropdown">
+                  <div className="sk-dropdown-search">
+                    <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                      <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      ref={tagSearchInputRef}
+                      type="text"
+                      value={tagSearch}
+                      onChange={(e) => setTagSearch(e.target.value)}
+                      placeholder={language === 'zh' ? '搜索或创建标签...' : 'Search or create tag...'}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && showCreateOption) {
+                          handleCreateTag()
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="sk-dropdown-tree">
+                    {showCreateOption && (
+                      <button
+                        className="ri-tag-create-option"
+                        onClick={handleCreateTag}
+                        disabled={creatingTag}
+                      >
+                        <Plus className="w-3 h-3" />
+                        {language === 'zh' ? `创建标签 "${tagSearch.trim()}"` : `Create tag "${tagSearch.trim()}"`}
+                      </button>
+                    )}
+                    {tree.length > 0 ? (
+                      tree.map(node => renderTreeNode(node, 0))
+                    ) : (
+                      <div className="sk-empty-hint">{language === 'zh' ? '暂无可选标签' : 'No available tags'}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="repo-import-footer">
           <div className="repo-import-footer-info">

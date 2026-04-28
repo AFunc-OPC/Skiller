@@ -44,5 +44,6 @@ coverage/
 *.tsbuildinfo
 
 # AI Code
-.opencode
+.claude/
+.opencode/
 openspec/
