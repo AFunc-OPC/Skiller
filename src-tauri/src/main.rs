@@ -86,6 +86,7 @@ fn main() {
             skiller::commands::repo::repair_repo,
             skiller::commands::repo::list_repo_skills,
             skiller::commands::repo::get_repo_skill_count,
+            skiller::commands::repo::get_repo_skill_counts,
             skiller::commands::config::get_config,
             skiller::commands::config::set_config,
             skiller::commands::config::get_tool_presets,

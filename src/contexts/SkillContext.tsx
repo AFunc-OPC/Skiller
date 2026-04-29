@@ -37,15 +37,16 @@ interface SkillContextValue extends SkillCenterState {
   selectSkill: (skillId: string | null) => void
   toggleDrawer: (open: boolean) => void
   toggleSkillStatus: (skillId: string) => Promise<void>
-  deleteSkill: (skillId: string) => Promise<void>
+  deleteSkill: (skillId: string, options?: { refresh?: boolean }) => Promise<void>
   importSkillFromFile: (filePath: string) => Promise<void>
   prepareSkillImportFromNpx: (command: string, requestId: string) => Promise<PrepareNpxSkillImportResponse>
   confirmSkillImportFromNpx: (sessionId: string) => Promise<ConfirmNpxSkillImportResponse>
   cancelSkillImportFromNpx: (sessionId: string) => Promise<void>
-  importSkillFromRepository: (repoId: string, skillPath: string) => Promise<void>
+  importSkillFromRepository: (repoId: string, skillPath: string, options?: { refresh?: boolean }) => Promise<string>
   checkToolAvailability: () => Promise<{ git: boolean; npx: boolean }>
   refreshSkills: () => Promise<void>
-  updateSkillTags: (skillId: string, tags: string[]) => Promise<void>
+  refreshSkillData: () => Promise<void>
+  updateSkillTags: (skillId: string, tags: string[], options?: { refresh?: boolean }) => Promise<void>
   getSkillTags: (skillId: string) => Promise<string[]>
   distributeSkill: (request: DistributeSkillRequest) => Promise<DistributeSkillResult>
   executeNativeNpxSkillsAdd: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
@@ -116,28 +117,33 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     try {
       await invoke('toggle_skill', { skillId })
       await loadSkills()
+      await fetchTagTree()
     } catch (error) {
       throw new Error('切换技能状态失败: ' + (error as Error).message)
     }
-  }, [loadSkills])
+  }, [loadSkills, fetchTagTree])
 
-  const deleteSkill = useCallback(async (skillId: string) => {
+  const deleteSkill = useCallback(async (skillId: string, options?: { refresh?: boolean }) => {
     try {
       await invoke('delete_file_skill', { skillId })
-      await loadSkills()
+      if (options?.refresh !== false) {
+        await loadSkills()
+        await fetchTagTree()
+      }
     } catch (error) {
       throw new Error('删除技能失败: ' + getErrorMessage(error))
     }
-  }, [loadSkills])
+  }, [loadSkills, fetchTagTree])
 
   const importSkillFromFile = useCallback(async (filePath: string) => {
     try {
       await invoke('unzip_skill', { filePath })
       await fetchSkills()
+      await fetchTagTree()
     } catch (error) {
       throw new Error('从文件导入技能失败: ' + getErrorMessage(error))
     }
-  }, [fetchSkills])
+  }, [fetchSkills, fetchTagTree])
 
   const prepareSkillImportFromNpx = useCallback(async (command: string, requestId: string) => {
     try {
@@ -151,11 +157,12 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     try {
       const result = await invoke<ConfirmNpxSkillImportResponse>('confirm_npx_skill_import', { sessionId })
       await fetchSkills()
+      await fetchTagTree()
       return result
     } catch (error) {
       throw new Error('确认导入技能失败: ' + getErrorMessage(error))
     }
-  }, [fetchSkills])
+  }, [fetchSkills, fetchTagTree])
 
   const cancelSkillImportFromNpx = useCallback(async (sessionId: string) => {
     try {
@@ -165,14 +172,18 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const importSkillFromRepository = useCallback(async (repoId: string, skillPath: string) => {
+  const importSkillFromRepository = useCallback(async (repoId: string, skillPath: string, options?: { refresh?: boolean }) => {
     try {
-      await invoke('copy_skill', { repoId, skillPath })
-      await fetchSkills()
+      const importedSkillPath = await invoke<string>('copy_skill', { repoId, skillPath })
+      if (options?.refresh !== false) {
+        await fetchSkills()
+        await fetchTagTree()
+      }
+      return importedSkillPath
     } catch (error) {
       throw new Error('从仓库导入技能失败: ' + getErrorMessage(error))
     }
-  }, [fetchSkills])
+  }, [fetchSkills, fetchTagTree])
 
   const checkToolAvailability = useCallback(async () => {
     try {
@@ -189,6 +200,11 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     await loadSkills()
   }, [loadSkills])
 
+  const refreshSkillData = useCallback(async () => {
+    await fetchSkills()
+    await fetchTagTree()
+  }, [fetchSkills, fetchTagTree])
+
   const getSkillTags = useCallback(async (skillId: string) => {
     try {
       const tags = await invoke<string[]>('get_file_skill_tags', { skillPath: skillId })
@@ -199,13 +215,15 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const updateSkillTags = useCallback(async (skillId: string, tags: string[]) => {
+  const updateSkillTags = useCallback(async (skillId: string, tags: string[], options?: { refresh?: boolean }) => {
     try {
       await invoke('update_file_skill_tags', { skillPath: skillId, tags })
       updateSkillLocally(skillId, {
         tags,
       })
-      await fetchTagTree()
+      if (options?.refresh !== false) {
+        await fetchTagTree()
+      }
     } catch (error) {
       throw new Error('更新技能标签失败: ' + (error as Error).message)
     }
@@ -223,21 +241,23 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     try {
       const result = await invoke<NativeNpxImportResponse>('execute_npx_skills_add_native', { command, requestId })
       await fetchSkills()
+      await fetchTagTree()
       return result
     } catch (error) {
       throw new Error('原生 npx 导入失败: ' + getErrorMessage(error))
     }
-  }, [fetchSkills])
+  }, [fetchSkills, fetchTagTree])
 
   const syncToSkiller = useCallback(async (skillName: string) => {
     try {
       const result = await invoke<{ skill_name: string; skill_path: string; is_update: boolean }>('sync_skill_to_skiller', { skillName })
       await fetchSkills()
+      await fetchTagTree()
       return result
     } catch (error) {
       throw new Error('同步失败: ' + getErrorMessage(error))
     }
-  }, [fetchSkills])
+  }, [fetchSkills, fetchTagTree])
 
   const listAgentsSkills = useCallback(async () => {
     try {
@@ -344,6 +364,7 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     importSkillFromRepository,
     checkToolAvailability,
     refreshSkills,
+    refreshSkillData,
     updateSkillTags,
     getSkillTags,
     distributeSkill,

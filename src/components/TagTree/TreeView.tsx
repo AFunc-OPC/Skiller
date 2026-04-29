@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import type { TreeNode as TreeNodeType } from '../../types'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { DraggableTreeNode } from './DraggableTreeNode'
 import { DroppableZone } from './DroppableZone'
@@ -10,6 +11,7 @@ interface TreeViewProps {
   onDelete?: (tagId: string) => void
   onCreateChild?: (parentId: string) => void
   virtualizationThreshold?: number
+  treeOverride?: TreeNodeType[]
 }
 
 export function TreeView({
@@ -17,11 +19,13 @@ export function TreeView({
   onDelete,
   onCreateChild,
   virtualizationThreshold = 100,
+  treeOverride,
 }: TreeViewProps) {
   const { tree, loading, error, fetchTree, collapseAll, expandAll, expandedIds, selectTag } = useTagTreeStore()
   const [totalNodeCount, setTotalNodeCount] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerHeight, setContainerHeight] = useState(600)
+  const displayTree = treeOverride ?? tree
 
   useEffect(() => {
     fetchTree()
@@ -39,8 +43,8 @@ export function TreeView({
       return count
     }
     
-    setTotalNodeCount(countVisibleNodes(tree))
-  }, [tree, expandedIds])
+    setTotalNodeCount(countVisibleNodes(displayTree))
+  }, [displayTree, expandedIds])
 
   useEffect(() => {
     const updateHeight = () => {
@@ -83,7 +87,7 @@ export function TreeView({
     )
   }
 
-  if (tree.length === 0) {
+  if (displayTree.length === 0) {
     return (
       <DroppableZone id="root">
         <div className="tree-empty-state">
@@ -126,7 +130,7 @@ export function TreeView({
           {useVirtualization ? (
             <div className="h-full" onClick={(e) => e.stopPropagation()}>
               <VirtualizedTree
-                tree={tree}
+                tree={displayTree}
                 expandedIds={expandedIds}
                 height={containerHeight}
                 onEdit={onEdit}
@@ -136,7 +140,7 @@ export function TreeView({
             </div>
           ) : (
             <div className="tree-scroll-container overflow-auto h-full py-1" onClick={(e) => e.stopPropagation()}>
-              {tree.map((node) => (
+              {displayTree.map((node) => (
                 <DraggableTreeNode
                   key={node.tag.id}
                   node={node}

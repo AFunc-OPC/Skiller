@@ -5,8 +5,9 @@ import { openUrl } from '@tauri-apps/plugin-opener'
 import { useRepositoryStore } from '../../stores/repositoryStore'
 import { useAppStore } from '../../stores/appStore'
 import { useSkillContext } from '../../contexts/SkillContext'
+import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { desktopApi } from '../../api/desktop'
-import type { Repo, RepoSyncEvent, Skill } from '../../types'
+import type { Repo, RepoSyncEvent, Skill, TreeNode } from '../../types'
 import { SkillMarkdownPreview } from '../SkillCenter/SkillMarkdownPreview'
 
 const REPO_SYNC_PROGRESS_EVENT = 'repo-sync-progress'
@@ -58,7 +59,8 @@ function gitUrlToHttps(url: string): string {
 export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigateToSkill }: RepositoryDetailDrawerProps) {
   const { language } = useAppStore()
   const { deleteRepository, syncRepository, updateRepository, repairRepository, fetchRepositorySkills, repositorySkills, syncingRepositoryIds, markRepositorySyncCompleted, markRepositorySyncFailed } = useRepositoryStore()
-  const { importSkillFromRepository, skills: existingSkills, deleteSkill } = useSkillContext()
+  const { importSkillFromRepository, skills: existingSkills, deleteSkill, updateSkillTags, refreshSkillData } = useSkillContext()
+  const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -79,6 +81,9 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
   }>({ existing: [], newSkills: [] })
   const [previewSkill, setPreviewSkill] = useState<Skill | null>(null)
   const [copiedSkillId, setCopiedSkillId] = useState<string | null>(null)
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
+  const [tagSearchKeyword, setTagSearchKeyword] = useState('')
+  const [expandedTagIds, setExpandedTagIds] = useState<Set<string>>(new Set())
   const drawerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -123,6 +128,12 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
     setSyncProgressMessage(null)
     setPreviewSkill(null)
   }, [repository?.id, isOpen])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTagTree()
+    }
+  }, [isOpen, fetchTagTree])
 
   useEffect(() => {
     if (!syncing) {
@@ -397,34 +408,86 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       setSelectedSkillIds(new Set(filteredSkills.map(s => s.id)))
     }
   }, [selectedSkillIds.size, filteredSkills])
-  
-  const checkAndConfirmImport = useCallback(() => {
-    if (!repository || selectedSkillIds.size === 0) return
 
-    const skillsToImport = repositorySkills.filter(s => selectedSkillIds.has(s.id))
-    const existingNames = new Set(existingSkills.map(s => s.name))
-    const existing: Skill[] = []
-    const newSkills: Skill[] = []
-
-    for (const skill of skillsToImport) {
-      if (existingNames.has(skill.name)) {
-        existing.push(skill)
+  const toggleTagSelection = useCallback((tagId: string) => {
+    setSelectedTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
       } else {
-        newSkills.push(skill)
+        next.add(tagId)
       }
-    }
+      return next
+    })
+  }, [])
 
-    if (existing.length > 0) {
-      setImportConfirmData({ existing, newSkills })
-      setImportConfirmOpen(true)
-    } else {
-      executeImport(skillsToImport, false)
+  const toggleTagExpand = useCallback((tagId: string) => {
+    setExpandedTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }, [])
+
+  const hasMatchingDescendant = useCallback((node: TreeNode, search: string): boolean => {
+    if (!search.trim()) return true
+    const searchLower = search.toLowerCase()
+    for (const child of node.children) {
+      if (child.tag.name.toLowerCase().includes(searchLower)) return true
+      if (hasMatchingDescendant(child, search)) return true
     }
-  }, [repository, selectedSkillIds, repositorySkills, existingSkills])
+    return false
+  }, [])
+
+  const renderTagNode = useCallback((node: TreeNode, depth: number): React.ReactNode => {
+    const { tag } = node
+    const isExpanded = expandedTagIds.has(tag.id)
+    const isSelected = selectedTagIds.has(tag.id)
+    const hasChildren = node.children.length > 0
+    const matchesSearch = !tagSearchKeyword.trim() || tag.name.toLowerCase().includes(tagSearchKeyword.toLowerCase())
+
+    if (tagSearchKeyword.trim() && !matchesSearch && !hasMatchingDescendant(node, tagSearchKeyword)) return null
+
+    return (
+      <div key={tag.id}>
+        <div
+          className={`repo-tag-node ${isSelected ? 'selected' : ''}`}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        >
+          <button
+            className={`repo-tag-toggle ${!hasChildren ? 'invisible' : ''}`}
+            onClick={() => toggleTagExpand(tag.id)}
+          >
+            {hasChildren && (
+              <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                <path fill="currentColor" d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <button className="repo-tag-label" onClick={() => toggleTagSelection(tag.id)}>
+            <span className="repo-tag-name">{tag.name}</span>
+            {isSelected && (
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {isExpanded && hasChildren && (
+          <div>{node.children.map(child => renderTagNode(child, depth + 1))}</div>
+        )}
+      </div>
+    )
+  }, [expandedTagIds, selectedTagIds, tagSearchKeyword, hasMatchingDescendant, toggleTagExpand, toggleTagSelection])
 
   const executeImport = useCallback(async (
     skillsToImport: Skill[],
-    overwrite: boolean
+    overwrite: boolean,
+    additionalTagIds: string[] = []
   ) => {
     if (!repository) return
 
@@ -438,13 +501,18 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
 
     for (const skill of skillsToImport) {
       try {
+        const existingSkill = existingSkills.find(s => s.name === skill.name)
+        const preservedTags = overwrite && existingSkill ? existingSkill.tags : []
         if (overwrite) {
-          const existingSkill = existingSkills.find(s => s.name === skill.name)
           if (existingSkill) {
-            await deleteSkill(existingSkill.id)
+            await deleteSkill(existingSkill.id, { refresh: false })
           }
         }
-        await importSkillFromRepository(repository.id, skill.file_path)
+        const importedSkillPath = await importSkillFromRepository(repository.id, skill.file_path, { refresh: false })
+        const allTags = [...new Set([...preservedTags, ...additionalTagIds])]
+        if (allTags.length > 0) {
+          await updateSkillTags(importedSkillPath, allTags, { refresh: false })
+        }
         successCount++
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error)
@@ -453,6 +521,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       }
     }
 
+    await refreshSkillData()
     setImportingSkills(false)
 
     if (failedSkills.length === 0) {
@@ -471,7 +540,37 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       setImportSuccess(null)
       setImportError(null)
     }, 8000)
-  }, [repository, existingSkills, deleteSkill, importSkillFromRepository, language])
+  }, [repository, existingSkills, deleteSkill, importSkillFromRepository, updateSkillTags, refreshSkillData, language])
+
+  const checkAndConfirmImport = useCallback(() => {
+    if (!repository || selectedSkillIds.size === 0) return
+
+    const skillsToImport = repositorySkills.filter(s => selectedSkillIds.has(s.id))
+    const existingNames = new Set(existingSkills.map(s => s.name))
+    const existing: Skill[] = []
+    const newSkills: Skill[] = []
+
+    for (const skill of skillsToImport) {
+      if (existingNames.has(skill.name)) {
+        existing.push(skill)
+      } else {
+        newSkills.push(skill)
+      }
+    }
+
+    setImportConfirmData({ existing, newSkills })
+    setSelectedTagIds(new Set())
+    setTagSearchKeyword('')
+    setExpandedTagIds(new Set())
+    setImportConfirmOpen(true)
+  }, [repository, selectedSkillIds, repositorySkills, existingSkills])
+
+  const handleConfirmImport = useCallback(() => {
+    const skillsToImport = [...importConfirmData.existing, ...importConfirmData.newSkills]
+    const hasExisting = importConfirmData.existing.length > 0
+    const tagIds = Array.from(selectedTagIds)
+    executeImport(skillsToImport, hasExisting, tagIds)
+  }, [importConfirmData, selectedTagIds, executeImport])
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return language === 'zh' ? '未同步' : 'Not synced'
@@ -1130,6 +1229,39 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
                   </ul>
                 </div>
               )}
+              <div className="repo-import-tag-section">
+                <p className="repo-import-section-title">
+                  {language === 'zh' ? '添加标签（可选）' : 'Add Tags (optional)'}
+                </p>
+                <div className="repo-import-tag-search">
+                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                    <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={tagSearchKeyword}
+                    onChange={(e) => setTagSearchKeyword(e.target.value)}
+                    placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                  />
+                </div>
+                <div className="repo-import-tag-tree">
+                  {tagTree.length > 0 ? (
+                    tagTree.map(node => renderTagNode(node, 0))
+                  ) : (
+                    <div className="repo-tag-empty">
+                      {language === 'zh' ? '暂无可选标签' : 'No available tags'}
+                    </div>
+                  )}
+                </div>
+                {selectedTagIds.size > 0 && (
+                  <div className="repo-import-selected-tags">
+                    {language === 'zh' 
+                      ? `已选择 ${selectedTagIds.size} 个标签` 
+                      : `${selectedTagIds.size} tag${selectedTagIds.size > 1 ? 's' : ''} selected`}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="repo-confirm-actions">
               <button className="repo-btn-ghost" onClick={() => setImportConfirmOpen(false)}>
@@ -1137,10 +1269,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
               </button>
               <button 
                 className="repo-btn-primary" 
-                onClick={() => {
-                  const skillsToImport = [...importConfirmData.existing, ...importConfirmData.newSkills]
-                  executeImport(skillsToImport, true)
-                }}
+                onClick={handleConfirmImport}
               >
                 {language === 'zh' ? '确认导入' : 'Confirm Import'}
               </button>

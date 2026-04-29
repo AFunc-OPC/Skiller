@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink, Tag, Plus } from 'lucide-react'
-import { Repo, Skill, TreeNode } from '../../types'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink, Tag, Plus, RefreshCw } from 'lucide-react'
+import { Repo, Skill, TreeNode, RepoSyncEvent } from '../../types'
 import { repoApi, ImportableSkill } from '../../api/repo'
 import { useAppStore } from '../../stores/appStore'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
+import { useRepositoryStore } from '../../stores/repositoryStore'
 import './RepositorySelectDialog.css'
+
+const REPO_SYNC_PROGRESS_EVENT = 'repo-sync-progress'
 
 interface RepositorySelectDialogProps {
   isOpen: boolean
   onClose: () => void
-  onImport: (repoId: string, skillPath: string) => Promise<void>
-  onDeleteSkill?: (skillId: string) => Promise<void>
+  onImport: (repoId: string, skillPath: string, options?: { refresh?: boolean }) => Promise<string>
+  onImportComplete?: () => Promise<void>
+  onDeleteSkill?: (skillId: string, options?: { refresh?: boolean }) => Promise<void>
   existingSkills?: Skill[]
-  onUpdateSkillTags?: (skillId: string, tags: string[]) => Promise<void>
+  onUpdateSkillTags?: (skillId: string, tags: string[], options?: { refresh?: boolean }) => Promise<void>
   repositories: Repo[]
   loading?: boolean
   onLoadRepositories?: () => void
@@ -56,6 +61,7 @@ export function RepositorySelectDialog({
   isOpen,
   onClose,
   onImport,
+  onImportComplete,
   onDeleteSkill,
   existingSkills,
   onUpdateSkillTags,
@@ -87,9 +93,14 @@ export function RepositorySelectDialog({
   const [creatingTag, setCreatingTag] = useState(false)
   const tagPickerRef = useRef<HTMLDivElement>(null)
   const tagSearchInputRef = useRef<HTMLInputElement>(null)
+  const activeRequestIdRef = useRef<string | null>(null)
+  const unlistenRef = useRef<UnlistenFn | null>(null)
 
   const { language } = useAppStore()
   const { tree, createTag, fetchTree } = useTagTreeStore()
+  const { syncRepository, syncingRepositoryIds, markRepositorySyncCompleted, markRepositorySyncFailed, fetchRepositorySkills } = useRepositoryStore()
+
+  const [syncResultMap, setSyncResultMap] = useState<Map<string, { status: 'success' | 'error'; message: string }>>(new Map())
 
   const allTags = useMemo(() => flattenTree(tree), [tree])
   const getTagName = useCallback((tagId: string): string => {
@@ -123,18 +134,12 @@ export function RepositorySelectDialog({
   useEffect(() => {
     if (isOpen && repositories.length > 0) {
       const loadSkillCounts = async () => {
-        const counts = new Map<string, number>()
-        await Promise.all(
-          repositories.map(async (repo) => {
-            try {
-              const count = await repoApi.getSkillCount(repo.id)
-              counts.set(repo.id, count)
-            } catch (err) {
-              counts.set(repo.id, 0)
-            }
-          })
-        )
-        setRepoSkillCounts(counts)
+        try {
+          const items = await repoApi.getSkillCounts(repositories.map(repo => repo.id))
+          setRepoSkillCounts(new Map(items.map(item => [item.repo_id, item.count])))
+        } catch (err) {
+          setRepoSkillCounts(new Map(repositories.map(repo => [repo.id, 0])))
+        }
       }
       loadSkillCounts()
     }
@@ -170,6 +175,87 @@ export function RepositorySelectDialog({
       setTimeout(() => tagSearchInputRef.current?.focus(), 50)
     }
   }, [showTagPicker])
+
+  useEffect(() => {
+    return () => {
+      if (unlistenRef.current) {
+        void unlistenRef.current()
+        unlistenRef.current = null
+      }
+    }
+  }, [])
+
+  const handleSyncRepository = useCallback(async (repo: Repo) => {
+    const requestId = crypto.randomUUID()
+    activeRequestIdRef.current = requestId
+
+    try {
+      if (unlistenRef.current) {
+        await unlistenRef.current()
+        unlistenRef.current = null
+      }
+
+      unlistenRef.current = await listen<RepoSyncEvent>(REPO_SYNC_PROGRESS_EVENT, async (event) => {
+        const payload = event.payload
+        if (!payload || payload.request_id !== activeRequestIdRef.current || payload.repo_id !== repo.id) {
+          return
+        }
+
+        if (payload.status === 'success' && payload.repo) {
+          markRepositorySyncCompleted(payload.repo)
+          await fetchRepositorySkills(repo.id)
+          const latestSkills = useRepositoryStore.getState().repositorySkills.filter((skill) => skill.repo_id === repo.id)
+          setSyncResultMap(prev => {
+            const next = new Map(prev)
+            next.set(repo.id, {
+              status: 'success',
+              message: language === 'zh' ? `同步成功，发现 ${latestSkills.length} 个技能` : `Sync complete. Found ${latestSkills.length} skills.`
+            })
+            return next
+          })
+          try {
+            const newSkills = await repoApi.listSkills(repo.id)
+            setSkills(newSkills)
+            const items = await repoApi.getSkillCounts([repo.id])
+            setRepoSkillCounts(prev => {
+              const next = new Map(prev)
+              const count = items.find(item => item.repo_id === repo.id)?.count ?? 0
+              next.set(repo.id, count)
+              return next
+            })
+          } catch (err) {
+            console.error('Failed to refresh skills after sync:', err)
+          }
+        } else {
+          markRepositorySyncFailed(repo.id)
+          setSyncResultMap(prev => {
+            const next = new Map(prev)
+            next.set(repo.id, {
+              status: 'error',
+              message: payload.error || (language === 'zh' ? '同步失败' : 'Sync failed')
+            })
+            return next
+          })
+        }
+
+        activeRequestIdRef.current = null
+      })
+
+      await syncRepository(repo.id, requestId)
+    } catch (error) {
+      markRepositorySyncFailed(repo.id)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      setSyncResultMap(prev => {
+        const next = new Map(prev)
+        next.set(repo.id, {
+          status: 'error',
+          message: errorMessage
+        })
+        return next
+      })
+      console.error('Failed to sync repository:', error)
+    }
+  }, [syncRepository, fetchRepositorySkills, language, markRepositorySyncCompleted, markRepositorySyncFailed])
 
   if (!isOpen) return null
 
@@ -313,21 +399,25 @@ export function RepositorySelectDialog({
 
     try {
       const existingByName = existingSkills ? new Map(existingSkills.map(item => [item.name, item])) : new Map<string, Skill>()
-      const tagArray = selectedTagIds.size > 0 ? Array.from(selectedTagIds) : null
+      const selectedTagArray = Array.from(selectedTagIds)
 
       for (const skill of skillsToImport) {
+        const existingSkill = existingByName.get(skill.name)
+        const preservedTags = overwrite && existingSkill ? existingSkill.tags : []
         if (overwrite && onDeleteSkill) {
-          const existingSkill = existingByName.get(skill.name)
           if (existingSkill) {
-            await onDeleteSkill(existingSkill.id)
+            await onDeleteSkill(existingSkill.id, { refresh: false })
           }
         }
 
-        await onImport(selectedRepo.id, skill.path)
-        if (tagArray && onUpdateSkillTags) {
-          await onUpdateSkillTags(skill.path, tagArray)
+        const importedSkillPath = await onImport(selectedRepo.id, skill.path, { refresh: false })
+        const nextTags = Array.from(new Set([...preservedTags, ...selectedTagArray]))
+        if (nextTags.length > 0 && onUpdateSkillTags) {
+          await onUpdateSkillTags(importedSkillPath, nextTags, { refresh: false })
         }
       }
+
+      await onImportComplete?.()
 
       setConfirmOverwriteOpen(false)
       setStage('success')
@@ -358,9 +448,18 @@ export function RepositorySelectDialog({
     await executeImport(skillsToImport, false)
   }
 
-  const getButtonLabel = () => {
+  const getButtonLabel = (showLoading = stage === 'submitting') => {
     switch (stage) {
       case 'submitting':
+        if (!showLoading) {
+          return (
+            <>
+              {language === 'zh' ? '导入选中项' : 'Import Selected'}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )
+        }
+
         return (
           <>
             <span className="spinner" />
@@ -381,7 +480,7 @@ export function RepositorySelectDialog({
 
   return (
     <>
-      <div className="repo-import-overlay" onClick={onClose} />
+      <div className="repo-import-overlay" onClick={stage === 'submitting' ? undefined : onClose} />
       <div className="repo-import-dialog">
         <div className="repo-import-header">
           <div className="repo-import-title">
@@ -390,7 +489,7 @@ export function RepositorySelectDialog({
             </div>
             <h3>{language === 'zh' ? '从仓库导入技能' : 'Import Skill from Repository'}</h3>
           </div>
-          <button onClick={onClose} className="repo-import-close">
+          <button onClick={onClose} className="repo-import-close" disabled={stage === 'submitting'}>
             <X />
           </button>
         </div>
@@ -491,19 +590,46 @@ export function RepositorySelectDialog({
                         </div>
                       )}
                     </div>
-                    {onNavigateToRepository && (
-                      <button
-                        onClick={() => {
-                          onNavigateToRepository(selectedRepo.id)
-                          onClose()
-                        }}
-                        className="repo-import-navigate-btn"
-                        title={language === 'zh' ? '在仓库管理中查看详情' : 'View details in repository management'}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        {language === 'zh' ? '查看详情' : 'View Details'}
-                      </button>
-                    )}
+                    <div className="repo-import-panel-header-actions">
+                      <div className="repo-import-sync-wrapper">
+                        <button
+                          onClick={() => handleSyncRepository(selectedRepo)}
+                          disabled={syncingRepositoryIds.includes(selectedRepo.id)}
+                          className="repo-import-sync-btn"
+                          title={language === 'zh' ? '同步仓库' : 'Sync repository'}
+                        >
+                          {syncingRepositoryIds.includes(selectedRepo.id) ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              {language === 'zh' ? '同步中...' : 'Syncing...'}
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4" />
+                              {language === 'zh' ? '立即同步' : 'Sync Now'}
+                            </>
+                          )}
+                        </button>
+                        {syncResultMap.has(selectedRepo.id) && (
+                          <div className={`repo-import-sync-tooltip ${syncResultMap.get(selectedRepo.id)?.status === 'success' ? 'success' : 'error'}`}>
+                            {syncResultMap.get(selectedRepo.id)?.message}
+                          </div>
+                        )}
+                      </div>
+                      {onNavigateToRepository && (
+                        <button
+                          onClick={() => {
+                            onNavigateToRepository(selectedRepo.id)
+                            onClose()
+                          }}
+                          className="repo-import-navigate-btn"
+                          title={language === 'zh' ? '在仓库管理中查看详情' : 'View details in repository management'}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          {language === 'zh' ? '查看详情' : 'View Details'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="repo-import-panel-meta-row">
                     <span className="repo-import-panel-branch">
@@ -690,7 +816,7 @@ export function RepositorySelectDialog({
             )}
           </div>
           <div className="repo-import-footer-actions">
-            <button onClick={onClose} className="repo-import-btn repo-import-btn-ghost">
+            <button onClick={onClose} className="repo-import-btn repo-import-btn-ghost" disabled={stage === 'submitting'}>
               {language === 'zh' ? '取消' : 'Cancel'}
             </button>
             <button
@@ -698,7 +824,7 @@ export function RepositorySelectDialog({
               disabled={!selectedRepo || selectedSkills.size === 0 || stage === 'submitting'}
               className="repo-import-btn repo-import-btn-primary"
             >
-              {getButtonLabel()}
+              {getButtonLabel(!confirmOverwriteOpen)}
             </button>
           </div>
         </div>
@@ -706,7 +832,7 @@ export function RepositorySelectDialog({
 
       {confirmOverwriteOpen && (
         <>
-          <div className="repo-import-confirm-overlay" onClick={() => setConfirmOverwriteOpen(false)} />
+          <div className="repo-import-confirm-overlay" onClick={stage === 'submitting' ? undefined : () => setConfirmOverwriteOpen(false)} />
           <div className="repo-import-confirm-modal" role="dialog" aria-modal="true">
             <h4>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h4>
             <div className="repo-import-confirm-content">
@@ -743,14 +869,16 @@ export function RepositorySelectDialog({
               <button
                 className="repo-import-btn repo-import-btn-ghost"
                 onClick={() => setConfirmOverwriteOpen(false)}
+                disabled={stage === 'submitting'}
               >
                 {language === 'zh' ? '取消' : 'Cancel'}
               </button>
               <button
-                className="repo-import-btn repo-import-btn-primary"
+                className={`repo-import-btn repo-import-btn-primary ${stage === 'submitting' ? 'is-loading' : ''}`}
                 onClick={() => executeImport([...confirmOverwriteData.existing, ...confirmOverwriteData.newSkills], true)}
+                disabled={stage === 'submitting'}
               >
-                {language === 'zh' ? '确认导入' : 'Confirm Import'}
+                {stage === 'submitting' ? getButtonLabel() : (language === 'zh' ? '确认导入' : 'Confirm Import')}
               </button>
             </div>
           </div>

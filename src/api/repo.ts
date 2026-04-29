@@ -7,6 +7,11 @@ export interface ImportableSkill {
   description?: string
 }
 
+export interface RepoSkillCount {
+  repo_id: string
+  count: number
+}
+
 export const repoApi = {
   list: async (): Promise<Repo[]> => {
     return await invoke('get_repos')
@@ -38,5 +43,9 @@ export const repoApi = {
 
   getSkillCount: async (repoId: string): Promise<number> => {
     return await invoke('get_repo_skill_count', { repoId })
+  },
+
+  getSkillCounts: async (repoIds: string[]): Promise<RepoSkillCount[]> => {
+    return await invoke('get_repo_skill_counts', { repoIds })
   }
 }

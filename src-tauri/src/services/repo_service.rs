@@ -855,3 +855,19 @@ pub fn list_importable_skills(
 pub fn get_repo_skill_count(conn: &Connection, repo_id: &str) -> Result<usize, SkillerError> {
     skill_service::get_skill_count_by_repo_id(conn, repo_id)
 }
+
+pub fn get_repo_skill_counts(
+    conn: &Connection,
+    repo_ids: &[String],
+) -> Result<Vec<(String, usize)>, SkillerError> {
+    let mut counts = Vec::with_capacity(repo_ids.len());
+
+    for repo_id in repo_ids {
+        counts.push((
+            repo_id.clone(),
+            skill_service::get_skill_count_by_repo_id(conn, repo_id)?,
+        ));
+    }
+
+    Ok(counts)
+}
