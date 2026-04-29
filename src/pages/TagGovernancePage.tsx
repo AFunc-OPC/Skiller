@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TreeView, SearchResults, useTagSearch, DraggableTree } from '../components/TagTree'
 import { useTagTreeStore } from '../stores/tagTreeStore'
 import { useAppStore } from '../stores/appStore'
+import { useFileSkillStore } from '../stores/fileSkillStore'
 import type { DeleteTagOptions } from '../types'
 import { DeleteTagDialog, TagDialog } from '../components/TagTree/TagDialog'
 import { NotificationContainer } from '../components/NotificationToast'
-import { tagApi } from '../api/tag'
 
 export function TagGovernancePage() {
   const { language } = useAppStore()
@@ -18,8 +18,36 @@ export function TagGovernancePage() {
   const [editTagId, setEditTagId] = useState<string | null>(null)
   const [deleteTagId, setDeleteTagId] = useState<string | null>(null)
   const [deleteSkillCount, setDeleteSkillCount] = useState<number>(0)
-  const { createTag, deleteTag: deleteTagAction, error, clearError } = useTagTreeStore()
+  const { createTag, deleteTag: deleteTagAction, error, clearError, tree } = useTagTreeStore()
+  const { skills } = useFileSkillStore()
   const { query, results, search, clear } = useTagSearch()
+
+  const skillCountsByTagId = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    for (const skill of skills) {
+      for (const tagId of skill.tags) {
+        counts.set(tagId, (counts.get(tagId) ?? 0) + 1)
+      }
+    }
+
+    return counts
+  }, [skills])
+
+  const treeWithLiveCounts = useMemo(() => {
+    const injectCounts = (nodes: typeof tree): typeof tree => {
+      return nodes.map((node) => ({
+        ...node,
+        tag: {
+          ...node.tag,
+          skill_count: skillCountsByTagId.get(node.tag.id) ?? 0,
+        },
+        children: injectCounts(node.children),
+      }))
+    }
+
+    return injectCounts(tree)
+  }, [tree, skillCountsByTagId])
 
   const clearSuccess = () => {
     setSuccessMessage(null)
@@ -87,12 +115,7 @@ export function TagGovernancePage() {
 
   const handleOpenDelete = async (tagId: string) => {
     setDeleteTagId(tagId)
-    try {
-      const count = await tagApi.getSkillCount(tagId)
-      setDeleteSkillCount(count)
-    } catch {
-      setDeleteSkillCount(0)
-    }
+    setDeleteSkillCount(skillCountsByTagId.get(tagId) ?? 0)
     setDeleteOpen(true)
   }
 
@@ -183,6 +206,7 @@ export function TagGovernancePage() {
               onEdit={handleOpenEdit}
               onDelete={handleOpenDelete}
               onCreateChild={handleOpenCreate}
+              treeOverride={treeWithLiveCounts}
             />
           </DraggableTree>
         )}

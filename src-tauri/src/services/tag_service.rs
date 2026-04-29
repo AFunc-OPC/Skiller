@@ -7,13 +7,33 @@ use crate::models::tag::{
 };
 
 pub fn get_tags(conn: &Connection) -> Result<Vec<Tag>, SkillerError> {
+    let skills_dir = dirs::home_dir()
+        .ok_or_else(|| {
+            SkillerError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Cannot get home directory",
+            ))
+        })?
+        .join(".skiller")
+        .join("skills");
+    let skills_dir_str = skills_dir.to_string_lossy().to_string();
+
     let mut stmt = conn.prepare(
         r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
-           (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-           FROM tags t"#
+           (
+               SELECT COUNT(DISTINCT st.skill_id)
+               FROM skill_tags st
+               LEFT JOIN tags alias_t ON alias_t.name = st.tag_id
+               WHERE (st.tag_id = t.id OR alias_t.id = t.id)
+                 AND (
+                     st.skill_id LIKE ?1 || '/%'
+                     OR st.skill_id LIKE ?1 || '/.disable.%'
+                 )
+           ) as skill_count
+           FROM tags t"#,
     )?;
 
-    let tags = stmt.query_map([], |row| {
+    let tags = stmt.query_map(rusqlite::params![skills_dir_str], |row| {
         Ok(Tag {
             id: row.get(0)?,
             name: row.get(1)?,
@@ -439,9 +459,27 @@ pub fn update_tag(conn: &Connection, request: UpdateTagRequest) -> Result<Tag, S
 }
 
 pub fn get_tag_skill_count(conn: &Connection, tag_id: &str) -> Result<usize, SkillerError> {
+    let skills_dir = dirs::home_dir()
+        .ok_or_else(|| {
+            SkillerError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Cannot get home directory",
+            ))
+        })?
+        .join(".skiller")
+        .join("skills");
+    let skills_dir_str = skills_dir.to_string_lossy().to_string();
+
     let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM skill_tags WHERE tag_id = ?1",
-        rusqlite::params![tag_id],
+        r#"SELECT COUNT(DISTINCT st.skill_id)
+           FROM skill_tags st
+           LEFT JOIN tags alias_t ON alias_t.name = st.tag_id
+           WHERE (st.tag_id = ?1 OR alias_t.id = ?1)
+             AND (
+                 st.skill_id LIKE ?2 || '/%'
+                 OR st.skill_id LIKE ?2 || '/.disable.%'
+             )"#,
+        rusqlite::params![tag_id, skills_dir_str],
         |row| row.get(0),
     )?;
     Ok(count as usize)

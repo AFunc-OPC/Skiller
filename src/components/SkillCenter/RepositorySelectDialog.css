@@ -143,6 +143,12 @@ body:has(.repo-import-overlay) {
   transform: rotate(90deg);
 }
 
+.repo-import-close:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .repo-import-close svg {
   width: 20px;
   height: 20px;
@@ -1181,7 +1187,10 @@ body:has(.repo-import-overlay) {
   transition: all 0.2s;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  min-height: 42px;
+  white-space: nowrap;
 }
 
 .repo-import-btn-ghost {
@@ -1194,6 +1203,11 @@ body:has(.repo-import-overlay) {
   border-color: var(--text-secondary);
   color: var(--text-primary);
   background: var(--bg-elevated);
+}
+
+.repo-import-btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .repo-import-btn-primary {
@@ -1214,9 +1228,14 @@ body:has(.repo-import-overlay) {
 }
 
 .repo-import-btn-primary:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.repo-import-btn-primary.is-loading {
+  opacity: 1;
+  min-width: 112px;
 }
 
 .repo-import-btn-primary svg {

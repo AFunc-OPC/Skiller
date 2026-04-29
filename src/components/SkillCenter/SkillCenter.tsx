@@ -69,6 +69,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     cancelSkillImportFromNpx,
     importSkillFromRepository,
     checkToolAvailability,
+    refreshSkillData,
     executeNativeNpxSkillsAdd,
     syncToSkiller,
     updateSkillTags,
@@ -448,10 +449,37 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
     fetchTree()
   }, [fetchTree])
 
+  const skillCountsByTagId = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    for (const skill of skills) {
+      for (const tagId of skill.tags) {
+        counts.set(tagId, (counts.get(tagId) ?? 0) + 1)
+      }
+    }
+
+    return counts
+  }, [skills])
+
+  const treeWithLiveCounts = useMemo(() => {
+    const injectCounts = (nodes: TreeNode[]): TreeNode[] => {
+      return nodes.map((node) => ({
+        ...node,
+        tag: {
+          ...node.tag,
+          skill_count: skillCountsByTagId.get(node.tag.id) ?? 0,
+        },
+        children: injectCounts(node.children),
+      }))
+    }
+
+    return injectCounts(tree)
+  }, [tree, skillCountsByTagId])
+
   const findTagPath = useCallback((tagId: string | null) => {
     if (!tagId) return [] as string[]
 
-    const walk = (nodes: typeof tree, parents: string[] = []): string[] | null => {
+    const walk = (nodes: typeof treeWithLiveCounts, parents: string[] = []): string[] | null => {
       for (const node of nodes) {
         const nextPath = [...parents, node.tag.name]
         if (node.tag.id === tagId) return nextPath
@@ -461,8 +489,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
       return null
     }
 
-    return walk(tree) || []
-  }, [tree])
+    return walk(treeWithLiveCounts) || []
+  }, [treeWithLiveCounts])
 
   const selectedTagPath = findTagPath(selectedTagId)
 
@@ -621,9 +649,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                         <div className="text-sm text-[var(--text-secondary)]">{language === 'zh' ? '标签树加载中...' : 'Loading tag tree...'}</div>
                       ) : tagTreeError ? (
                         <div className="text-sm text-red-600 dark:text-red-400">{tagTreeError}</div>
-                      ) : tree.length > 0 ? (
+                      ) : treeWithLiveCounts.length > 0 ? (
                         <div className="space-y-1">
-                          {tree.map((node) => (
+                          {treeWithLiveCounts.map((node) => (
                             <DraggableTagNode
                               key={node.tag.id}
                               node={node}
@@ -776,6 +804,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
           isOpen={importDialog === 'repository'}
           onClose={() => setImportDialog(null)}
           onImport={importSkillFromRepository}
+          onImportComplete={refreshSkillData}
           onDeleteSkill={deleteSkill}
           existingSkills={skills}
           onUpdateSkillTags={updateSkillTags}

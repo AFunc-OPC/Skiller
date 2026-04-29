@@ -14,6 +14,12 @@ pub struct ImportableSkill {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RepoSkillCount {
+    pub repo_id: String,
+    pub count: usize,
+}
+
 fn log_action(app: &AppHandle, level: &str, source: &str, message: &str) {
     if let Some(log_service) = app.try_state::<LogService>() {
         log_service.log(Some(app), level, source, message, None);
@@ -147,6 +153,22 @@ pub fn list_repo_skills(db: State<'_, DbConnection>, repo_id: String) -> Result<
 pub fn get_repo_skill_count(db: State<'_, DbConnection>, repo_id: String) -> Result<usize, String> {
     let conn = get_connection(&db).map_err(|e| e.to_string())?;
     repo_service::get_repo_skill_count(&conn, &repo_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_repo_skill_counts(
+    db: State<'_, DbConnection>,
+    repo_ids: Vec<String>,
+) -> Result<Vec<RepoSkillCount>, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    repo_service::get_repo_skill_counts(&conn, &repo_ids)
+        .map(|items| {
+            items
+                .into_iter()
+                .map(|(repo_id, count)| RepoSkillCount { repo_id, count })
+                .collect()
+        })
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

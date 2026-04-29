@@ -786,6 +786,14 @@ pub fn delete_file_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), 
         .unwrap_or(&skill_id);
     
     log_action(&app, "INFO", "skill", &format!("删除技能: {}", skill_name));
+
+    let db = app.state::<DbConnection>();
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    conn.execute(
+        "DELETE FROM skill_tags WHERE skill_id = ?1",
+        rusqlite::params![&skill_id],
+    )
+    .map_err(|e| e.to_string())?;
     
     if path.exists() && path.is_dir() {
         fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
@@ -946,7 +954,7 @@ pub fn unzip_skill(file_path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn copy_skill(_repo_id: String, skill_path: String) -> Result<(), String> {
+pub fn copy_skill(_repo_id: String, skill_path: String) -> Result<String, String> {
     let skills_dir = get_skiller_skills_dir().map_err(|e| e.to_string())?;
     let source_path = PathBuf::from(&skill_path);
     
@@ -975,7 +983,7 @@ pub fn copy_skill(_repo_id: String, skill_path: String) -> Result<(), String> {
     
     copy_directory_to_target(&skill_dir, &target_dir)?;
 
-    Ok(())
+    Ok(target_dir.to_string_lossy().to_string())
 }
 
 #[tauri::command]

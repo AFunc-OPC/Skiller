@@ -9,10 +9,11 @@ import './RepositorySelectDialog.css'
 interface RepositorySelectDialogProps {
   isOpen: boolean
   onClose: () => void
-  onImport: (repoId: string, skillPath: string) => Promise<void>
-  onDeleteSkill?: (skillId: string) => Promise<void>
+  onImport: (repoId: string, skillPath: string, options?: { refresh?: boolean }) => Promise<string>
+  onImportComplete?: () => Promise<void>
+  onDeleteSkill?: (skillId: string, options?: { refresh?: boolean }) => Promise<void>
   existingSkills?: Skill[]
-  onUpdateSkillTags?: (skillId: string, tags: string[]) => Promise<void>
+  onUpdateSkillTags?: (skillId: string, tags: string[], options?: { refresh?: boolean }) => Promise<void>
   repositories: Repo[]
   loading?: boolean
   onLoadRepositories?: () => void
@@ -56,6 +57,7 @@ export function RepositorySelectDialog({
   isOpen,
   onClose,
   onImport,
+  onImportComplete,
   onDeleteSkill,
   existingSkills,
   onUpdateSkillTags,
@@ -123,18 +125,12 @@ export function RepositorySelectDialog({
   useEffect(() => {
     if (isOpen && repositories.length > 0) {
       const loadSkillCounts = async () => {
-        const counts = new Map<string, number>()
-        await Promise.all(
-          repositories.map(async (repo) => {
-            try {
-              const count = await repoApi.getSkillCount(repo.id)
-              counts.set(repo.id, count)
-            } catch (err) {
-              counts.set(repo.id, 0)
-            }
-          })
-        )
-        setRepoSkillCounts(counts)
+        try {
+          const items = await repoApi.getSkillCounts(repositories.map(repo => repo.id))
+          setRepoSkillCounts(new Map(items.map(item => [item.repo_id, item.count])))
+        } catch (err) {
+          setRepoSkillCounts(new Map(repositories.map(repo => [repo.id, 0])))
+        }
       }
       loadSkillCounts()
     }
@@ -313,21 +309,25 @@ export function RepositorySelectDialog({
 
     try {
       const existingByName = existingSkills ? new Map(existingSkills.map(item => [item.name, item])) : new Map<string, Skill>()
-      const tagArray = selectedTagIds.size > 0 ? Array.from(selectedTagIds) : null
+      const selectedTagArray = Array.from(selectedTagIds)
 
       for (const skill of skillsToImport) {
+        const existingSkill = existingByName.get(skill.name)
+        const preservedTags = overwrite && existingSkill ? existingSkill.tags : []
         if (overwrite && onDeleteSkill) {
-          const existingSkill = existingByName.get(skill.name)
           if (existingSkill) {
-            await onDeleteSkill(existingSkill.id)
+            await onDeleteSkill(existingSkill.id, { refresh: false })
           }
         }
 
-        await onImport(selectedRepo.id, skill.path)
-        if (tagArray && onUpdateSkillTags) {
-          await onUpdateSkillTags(skill.path, tagArray)
+        const importedSkillPath = await onImport(selectedRepo.id, skill.path, { refresh: false })
+        const nextTags = Array.from(new Set([...preservedTags, ...selectedTagArray]))
+        if (nextTags.length > 0 && onUpdateSkillTags) {
+          await onUpdateSkillTags(importedSkillPath, nextTags, { refresh: false })
         }
       }
+
+      await onImportComplete?.()
 
       setConfirmOverwriteOpen(false)
       setStage('success')
@@ -358,9 +358,18 @@ export function RepositorySelectDialog({
     await executeImport(skillsToImport, false)
   }
 
-  const getButtonLabel = () => {
+  const getButtonLabel = (showLoading = stage === 'submitting') => {
     switch (stage) {
       case 'submitting':
+        if (!showLoading) {
+          return (
+            <>
+              {language === 'zh' ? '导入选中项' : 'Import Selected'}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )
+        }
+
         return (
           <>
             <span className="spinner" />
@@ -381,7 +390,7 @@ export function RepositorySelectDialog({
 
   return (
     <>
-      <div className="repo-import-overlay" onClick={onClose} />
+      <div className="repo-import-overlay" onClick={stage === 'submitting' ? undefined : onClose} />
       <div className="repo-import-dialog">
         <div className="repo-import-header">
           <div className="repo-import-title">
@@ -390,7 +399,7 @@ export function RepositorySelectDialog({
             </div>
             <h3>{language === 'zh' ? '从仓库导入技能' : 'Import Skill from Repository'}</h3>
           </div>
-          <button onClick={onClose} className="repo-import-close">
+          <button onClick={onClose} className="repo-import-close" disabled={stage === 'submitting'}>
             <X />
           </button>
         </div>
@@ -690,7 +699,7 @@ export function RepositorySelectDialog({
             )}
           </div>
           <div className="repo-import-footer-actions">
-            <button onClick={onClose} className="repo-import-btn repo-import-btn-ghost">
+            <button onClick={onClose} className="repo-import-btn repo-import-btn-ghost" disabled={stage === 'submitting'}>
               {language === 'zh' ? '取消' : 'Cancel'}
             </button>
             <button
@@ -698,7 +707,7 @@ export function RepositorySelectDialog({
               disabled={!selectedRepo || selectedSkills.size === 0 || stage === 'submitting'}
               className="repo-import-btn repo-import-btn-primary"
             >
-              {getButtonLabel()}
+              {getButtonLabel(!confirmOverwriteOpen)}
             </button>
           </div>
         </div>
@@ -706,7 +715,7 @@ export function RepositorySelectDialog({
 
       {confirmOverwriteOpen && (
         <>
-          <div className="repo-import-confirm-overlay" onClick={() => setConfirmOverwriteOpen(false)} />
+          <div className="repo-import-confirm-overlay" onClick={stage === 'submitting' ? undefined : () => setConfirmOverwriteOpen(false)} />
           <div className="repo-import-confirm-modal" role="dialog" aria-modal="true">
             <h4>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h4>
             <div className="repo-import-confirm-content">
@@ -743,14 +752,16 @@ export function RepositorySelectDialog({
               <button
                 className="repo-import-btn repo-import-btn-ghost"
                 onClick={() => setConfirmOverwriteOpen(false)}
+                disabled={stage === 'submitting'}
               >
                 {language === 'zh' ? '取消' : 'Cancel'}
               </button>
               <button
-                className="repo-import-btn repo-import-btn-primary"
+                className={`repo-import-btn repo-import-btn-primary ${stage === 'submitting' ? 'is-loading' : ''}`}
                 onClick={() => executeImport([...confirmOverwriteData.existing, ...confirmOverwriteData.newSkills], true)}
+                disabled={stage === 'submitting'}
               >
-                {language === 'zh' ? '确认导入' : 'Confirm Import'}
+                {stage === 'submitting' ? getButtonLabel() : (language === 'zh' ? '确认导入' : 'Confirm Import')}
               </button>
             </div>
           </div>

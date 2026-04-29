@@ -58,7 +58,7 @@ function gitUrlToHttps(url: string): string {
 export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigateToSkill }: RepositoryDetailDrawerProps) {
   const { language } = useAppStore()
   const { deleteRepository, syncRepository, updateRepository, repairRepository, fetchRepositorySkills, repositorySkills, syncingRepositoryIds, markRepositorySyncCompleted, markRepositorySyncFailed } = useRepositoryStore()
-  const { importSkillFromRepository, skills: existingSkills, deleteSkill } = useSkillContext()
+  const { importSkillFromRepository, skills: existingSkills, deleteSkill, updateSkillTags, refreshSkillData } = useSkillContext()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [editingField, setEditingField] = useState<string | null>(null)
@@ -439,13 +439,17 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
 
     for (const skill of skillsToImport) {
       try {
+        const existingSkill = existingSkills.find(s => s.name === skill.name)
+        const preservedTags = overwrite && existingSkill ? existingSkill.tags : []
         if (overwrite) {
-          const existingSkill = existingSkills.find(s => s.name === skill.name)
           if (existingSkill) {
-            await deleteSkill(existingSkill.id)
+            await deleteSkill(existingSkill.id, { refresh: false })
           }
         }
-        await importSkillFromRepository(repository.id, skill.file_path)
+        const importedSkillPath = await importSkillFromRepository(repository.id, skill.file_path, { refresh: false })
+        if (preservedTags.length > 0) {
+          await updateSkillTags(importedSkillPath, preservedTags, { refresh: false })
+        }
         successCount++
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error)
@@ -454,6 +458,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       }
     }
 
+    await refreshSkillData()
     setImportingSkills(false)
 
     if (failedSkills.length === 0) {
@@ -472,7 +477,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       setImportSuccess(null)
       setImportError(null)
     }, 8000)
-  }, [repository, existingSkills, deleteSkill, importSkillFromRepository, language])
+  }, [repository, existingSkills, deleteSkill, importSkillFromRepository, updateSkillTags, refreshSkillData, language])
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return language === 'zh' ? '未同步' : 'Not synced'
