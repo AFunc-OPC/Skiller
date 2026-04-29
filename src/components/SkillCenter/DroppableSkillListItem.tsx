@@ -13,6 +13,9 @@ interface DroppableSkillListItemProps {
   onSkillClick: (skill: Skill) => void
   language: Language
   enableDropHighlight?: boolean
+  isSelected?: boolean
+  hasSelection?: boolean
+  onToggleSelect?: (skillId: string) => void
 }
 
 const STATUS_COLORS = [
@@ -40,6 +43,9 @@ export function DroppableSkillListItem({
   onSkillClick,
   language,
   enableDropHighlight = false,
+  isSelected = false,
+  hasSelection = false,
+  onToggleSelect,
 }: DroppableSkillListItemProps) {
   const { tree } = useTagTreeStore()
   const { isOver, setNodeRef, active } = useDroppable({
@@ -66,11 +72,19 @@ export function DroppableSkillListItem({
     return findTag(tree) || tagId
   }
 
+  const handleItemClick = () => {
+    if (hasSelection && onToggleSelect) {
+      onToggleSelect(skill.id)
+    } else {
+      onSkillClick(skill)
+    }
+  }
+
   return (
     <div
       ref={setNodeRef}
-      onClick={() => onSkillClick(skill)}
-      className={`droppable-skill-list-item pm-list-item ${isDisabled ? 'opacity-60' : ''} ${showDropIndicator ? 'drag-over' : ''}`}
+      onClick={handleItemClick}
+      className={`droppable-skill-list-item pm-list-item ${isDisabled ? 'opacity-60' : ''} ${showDropIndicator ? 'drag-over' : ''} ${isSelected ? 'skill-selected' : ''}`}
     >
       {showDropIndicator && (
         <div className="drop-tag-indicator-list">

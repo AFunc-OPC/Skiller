@@ -11,6 +11,9 @@ interface DroppableSkillCardProps {
   style?: React.CSSProperties
   language: 'zh' | 'en'
   enableDropHighlight?: boolean
+  isSelected?: boolean
+  hasSelection?: boolean
+  onToggleSelect?: (skillId: string) => void
 }
 
 export function DroppableSkillCard({
@@ -20,6 +23,9 @@ export function DroppableSkillCard({
   style,
   language,
   enableDropHighlight = false,
+  isSelected = false,
+  hasSelection = false,
+  onToggleSelect,
 }: DroppableSkillCardProps) {
   const { isOver, setNodeRef, active } = useDroppable({
     id: `skill-card-${skill.id}`,
@@ -32,10 +38,18 @@ export function DroppableSkillCard({
   const isDraggingTag = active?.data?.current?.type === 'tag-for-skill'
   const showDropIndicator = enableDropHighlight && isOver && isDraggingTag
 
+  const handleCardClick = () => {
+    if (hasSelection && onToggleSelect) {
+      onToggleSelect(skill.id)
+    } else {
+      onClick()
+    }
+  }
+
   return (
     <div
       ref={setNodeRef}
-      className={`droppable-skill-wrapper ${showDropIndicator ? 'drag-over' : ''}`}
+      className={`droppable-skill-wrapper ${showDropIndicator ? 'drag-over' : ''} ${isSelected ? 'skill-selected' : ''}`}
     >
       {showDropIndicator && (
         <div className="drop-tag-indicator">
@@ -47,7 +61,7 @@ export function DroppableSkillCard({
       <SkillCard
         skill={skill}
         searchKeyword={searchKeyword}
-        onClick={onClick}
+        onClick={handleCardClick}
         style={style}
         language={language}
       />

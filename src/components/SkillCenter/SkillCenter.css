@@ -1686,3 +1686,376 @@ code.sc-prepared-value {
   font-size: 0.8125rem;
   color: var(--text-primary);
 }
+
+/* ── Batch Action Bar ──────────────────────────────────────────── */
+
+.skill-center-toolbar {
+  position: relative;
+  z-index: 30;
+  overflow: visible;
+}
+
+.skill-actions {
+  position: relative;
+  z-index: 31;
+  overflow: visible;
+}
+
+.skill-multi-mode-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 32;
+}
+
+.skill-multi-mode-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.skill-multi-mode-cluster.active {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .skill-multi-mode-cluster.active {
+  border-color: rgba(52, 211, 153, 0.32);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.12) 0%, rgba(52, 211, 153, 0.04) 100%);
+}
+
+.skill-multi-mode-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skill-multi-mode-trigger:hover {
+  background: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.skill-multi-mode-trigger.active {
+  color: var(--accent-mint);
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.08);
+  width: auto;
+  min-width: 36px;
+}
+
+.skill-multi-selected-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-mint);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.skill-multi-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  animation: skill-multi-panel-in 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes skill-multi-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.skill-multi-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  position: relative;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.skill-multi-action-btn.neutral {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+
+.skill-multi-action-btn.neutral:hover:not(:disabled) {
+  background: var(--border-soft);
+  color: var(--text-primary);
+}
+
+.skill-multi-action-btn.selected {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-mint);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.skill-multi-action-btn.selected:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: var(--accent-mint);
+}
+
+.skill-multi-action-btn.tag {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-mint);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.skill-multi-action-btn.tag:hover {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: var(--accent-mint);
+}
+
+.skill-multi-action-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.skill-multi-action-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.38);
+}
+
+.skill-multi-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skill-multi-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+[data-theme="dark"] .skill-multi-action-btn.danger {
+  color: #f87171;
+}
+
+.skill-top-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+}
+
+.skill-batch-tag-picker.in-portal {
+  position: fixed;
+  bottom: auto;
+  right: auto;
+  width: 260px;
+  max-height: min(420px, calc(100vh - 16px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2147483647;
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  .skill-multi-mode-wrap {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .skill-multi-inline-actions {
+    width: 100%;
+  }
+
+  .skill-multi-action-btn {
+    flex: 0 0 auto;
+  }
+
+  .skill-batch-tag-picker.in-portal {
+    width: min(260px, calc(100vw - 2rem));
+  }
+}
+
+.skill-batch-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-soft);
+  animation: batch-bar-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes batch-bar-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.skill-batch-info {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent-mint);
+}
+
+.skill-batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skill-batch-tag-wrap {
+  position: relative;
+}
+
+.skill-batch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  font-family: inherit;
+}
+
+.skill-batch-btn-tag {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: var(--accent-mint);
+}
+
+.skill-batch-btn-tag:hover {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: var(--accent-mint);
+}
+
+.skill-batch-btn-clear {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-secondary);
+}
+
+.skill-batch-btn-clear:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.skill-batch-tag-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  background: var(--accent-mint);
+  color: white;
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  border: 1px solid var(--bg-elevated);
+}
+
+.skill-batch-tag-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px -4px rgba(0,0,0,0.15), 0 2px 8px -2px rgba(0,0,0,0.08);
+  z-index: 50;
+  overflow: hidden;
+  animation: batch-picker-in 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes batch-picker-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.skill-batch-picker-footer {
+  padding: 0.5rem;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-base);
+}
+
+.skill-batch-apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--accent-mint);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.skill-batch-apply-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.skill-batch-apply-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.skill-batch-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: skill-batch-spin 0.6s linear infinite;
+}
+
+@keyframes skill-batch-spin {
+  to { transform: rotate(360deg); }
+}

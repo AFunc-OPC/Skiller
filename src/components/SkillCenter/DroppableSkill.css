@@ -70,11 +70,6 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.24);
 }
 
-.droppable-skill-list-item {
-  position: relative;
-  transition: all 0.2s ease;
-}
-
 .droppable-skill-list-item.drag-over {
   background: rgba(16, 185, 129, 0.08);
 }
@@ -103,6 +98,17 @@
   border-radius: 6px;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.24);
+}
+
+.droppable-skill-wrapper.skill-selected .pm-card,
+.droppable-skill-list-item.skill-selected {
+  border-color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+[data-theme="dark"] .droppable-skill-wrapper.skill-selected .pm-card,
+[data-theme="dark"] .droppable-skill-list-item.skill-selected {
+  background: rgba(52, 211, 153, 0.06);
 }
 
 .tag-drag-overlay {
