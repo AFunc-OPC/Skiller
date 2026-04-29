@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink, Tag, Plus } from 'lucide-react'
-import { Repo, Skill, TreeNode } from '../../types'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
+import { X, GitBranch, Folder, Search, CheckSquare, Square, ArrowRight, AlertCircle, ExternalLink, Tag, Plus, RefreshCw } from 'lucide-react'
+import { Repo, Skill, TreeNode, RepoSyncEvent } from '../../types'
 import { repoApi, ImportableSkill } from '../../api/repo'
 import { useAppStore } from '../../stores/appStore'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
+import { useRepositoryStore } from '../../stores/repositoryStore'
 import './RepositorySelectDialog.css'
+
+const REPO_SYNC_PROGRESS_EVENT = 'repo-sync-progress'
 
 interface RepositorySelectDialogProps {
   isOpen: boolean
@@ -89,9 +93,14 @@ export function RepositorySelectDialog({
   const [creatingTag, setCreatingTag] = useState(false)
   const tagPickerRef = useRef<HTMLDivElement>(null)
   const tagSearchInputRef = useRef<HTMLInputElement>(null)
+  const activeRequestIdRef = useRef<string | null>(null)
+  const unlistenRef = useRef<UnlistenFn | null>(null)
 
   const { language } = useAppStore()
   const { tree, createTag, fetchTree } = useTagTreeStore()
+  const { syncRepository, syncingRepositoryIds, markRepositorySyncCompleted, markRepositorySyncFailed, fetchRepositorySkills } = useRepositoryStore()
+
+  const [syncResultMap, setSyncResultMap] = useState<Map<string, { status: 'success' | 'error'; message: string }>>(new Map())
 
   const allTags = useMemo(() => flattenTree(tree), [tree])
   const getTagName = useCallback((tagId: string): string => {
@@ -166,6 +175,87 @@ export function RepositorySelectDialog({
       setTimeout(() => tagSearchInputRef.current?.focus(), 50)
     }
   }, [showTagPicker])
+
+  useEffect(() => {
+    return () => {
+      if (unlistenRef.current) {
+        void unlistenRef.current()
+        unlistenRef.current = null
+      }
+    }
+  }, [])
+
+  const handleSyncRepository = useCallback(async (repo: Repo) => {
+    const requestId = crypto.randomUUID()
+    activeRequestIdRef.current = requestId
+
+    try {
+      if (unlistenRef.current) {
+        await unlistenRef.current()
+        unlistenRef.current = null
+      }
+
+      unlistenRef.current = await listen<RepoSyncEvent>(REPO_SYNC_PROGRESS_EVENT, async (event) => {
+        const payload = event.payload
+        if (!payload || payload.request_id !== activeRequestIdRef.current || payload.repo_id !== repo.id) {
+          return
+        }
+
+        if (payload.status === 'success' && payload.repo) {
+          markRepositorySyncCompleted(payload.repo)
+          await fetchRepositorySkills(repo.id)
+          const latestSkills = useRepositoryStore.getState().repositorySkills.filter((skill) => skill.repo_id === repo.id)
+          setSyncResultMap(prev => {
+            const next = new Map(prev)
+            next.set(repo.id, {
+              status: 'success',
+              message: language === 'zh' ? `同步成功，发现 ${latestSkills.length} 个技能` : `Sync complete. Found ${latestSkills.length} skills.`
+            })
+            return next
+          })
+          try {
+            const newSkills = await repoApi.listSkills(repo.id)
+            setSkills(newSkills)
+            const items = await repoApi.getSkillCounts([repo.id])
+            setRepoSkillCounts(prev => {
+              const next = new Map(prev)
+              const count = items.find(item => item.repo_id === repo.id)?.count ?? 0
+              next.set(repo.id, count)
+              return next
+            })
+          } catch (err) {
+            console.error('Failed to refresh skills after sync:', err)
+          }
+        } else {
+          markRepositorySyncFailed(repo.id)
+          setSyncResultMap(prev => {
+            const next = new Map(prev)
+            next.set(repo.id, {
+              status: 'error',
+              message: payload.error || (language === 'zh' ? '同步失败' : 'Sync failed')
+            })
+            return next
+          })
+        }
+
+        activeRequestIdRef.current = null
+      })
+
+      await syncRepository(repo.id, requestId)
+    } catch (error) {
+      markRepositorySyncFailed(repo.id)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      setSyncResultMap(prev => {
+        const next = new Map(prev)
+        next.set(repo.id, {
+          status: 'error',
+          message: errorMessage
+        })
+        return next
+      })
+      console.error('Failed to sync repository:', error)
+    }
+  }, [syncRepository, fetchRepositorySkills, language, markRepositorySyncCompleted, markRepositorySyncFailed])
 
   if (!isOpen) return null
 
@@ -500,19 +590,46 @@ export function RepositorySelectDialog({
                         </div>
                       )}
                     </div>
-                    {onNavigateToRepository && (
-                      <button
-                        onClick={() => {
-                          onNavigateToRepository(selectedRepo.id)
-                          onClose()
-                        }}
-                        className="repo-import-navigate-btn"
-                        title={language === 'zh' ? '在仓库管理中查看详情' : 'View details in repository management'}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        {language === 'zh' ? '查看详情' : 'View Details'}
-                      </button>
-                    )}
+                    <div className="repo-import-panel-header-actions">
+                      <div className="repo-import-sync-wrapper">
+                        <button
+                          onClick={() => handleSyncRepository(selectedRepo)}
+                          disabled={syncingRepositoryIds.includes(selectedRepo.id)}
+                          className="repo-import-sync-btn"
+                          title={language === 'zh' ? '同步仓库' : 'Sync repository'}
+                        >
+                          {syncingRepositoryIds.includes(selectedRepo.id) ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              {language === 'zh' ? '同步中...' : 'Syncing...'}
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4" />
+                              {language === 'zh' ? '立即同步' : 'Sync Now'}
+                            </>
+                          )}
+                        </button>
+                        {syncResultMap.has(selectedRepo.id) && (
+                          <div className={`repo-import-sync-tooltip ${syncResultMap.get(selectedRepo.id)?.status === 'success' ? 'success' : 'error'}`}>
+                            {syncResultMap.get(selectedRepo.id)?.message}
+                          </div>
+                        )}
+                      </div>
+                      {onNavigateToRepository && (
+                        <button
+                          onClick={() => {
+                            onNavigateToRepository(selectedRepo.id)
+                            onClose()
+                          }}
+                          className="repo-import-navigate-btn"
+                          title={language === 'zh' ? '在仓库管理中查看详情' : 'View details in repository management'}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          {language === 'zh' ? '查看详情' : 'View Details'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="repo-import-panel-meta-row">
                     <span className="repo-import-panel-branch">
