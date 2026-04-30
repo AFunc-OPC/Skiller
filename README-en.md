@@ -1,11 +1,10 @@
 # Skiller - Cross-Platform Skill Management Tool
 
-**Version**: v0.1.5
-**Status**: Production Ready
-**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
-**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)
-
-📄 **中文版**: [README.md](./README.md)
+**Version**: v0.1.5<br/>
+**Status**: Production Ready<br/>
+**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)<br/>
+**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)<br/>
+📄 **中文版**: [README.md](./README.md)<br/>
 
 ## Overview
 

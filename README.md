@@ -1,11 +1,10 @@
 # Skiller - 跨平台 Skill 管理工具
 
-**版本**: v0.1.5
-**状态**: Production Ready
-**开源地址**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
-**主页**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)
-
-📄 **English Version**: [README-en.md](./README-en.md)
+**版本**: v0.1.5<br/>
+**状态**: Production Ready<br/>
+**开源地址**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)<br/>
+**主页**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)<br/>
+📄 **English Version**: [README-en.md](./README-en.md)<br/>
 
 ## 项目简介
 
