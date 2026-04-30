@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { Skill, Tag, TagGroup, SourceMetadata } from '../types'
 import { skillApi } from '../api/skill'
 import { tagApi } from '../api/tag'
+import { normalizeSkillSourceMetadata } from '../utils/skillSourceMetadata'
 
 interface SkillState {
   skills: Skill[]
@@ -37,7 +38,7 @@ export const useSkillStore = create<SkillState>((set) => ({
     set({ loading: true, error: null })
     try {
       const skills = await skillApi.list(tagIds)
-      set({ skills, loading: false })
+      set({ skills: skills.map(normalizeSkillSourceMetadata), loading: false })
     } catch (error) {
       set({ error: String(error), loading: false })
     }
@@ -53,7 +54,7 @@ export const useSkillStore = create<SkillState>((set) => ({
         source_metadata: sourceMetadata,
         tags,
       })
-      set((state) => ({ skills: [...state.skills, skill] }))
+      set((state) => ({ skills: [...state.skills, normalizeSkillSourceMetadata(skill)] }))
     } catch (error) {
       set({ error: String(error) })
     }
@@ -68,7 +69,7 @@ export const useSkillStore = create<SkillState>((set) => ({
         tags: updates.tags,
       })
       set((state) => ({
-        skills: state.skills.map((s) => (s.id === id ? skill : s)),
+        skills: state.skills.map((s) => (s.id === id ? normalizeSkillSourceMetadata(skill) : s)),
       }))
     } catch (error) {
       set({ error: String(error) })

@@ -23,7 +23,7 @@ interface NpxImportDialogProps {
   onConfirmImport: (sessionId: string) => Promise<ConfirmNpxSkillImportResponse>
   onCancelImport: (sessionId: string) => Promise<void>
   onExecuteNative: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
-  onSyncToSkiller: (skillName: string) => Promise<SyncToSkillerResponse>
+  onSyncToSkiller: (skillName: string, command?: string) => Promise<SyncToSkillerResponse>
   checkTools: () => Promise<ToolAvailability>
 }
 
@@ -234,7 +234,7 @@ export function NpxImportDialog({
     setError('')
 
     try {
-      const result = await onSyncToSkiller(nativeResult.skill_name)
+      const result = await onSyncToSkiller(nativeResult.skill_name, command.trim())
       if (result.is_update) {
         setSuccessMessage(`${language === 'zh' ? '更新成功' : 'Update successful'}：${result.skill_name}`)
         setLogs((prev) => [...prev, `${language === 'zh' ? '已更新到' : 'Updated to'} ${result.skill_path}`])

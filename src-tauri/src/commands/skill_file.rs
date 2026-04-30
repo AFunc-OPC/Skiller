@@ -19,6 +19,28 @@ use crate::utils::shell::{check_command_available, create_shell_command_for_npx,
 
 const NPX_IMPORT_PROGRESS_EVENT: &str = "npx-import-progress";
 const NATIVE_NPX_PROGRESS_EVENT: &str = "native-npx-progress";
+const SKILLER_SOURCE_METADATA_FILE: &str = ".skiller-source.json";
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type")]
+enum FileSkillSourceMetadata {
+    #[serde(rename = "file")]
+    File { original_path: String },
+    #[serde(rename = "npx")]
+    Npx { command: String },
+    #[serde(rename = "repository")]
+    Repository { repo_id: String },
+}
+
+impl FileSkillSourceMetadata {
+    fn source(&self) -> &'static str {
+        match self {
+            Self::File { .. } => "file",
+            Self::Npx { .. } => "npx",
+            Self::Repository { .. } => "repository",
+        }
+    }
+}
 
 fn log_action(app: &tauri::AppHandle, level: &str, source: &str, message: &str) {
     if let Some(log_service) = app.try_state::<LogService>() {
@@ -437,6 +459,20 @@ fn copy_directory_to_target(source: &Path, target: &Path) -> Result<(), String> 
     Ok(())
 }
 
+fn source_metadata_path(skill_dir: &Path) -> PathBuf {
+    skill_dir.join(SKILLER_SOURCE_METADATA_FILE)
+}
+
+fn write_source_metadata(skill_dir: &Path, metadata: &FileSkillSourceMetadata) -> Result<(), String> {
+    let contents = serde_json::to_string(metadata).map_err(|e| e.to_string())?;
+    fs::write(source_metadata_path(skill_dir), contents).map_err(|e| e.to_string())
+}
+
+fn read_source_metadata(skill_dir: &Path) -> Option<FileSkillSourceMetadata> {
+    let contents = fs::read_to_string(source_metadata_path(skill_dir)).ok()?;
+    serde_json::from_str(&contents).ok()
+}
+
 fn parse_npx_skill_command(command: &str) -> Result<ParsedNpxSkillCommand, SkillerError> {
     let parts: Vec<&str> = command.split_whitespace().collect();
     if parts.len() < 4 {
@@ -685,6 +721,15 @@ pub fn get_file_skills(db: State<'_, DbConnection>) -> Result<Vec<Skill>, String
                 };
 
                 let skill_id = path.to_string_lossy().to_string();
+                let source_metadata = read_source_metadata(&path);
+                let source = source_metadata
+                    .as_ref()
+                    .map(FileSkillSourceMetadata::source)
+                    .unwrap_or("file")
+                    .to_string();
+                let source_metadata_json = source_metadata
+                    .as_ref()
+                    .and_then(|metadata| serde_json::to_string(metadata).ok());
 
                 let tags =
                     skill_file_service::get_file_skill_tags(&conn, &skill_id).unwrap_or_default();
@@ -706,9 +751,12 @@ pub fn get_file_skills(db: State<'_, DbConnection>) -> Result<Vec<Skill>, String
                     name: display_name,
                     description,
                     file_path: skill_id,
-                    source: "file".to_string(),
-                    source_metadata: None,
-                    repo_id: None,
+                    source,
+                    source_metadata: source_metadata_json,
+                    repo_id: match source_metadata {
+                        Some(FileSkillSourceMetadata::Repository { repo_id }) => Some(repo_id),
+                        _ => None,
+                    },
                     tags,
                     status: if is_disabled || target_disabled {
                         "disabled".to_string()
@@ -944,6 +992,13 @@ pub fn unzip_skill(file_path: String) -> Result<(), String> {
         format!("Failed to copy skill files: {}", e)
     })?;
 
+    write_source_metadata(
+        &target_dir,
+        &FileSkillSourceMetadata::File {
+            original_path: source_path.to_string_lossy().to_string(),
+        },
+    )?;
+
     if !is_directory {
         if let Some(parent) = source_content_dir.parent() {
             let _ = fs::remove_dir_all(parent);
@@ -954,7 +1009,7 @@ pub fn unzip_skill(file_path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn copy_skill(_repo_id: String, skill_path: String) -> Result<String, String> {
+pub fn copy_skill(repo_id: String, skill_path: String) -> Result<String, String> {
     let skills_dir = get_skiller_skills_dir().map_err(|e| e.to_string())?;
     let source_path = PathBuf::from(&skill_path);
     
@@ -982,6 +1037,10 @@ pub fn copy_skill(_repo_id: String, skill_path: String) -> Result<String, String
     }
     
     copy_directory_to_target(&skill_dir, &target_dir)?;
+    write_source_metadata(
+        &target_dir,
+        &FileSkillSourceMetadata::Repository { repo_id },
+    )?;
 
     Ok(target_dir.to_string_lossy().to_string())
 }
@@ -1124,6 +1183,12 @@ pub async fn confirm_npx_skill_import(
     }
 
     copy_directory_to_target(&source_path, &target_dir)?;
+    write_source_metadata(
+        &target_dir,
+        &FileSkillSourceMetadata::Npx {
+            command: session.command.clone(),
+        },
+    )?;
 
     let cleaned_up = fs::remove_dir_all(&session_dir).is_ok();
 
@@ -1400,7 +1465,7 @@ pub async fn execute_npx_skills_add_native(
 }
 
 #[tauri::command]
-pub fn confirm_overwrite_and_sync(skill_name: String) -> Result<String, String> {
+pub fn confirm_overwrite_and_sync(skill_name: String, command: Option<String>) -> Result<String, String> {
     let agents_skills_dir = get_agents_skills_dir().map_err(|e| e.to_string())?;
     let source_path = agents_skills_dir.join(&skill_name);
 
@@ -1429,12 +1494,18 @@ pub fn confirm_overwrite_and_sync(skill_name: String) -> Result<String, String> 
     }
 
     copy_directory_to_target(&source_path, &target_path)?;
+    if let Some(command) = command.filter(|value| !value.trim().is_empty()) {
+        write_source_metadata(
+            &target_path,
+            &FileSkillSourceMetadata::Npx { command },
+        )?;
+    }
 
     Ok(target_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub fn sync_skill_to_skiller(skill_name: String) -> Result<SyncToSkillerResponse, String> {
+pub fn sync_skill_to_skiller(skill_name: String, command: Option<String>) -> Result<SyncToSkillerResponse, String> {
     let agents_skills_dir = get_agents_skills_dir().map_err(|e| e.to_string())?;
     let source_path = agents_skills_dir.join(&skill_name);
 
@@ -1464,6 +1535,12 @@ pub fn sync_skill_to_skiller(skill_name: String) -> Result<SyncToSkillerResponse
     }
 
     copy_directory_to_target(&source_path, &target_path)?;
+    if let Some(command) = command.filter(|value| !value.trim().is_empty()) {
+        write_source_metadata(
+            &target_path,
+            &FileSkillSourceMetadata::Npx { command },
+        )?;
+    }
 
     Ok(SyncToSkillerResponse {
         skill_name,

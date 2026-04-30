@@ -6,6 +6,7 @@ import { repoApi } from '../../api/repo'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useAppStore } from '../../stores/appStore'
 import { Project, Skill, SkillDistributionMode, SkillDistributionTarget, Tag, ToolPreset, Repo } from '../../types'
+import { parseSourceMetadata } from '../../utils/skillSourceMetadata'
 import { SkillMarkdownPreview } from './SkillMarkdownPreview'
 
 interface SkillDetailDrawerProps {
@@ -55,6 +56,34 @@ function getSkillFolderName(skillPath: string): string {
   const normalized = skillPath.replace(/\/+$/, '')
   const parts = normalized.split('/')
   return parts[parts.length - 1] || skillPath
+}
+
+function getSourceDisplay(skill: Skill, language: string): { label: string; detail?: string } {
+  const sourceMetadata = parseSourceMetadata(skill.source_metadata)
+  const sourceLabels: Record<string, string> = {
+    file: language === 'zh' ? '从文件导入' : 'Imported from file',
+    npx: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
+    repository: language === 'zh' ? '从仓库导入' : 'Imported from repository',
+  }
+
+  if (!sourceMetadata) {
+    return { label: sourceLabels[skill.source] || skill.source }
+  }
+
+  switch (sourceMetadata.type) {
+    case 'file':
+      return {
+        label: language === 'zh' ? '从文件导入' : 'Imported from file',
+        detail: sourceMetadata.original_path,
+      }
+    case 'npx':
+      return {
+        label: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
+        detail: sourceMetadata.command,
+      }
+    case 'repository':
+      return { label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
+  }
 }
 
 function highlightText(text: string, search: string): React.ReactNode {
@@ -371,11 +400,8 @@ export function SkillDetailDrawer({
   const selectedPresets = toolPresets.filter((preset) => selectedPresetIds.includes(preset.id))
   const selectedProjects = projects.filter((project) => selectedProjectIds.includes(project.id))
   const skillFolderName = getSkillFolderName(skill.file_path)
-  const sourceLabels: Record<string, string> = {
-    file: language === 'zh' ? '从文件导入' : 'Imported from file',
-    npx: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
-    repository: language === 'zh' ? '从仓库导入' : 'Imported from repository'
-  }
+  const sourceMetadata = parseSourceMetadata(skill.source_metadata)
+  const sourceDisplay = getSourceDisplay(skill, language)
   const previewPath = selectedPreset
     ? distributionTarget === 'global'
       ? joinPath(expandTilde(selectedPreset.global_path), skillFolderName)
@@ -595,37 +621,28 @@ export function SkillDetailDrawer({
                 </button>
               </div>
             )}
-            <div className="sk-meta-item">
+            <div className="sk-meta-item sk-meta-source-item">
               <span className="sk-meta-label">{language === 'zh' ? '来源' : 'Source'}</span>
-              <span className="sk-meta-value">
-                {skill.source_metadata ? (
-                  <>
-                    {skill.source_metadata.type === 'file' && (
-                      <>{language === 'zh' ? '从文件导入' : 'Imported from file'} ({skill.source_metadata.original_path})</>
-                    )}
-                    {skill.source_metadata.type === 'npx' && (
-                      <>{language === 'zh' ? '使用' : 'Using'} {skill.source_metadata.command} {language === 'zh' ? '安装' : 'installed'}</>
-                    )}
-                    {skill.source_metadata.type === 'repository' && (
-                      <>
-                        {language === 'zh' ? '从仓库导入' : 'Imported from repository'}
-                        {skill.repo_id && onNavigateToRepository && (
-                          <button
-                            className="sk-meta-link sk-source-repo-link"
-                            onClick={() => onNavigateToRepository(skill.repo_id!)}
-                            title={language === 'zh' ? '查看仓库详情' : 'View repository details'}
-                          >
-                            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                            </svg>
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>{sourceLabels[skill.source] || skill.source}</>
+              <span className="sk-meta-value sk-source-value">
+                <span className="sk-source-main">
+                  {sourceDisplay.label}
+                  {sourceMetadata?.type === 'repository' && skill.repo_id && onNavigateToRepository && (
+                    <button
+                      className="sk-meta-link sk-source-repo-link"
+                      onClick={() => onNavigateToRepository(skill.repo_id!)}
+                      title={language === 'zh' ? '查看仓库详情' : 'View repository details'}
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                      </svg>
+                    </button>
+                  )}
+                </span>
+                {sourceDisplay.detail && (
+                  <span className="sk-source-detail" title={sourceDisplay.detail}>
+                    {sourceDisplay.detail}
+                  </span>
                 )}
               </span>
             </div>

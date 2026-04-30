@@ -50,7 +50,7 @@ interface SkillContextValue extends SkillCenterState {
   getSkillTags: (skillId: string) => Promise<string[]>
   distributeSkill: (request: DistributeSkillRequest) => Promise<DistributeSkillResult>
   executeNativeNpxSkillsAdd: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
-  syncToSkiller: (skillName: string) => Promise<{ skill_name: string; skill_path: string; is_update: boolean }>
+  syncToSkiller: (skillName: string, command?: string) => Promise<{ skill_name: string; skill_path: string; is_update: boolean }>
   listAgentsSkills: () => Promise<AgentsSkillInfo[]>
 }
 
@@ -248,9 +248,9 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchSkills, fetchTagTree])
 
-  const syncToSkiller = useCallback(async (skillName: string) => {
+  const syncToSkiller = useCallback(async (skillName: string, command?: string) => {
     try {
-      const result = await invoke<{ skill_name: string; skill_path: string; is_update: boolean }>('sync_skill_to_skiller', { skillName })
+      const result = await invoke<{ skill_name: string; skill_path: string; is_update: boolean }>('sync_skill_to_skiller', { skillName, command })
       await fetchSkills()
       await fetchTagTree()
       return result
