@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { invoke } from '../api/tauri'
 import type { Skill } from '../types'
+import { normalizeSkillSourceMetadata } from '../utils/skillSourceMetadata'
 
 interface FileSkillState {
   skills: Skill[]
@@ -19,7 +20,7 @@ export const useFileSkillStore = create<FileSkillState>((set) => ({
     set({ loading: true, error: null })
     try {
       const skills = await invoke<Skill[]>('get_file_skills')
-      set({ skills, loading: false })
+      set({ skills: skills.map(normalizeSkillSourceMetadata), loading: false })
     } catch (error) {
       set({ error: String(error), loading: false })
     }

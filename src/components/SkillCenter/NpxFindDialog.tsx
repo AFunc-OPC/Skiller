@@ -46,7 +46,7 @@ interface NpxFindDialogProps {
   onSearchApi: (keyword: string) => Promise<NpxFindResponse>
   onExecuteFind: (keyword: string, requestId: string) => Promise<NpxFindResponse>
   onExecuteNative: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
-  onSyncToSkiller: (skillName: string) => Promise<SyncToSkillerResponse>
+  onSyncToSkiller: (skillName: string, command?: string) => Promise<SyncToSkillerResponse>
   checkNpx: () => Promise<boolean>
   existingSkillNames: string[]
 }
@@ -393,7 +393,7 @@ export function NpxFindDialog({
             : `Syncing to Skiller: ${skillName}`,
         ])
         
-        const syncResult = await onSyncToSkiller(skillName)
+        const syncResult = await onSyncToSkiller(skillName, command)
         
         successCount++
         setLogs((prev) => [

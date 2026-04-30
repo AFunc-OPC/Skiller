@@ -23,7 +23,7 @@ export interface Skill {
   description: string | null
   file_path: string
   source: string
-  source_metadata: SourceMetadata | null
+  source_metadata: SourceMetadata | string | null
   repo_id: string | null
   tags: string[]
   status: 'available' | 'disabled'
