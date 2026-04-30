@@ -615,7 +615,7 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 ---
 
-**版本**：v0.1.3 (Beta)  
+**版本**：v0.1.5 (Beta)  
 **技术栈**：Tauri + React + TypeScript + Tailwind CSS  
 **开源地址**：[https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `
@@ -1237,7 +1237,7 @@ If you encounter issues, please get help through:
 
 ---
 
-**Version**: v0.1.3 (Beta)  
+**Version**: v0.1.5 (Beta)  
 **Tech Stack**: Tauri + React + TypeScript + Tailwind CSS  
 **Open Source**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `
