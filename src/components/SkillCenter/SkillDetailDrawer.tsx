@@ -58,7 +58,7 @@ function getSkillFolderName(skillPath: string): string {
   return parts[parts.length - 1] || skillPath
 }
 
-function getSourceDisplay(skill: Skill, language: string): { label: string; detail?: string } {
+function getSourceDisplay(skill: Skill, language: string): { kind: string; label: string; detail?: string } {
   const sourceMetadata = parseSourceMetadata(skill.source_metadata)
   const sourceLabels: Record<string, string> = {
     file: language === 'zh' ? '从文件导入' : 'Imported from file',
@@ -67,22 +67,24 @@ function getSourceDisplay(skill: Skill, language: string): { label: string; deta
   }
 
   if (!sourceMetadata) {
-    return { label: sourceLabels[skill.source] || skill.source }
+    return { kind: skill.source || 'unknown', label: sourceLabels[skill.source] || skill.source }
   }
 
   switch (sourceMetadata.type) {
     case 'file':
       return {
+        kind: 'file',
         label: language === 'zh' ? '从文件导入' : 'Imported from file',
         detail: sourceMetadata.original_path,
       }
     case 'npx':
       return {
+        kind: 'npx',
         label: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
         detail: sourceMetadata.command,
       }
     case 'repository':
-      return { label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
+      return { kind: 'repository', label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
   }
 }
 
@@ -114,6 +116,7 @@ export function SkillDetailDrawer({
   const [skillTags, setSkillTags] = useState<string[]>(skill?.tags || [])
   const [tagsLoading, setTagsLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [sourceCopied, setSourceCopied] = useState(false)
   const [showTagDropdown, setShowTagDropdown] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
   const [expandedTagIds, setExpandedTagIds] = useState<Set<string>>(new Set())
@@ -184,6 +187,7 @@ export function SkillDetailDrawer({
     setDistributionError('')
     setDistributionSuccess('')
     setDistributionPathCopied(false)
+    setSourceCopied(false)
     setShowProjectDropdown(false)
     setShowPresetDropdown(false)
   }, [skill?.id, isOpen])
@@ -265,6 +269,17 @@ export function SkillDetailDrawer({
       setTimeout(() => setCopied(false), 1500)
     } catch (error) {
       console.error('Failed to copy:', error)
+    }
+  }
+
+  const handleCopySourceDetail = async () => {
+    if (!sourceDisplay.detail) return
+    try {
+      await navigator.clipboard.writeText(sourceDisplay.detail)
+      setSourceCopied(true)
+      setTimeout(() => setSourceCopied(false), 1500)
+    } catch (error) {
+      console.error('Failed to copy source detail:', error)
     }
   }
 
@@ -606,7 +621,7 @@ export function SkillDetailDrawer({
           </div>
 
           <div className="sk-meta-grid">
-            {repository && (
+            {repository && sourceMetadata?.type !== 'repository' && (
               <div className="sk-meta-item">
                 <span className="sk-meta-label">{language === 'zh' ? '所属仓库' : 'Repository'}</span>
                 <button 
@@ -624,14 +639,15 @@ export function SkillDetailDrawer({
             <div className="sk-meta-item sk-meta-source-item">
               <span className="sk-meta-label">{language === 'zh' ? '来源' : 'Source'}</span>
               <span className="sk-meta-value sk-source-value">
-                <span className="sk-source-main">
+                <span className={`sk-source-main ${sourceDisplay.kind}`}>
                   {sourceDisplay.label}
                   {sourceMetadata?.type === 'repository' && skill.repo_id && onNavigateToRepository && (
                     <button
-                      className="sk-meta-link sk-source-repo-link"
+                      className="sk-source-repo-chip"
                       onClick={() => onNavigateToRepository(skill.repo_id!)}
                       title={language === 'zh' ? '查看仓库详情' : 'View repository details'}
                     >
+                      <span>{repository?.name || (language === 'zh' ? '查看仓库' : 'View repository')}</span>
                       <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                         <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                         <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
@@ -643,6 +659,25 @@ export function SkillDetailDrawer({
                   <span className="sk-source-detail" title={sourceDisplay.detail}>
                     {sourceDisplay.detail}
                   </span>
+                )}
+                {sourceMetadata?.type === 'npx' && sourceDisplay.detail && (
+                  <button
+                    className={`sk-source-copy-btn ${sourceCopied ? 'copied' : ''}`}
+                    onClick={handleCopySourceDetail}
+                    title={sourceCopied ? (language === 'zh' ? '已复制' : 'Copied') : (language === 'zh' ? '复制 npx 命令' : 'Copy npx command')}
+                    aria-label={sourceCopied ? (language === 'zh' ? '已复制' : 'Copied') : (language === 'zh' ? '复制 npx 命令' : 'Copy npx command')}
+                  >
+                    {sourceCopied ? (
+                      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                        <rect x="7" y="7" width="10" height="10" rx="1" />
+                        <path d="M3 13V4a1 1 0 011-1h9" />
+                      </svg>
+                    )}
+                  </button>
                 )}
               </span>
             </div>
