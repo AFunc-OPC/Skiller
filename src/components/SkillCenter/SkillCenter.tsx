@@ -11,7 +11,7 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle, Square, CheckSquare } from 'lucide-react'
+import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle, Square, CheckSquare, Download } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
@@ -106,6 +106,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [batchTagLoading, setBatchTagLoading] = useState(false)
   const [batchDeleting, setBatchDeleting] = useState(false)
   const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false)
+  const [batchExporting, setBatchExporting] = useState(false)
   const multiSelectPanelRef = useRef<HTMLDivElement>(null)
   const tagActionButtonRef = useRef<HTMLButtonElement>(null)
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
@@ -280,6 +281,31 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
       setBatchDeleting(false)
     }
   }, [batchDeleting, deleteSkill, handleClearSelection, selectedSkillsForDelete])
+
+  const handleBatchExport = useCallback(async () => {
+    if (selectedSkillIds.size === 0 || batchExporting) return
+
+    setBatchExporting(true)
+    try {
+      const { save } = await import('@tauri-apps/plugin-dialog')
+      const path = await save({
+        defaultPath: `skills-export-${Date.now()}.zip`,
+        filters: [{ name: 'ZIP', extensions: ['zip'] }],
+      })
+
+      if (path) {
+        await invoke('export_skills', {
+          skillIds: Array.from(selectedSkillIds),
+          exportPath: path,
+        })
+        handleClearSelection()
+      }
+    } catch (err) {
+      console.error('Failed to export skills:', err)
+    } finally {
+      setBatchExporting(false)
+    }
+  }, [batchExporting, selectedSkillIds, handleClearSelection])
 
   const handleBatchAssignTags = useCallback(async () => {
     if (batchTagIds.size === 0 || selectedSkillIds.size === 0) return
@@ -582,6 +608,16 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                       aria-label={language === 'zh' ? '批量删除' : 'Batch delete'}
                     >
                       {batchDeleting ? <span className="skill-batch-spinner" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <button
+                      className="skill-multi-action-btn export"
+                      onClick={handleBatchExport}
+                      disabled={selectedSkillIds.size === 0 || batchExporting}
+                      title={language === 'zh' ? '导出' : 'Export'}
+                      aria-label={language === 'zh' ? '导出' : 'Export'}
+                    >
+                      {batchExporting ? <span className="skill-batch-spinner" /> : <Download className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 )}

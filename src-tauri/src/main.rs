@@ -56,6 +56,7 @@ fn main() {
             skiller::commands::skill_file::list_agents_skills,
             skiller::commands::skill_file::search_skills_sh_api,
             skiller::commands::skill_file::execute_npx_skills_find,
+            skiller::commands::skill_file::export_skills,
             skiller::commands::tag::get_tags,
             skiller::commands::tag::get_tag_groups,
             skiller::commands::tag::create_tag,

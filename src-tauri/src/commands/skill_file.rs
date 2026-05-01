@@ -1902,6 +1902,68 @@ fn parse_npx_find_output(lines: &[String]) -> Vec<FoundSkill> {
     skills
 }
 
+#[tauri::command]
+pub fn export_skills(
+    skill_ids: Vec<String>,
+    export_path: String,
+) -> Result<(), String> {
+    if skill_ids.is_empty() {
+        return Err("No skills selected for export".to_string());
+    }
+
+    let export_file = PathBuf::from(&export_path);
+    let file = fs::File::create(&export_file).map_err(|e| format!("Failed to create export file: {}", e))?;
+    let mut zip = zip::ZipWriter::new(file);
+    let options = zip::write::FileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated)
+        .unix_permissions(0o755);
+
+    for skill_id in &skill_ids {
+        let skill_path = PathBuf::from(skill_id);
+        
+        if !skill_path.exists() {
+            continue;
+        }
+
+        let skill_name = skill_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown");
+
+        fn add_dir_to_zip<W: std::io::Write + std::io::Seek>(
+            zip: &mut zip::ZipWriter<W>,
+            base_path: &Path,
+            current_path: &Path,
+            prefix: &str,
+            options: zip::write::FileOptions,
+        ) -> Result<(), String> {
+            if current_path.is_dir() {
+                let entries = fs::read_dir(current_path).map_err(|e| e.to_string())?;
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let path = entry.path();
+                    let relative = path.strip_prefix(base_path).map_err(|e| e.to_string())?;
+                    let zip_path = format!("{}/{}", prefix, relative.to_string_lossy().replace('\\', "/"));
+                    
+                    if path.is_dir() {
+                        add_dir_to_zip(zip, base_path, &path, prefix, options)?;
+                    } else {
+                        zip.start_file(&zip_path, options).map_err(|e| e.to_string())?;
+                        let mut file = fs::File::open(&path).map_err(|e| e.to_string())?;
+                        std::io::copy(&mut file, zip).map_err(|e| e.to_string())?;
+                    }
+                }
+            }
+            Ok(())
+        }
+
+        add_dir_to_zip(&mut zip, &skill_path, &skill_path, skill_name, options)?;
+    }
+
+    zip.finish().map_err(|e| format!("Failed to finalize zip archive: {}", e))?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{

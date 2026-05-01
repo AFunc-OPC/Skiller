@@ -1855,6 +1855,21 @@ code.sc-prepared-value {
   border-color: rgba(239, 68, 68, 0.38);
 }
 
+.skill-multi-action-btn.export {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.24);
+}
+
+.skill-multi-action-btn.export:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.38);
+}
+
+[data-theme="dark"] .skill-multi-action-btn.export {
+  color: #60a5fa;
+}
+
 .skill-multi-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
