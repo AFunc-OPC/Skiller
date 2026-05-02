@@ -164,6 +164,7 @@ pub fn list_openspec_changes(project_path: String) -> Result<Vec<OpenSpecChangeI
     let json_output = run_openspec_command(&project_path, &["list", "--json"])?;
     
     #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
     struct CliChange {
         name: String,
         #[serde(default)]
