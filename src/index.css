@@ -3237,7 +3237,7 @@ body {
   right: 0;
   bottom: 0;
   z-index: 200;
-  background: var(--bg-primary);
+  background: var(--bg-base);
 }
 
 .pm-drawer-content {
