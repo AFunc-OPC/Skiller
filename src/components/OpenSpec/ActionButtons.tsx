@@ -9,27 +9,10 @@ interface ActionButtonsProps {
   language: 'zh' | 'en'
 }
 
-const STAGE_ACTIONS: Record<string, { action: string; labelZh: string; labelEn: string }[]> = {
-  propose: [{ action: 'new', labelZh: '继续推进', labelEn: 'Continue' }],
-  new: [
-    { action: 'continue', labelZh: '迭代', labelEn: 'Iterate' },
-    { action: 'apply', labelZh: '执行实现', labelEn: 'Apply' },
-  ],
-  continue: [
-    { action: 'continue', labelZh: '继续迭代', labelEn: 'Continue' },
-    { action: 'apply', labelZh: '执行实现', labelEn: 'Apply' },
-  ],
-  apply: [{ action: 'verify', labelZh: '验证实现', labelEn: 'Verify' }],
-  verify: [{ action: 'archive', labelZh: '归档变更', labelEn: 'Archive' }],
-  archive: [],
-}
-
 export function ActionButtons({ projectPath, change, language }: ActionButtonsProps) {
   const { executeAction, commandLoading, refresh } = useOpenSpecStore()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<string | null>(null)
-
-  const actions = STAGE_ACTIONS[change.currentStage] || []
 
   const handleActionClick = (action: string) => {
     setPendingAction(action)
@@ -47,32 +30,25 @@ export function ActionButtons({ projectPath, change, language }: ActionButtonsPr
     }
   }
 
-  if (actions.length === 0 || change.status === 'archived') {
+  if (change.status === 'complete') {
     return null
   }
 
   return (
     <>
       <div className="os-actions">
-        {actions.map((actionInfo) => (
-          <button
-            key={actionInfo.action}
-            className="os-action-btn primary"
-            onClick={() => handleActionClick(actionInfo.action)}
-            disabled={commandLoading}
-          >
-            {commandLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : actionInfo.action === 'archive' ? (
-              <Archive className="w-4 h-4" />
-            ) : actionInfo.action === 'verify' ? (
-              <CheckCircle className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-            <span>{language === 'zh' ? actionInfo.labelZh : actionInfo.labelEn}</span>
-          </button>
-        ))}
+        <button
+          className="os-action-btn primary"
+          onClick={() => handleActionClick('continue')}
+          disabled={commandLoading}
+        >
+          {commandLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Play className="w-4 h-4" />
+          )}
+          <span>{language === 'zh' ? '继续推进' : 'Continue'}</span>
+        </button>
       </div>
 
       {confirmOpen && (

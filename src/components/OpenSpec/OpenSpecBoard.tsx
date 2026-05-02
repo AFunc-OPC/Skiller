@@ -1,11 +1,8 @@
 import { useEffect, useCallback } from 'react'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RefreshCw, CheckCircle2, Circle, Loader2 } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
-import { WorkflowTimeline } from './WorkflowTimeline'
-import { ArtifactPreview } from './ArtifactPreview'
-import { ActionButtons } from './ActionButtons'
 import { CliInstallPrompt } from './CliInstallPrompt'
 import type { Project } from '../../types'
 import './OpenSpec.css'
@@ -23,18 +20,15 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     cliStatus,
     loading,
     error,
-    hasOpenSpecDirectory,
     fetchChanges,
     selectChange,
     checkCli,
-    checkOpenSpecDirectory,
     refresh,
   } = useOpenSpecStore()
 
   useEffect(() => {
     checkCli()
-    checkOpenSpecDirectory(project.path)
-  }, [checkCli, checkOpenSpecDirectory, project.path])
+  }, [checkCli])
 
   useEffect(() => {
     if (cliStatus?.installed) {
@@ -42,7 +36,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     }
   }, [cliStatus?.installed, fetchChanges, project.path])
 
-  const selectedChange = changes.find((c) => c.id === selectedChangeId)
+  const selectedChange = changes.find((c) => c.name === selectedChangeId)
 
   const handleRefresh = useCallback(() => {
     refresh(project.path)
@@ -112,23 +106,61 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
 
         <main className="os-main">
           {selectedChange ? (
-            <>
-              <WorkflowTimeline
-                currentStage={selectedChange.currentStage}
-                language={language}
-              />
-              <ArtifactPreview
-                projectPath={project.path}
-                changeId={selectedChange.id}
-                artifacts={selectedChange.artifacts}
-                language={language}
-              />
-              <ActionButtons
-                projectPath={project.path}
-                change={selectedChange}
-                language={language}
-              />
-            </>
+            <div className="os-change-detail">
+              <div className="os-detail-header">
+                <h2 className="os-detail-title">{selectedChange.name}</h2>
+                <div className="os-detail-status">
+                  {selectedChange.status === 'complete' ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : selectedChange.status === 'in-progress' ? (
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  )}
+                  <span className={`os-status-label os-status-${selectedChange.status}`}>
+                    {selectedChange.status === 'complete' 
+                      ? (language === 'zh' ? '已完成' : 'Complete')
+                      : selectedChange.status === 'in-progress'
+                        ? (language === 'zh' ? '进行中' : 'In Progress')
+                        : (language === 'zh' ? '无任务' : 'No Tasks')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="os-detail-progress">
+                <div className="os-progress-header">
+                  <span className="os-progress-label">
+                    {language === 'zh' ? '任务进度' : 'Task Progress'}
+                  </span>
+                  <span className="os-progress-value">
+                    {selectedChange.completedTasks} / {selectedChange.totalTasks}
+                  </span>
+                </div>
+                <div className="os-progress-bar">
+                  <div 
+                    className="os-progress-fill"
+                    style={{ 
+                      width: `${selectedChange.totalTasks > 0 
+                        ? (selectedChange.completedTasks / selectedChange.totalTasks) * 100 
+                        : 0}%` 
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="os-detail-meta">
+                <div className="os-meta-item">
+                  <span className="os-meta-label">
+                    {language === 'zh' ? '最后修改' : 'Last Modified'}
+                  </span>
+                  <span className="os-meta-value">
+                    {new Date(selectedChange.lastModified).toLocaleString(
+                      language === 'zh' ? 'zh-CN' : 'en-US'
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="os-empty-main">
               <p>

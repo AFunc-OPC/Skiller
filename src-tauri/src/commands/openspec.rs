@@ -20,13 +20,16 @@ pub struct OpenSpecArtifactInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenSpecChangeInfo {
-    pub id: String,
     pub name: String,
+    pub completed_tasks: u32,
+    pub total_tasks: u32,
+    pub last_modified: String,
     pub status: String,
-    pub current_stage: String,
-    pub created_at: String,
-    pub updated_at: String,
-    pub artifacts: Vec<OpenSpecArtifactInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OpenSpecListResponse {
+    pub changes: Vec<OpenSpecChangeInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,10 +119,10 @@ pub fn check_openspec_cli() -> Result<OpenSpecCliStatus, String> {
 pub fn list_openspec_changes(project_path: String) -> Result<Vec<OpenSpecChangeInfo>, String> {
     let json_output = run_openspec_command(&project_path, &["list", "--json"])?;
     
-    let changes: Vec<OpenSpecChangeInfo> = serde_json::from_str(&json_output)
+    let response: OpenSpecListResponse = serde_json::from_str(&json_output)
         .map_err(|e| format!("Failed to parse openspec list output: {}", e))?;
     
-    Ok(changes)
+    Ok(response.changes)
 }
 
 #[tauri::command]

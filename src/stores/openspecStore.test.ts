@@ -60,13 +60,11 @@ describe('openspecStore', () => {
     it('fetches and sets changes list', async () => {
       const mockChanges: OpenSpecChangeInfo[] = [
         {
-          id: 'change-1',
           name: 'add-feature',
-          status: 'in_progress',
-          currentStage: 'propose',
-          createdAt: '2026-05-02T00:00:00Z',
-          updatedAt: '2026-05-02T00:00:00Z',
-          artifacts: [],
+          completedTasks: 2,
+          totalTasks: 5,
+          lastModified: '2026-05-02T00:00:00Z',
+          status: 'in-progress',
         },
       ]
 
@@ -90,13 +88,13 @@ describe('openspecStore', () => {
 
   describe('selectChange', () => {
     it('sets selectedChangeId', () => {
-      useOpenSpecStore.getState().selectChange('change-1')
+      useOpenSpecStore.getState().selectChange('add-feature')
 
-      expect(useOpenSpecStore.getState().selectedChangeId).toBe('change-1')
+      expect(useOpenSpecStore.getState().selectedChangeId).toBe('add-feature')
     })
 
     it('clears selectedChangeId when null is passed', () => {
-      useOpenSpecStore.setState({ selectedChangeId: 'change-1' })
+      useOpenSpecStore.setState({ selectedChangeId: 'add-feature' })
 
       useOpenSpecStore.getState().selectChange(null)
 
@@ -143,8 +141,14 @@ describe('openspecStore', () => {
   describe('reset', () => {
     it('resets store to initial state', () => {
       useOpenSpecStore.setState({
-        changes: [{ id: '1', name: 'test', status: 'in_progress' as const, currentStage: 'propose' as const, createdAt: '', updatedAt: '', artifacts: [] }],
-        selectedChangeId: '1',
+        changes: [{ 
+          name: 'test', 
+          completedTasks: 0, 
+          totalTasks: 0, 
+          lastModified: '', 
+          status: 'no-tasks' as const 
+        }],
+        selectedChangeId: 'test',
         error: 'some error',
       })
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Search, Archive, Circle, CheckCircle2 } from 'lucide-react'
-import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
+import { Search, Archive, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import type { OpenSpecChangeInfo } from '../../types'
 
 interface ChangesListProps {
   changes: OpenSpecChangeInfo[]
@@ -10,15 +10,6 @@ interface ChangesListProps {
   onSelectChange: (changeId: string) => void
   projectPath: string
   language: 'zh' | 'en'
-}
-
-const STAGE_CONFIG: Record<OpenSpecStage, { color: string; label: { zh: string; en: string } }> = {
-  propose: { color: '#6b7280', label: { zh: '提案', en: 'Propose' } },
-  new: { color: '#8b5cf6', label: { zh: '新建', en: 'New' } },
-  continue: { color: '#f59e0b', label: { zh: '迭代', en: 'Continue' } },
-  apply: { color: '#3b82f6', label: { zh: '实现', en: 'Apply' } },
-  verify: { color: '#10b981', label: { zh: '验证', en: 'Verify' } },
-  archive: { color: '#6b7280', label: { zh: '归档', en: 'Archive' } },
 }
 
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -43,13 +34,58 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   )
 }
 
-function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' | 'en' }) {
-  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.propose
+function ProgressBadge({ 
+  completed, 
+  total, 
+  status,
+  language 
+}: { 
+  completed: number
+  total: number
+  status: string
+  language: 'zh' | 'en'
+}) {
+  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
+  
+  let color = '#6b7280'
+  let label = language === 'zh' ? '无任务' : 'No tasks'
+  
+  if (status === 'complete') {
+    color = '#10b981'
+    label = language === 'zh' ? '已完成' : 'Complete'
+  } else if (status === 'in-progress') {
+    color = '#3b82f6'
+    label = language === 'zh' ? '进行中' : 'In Progress'
+  }
+
   return (
-    <span className="os-stage-badge" style={{ '--stage-color': config.color } as React.CSSProperties}>
-      <span className="os-stage-dot" />
-      <span className="os-stage-label">{config.label[language]}</span>
-    </span>
+    <div className="os-progress-badge" style={{ '--progress-color': color } as React.CSSProperties}>
+      <div className="os-progress-ring">
+        <svg viewBox="0 0 24 24" className="w-5 h-5">
+          <circle 
+            cx="12" cy="12" r="10" 
+            fill="none" 
+            stroke="var(--border-soft)" 
+            strokeWidth="2"
+          />
+          <circle 
+            cx="12" cy="12" r="10" 
+            fill="none" 
+            stroke={color} 
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray={`${percentage * 0.628} 100`}
+            transform="rotate(-90 12 12)"
+          />
+        </svg>
+      </div>
+      <div className="os-progress-info">
+        <span className="os-progress-label" style={{ color }}>{label}</span>
+        {total > 0 && (
+          <span className="os-progress-count">{completed}/{total}</span>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -72,8 +108,8 @@ export function ChangesList({
     )
   }, [changes, searchQuery])
 
-  const inProgressChanges = filteredChanges.filter((c) => c.status === 'in_progress')
-  const archivedChanges = filteredChanges.filter((c) => c.status === 'archived')
+  const inProgressChanges = filteredChanges.filter((c) => c.status !== 'complete')
+  const completedChanges = filteredChanges.filter((c) => c.status === 'complete')
 
   if (loading) {
     return (
@@ -150,67 +186,66 @@ export function ChangesList({
           </div>
         ) : (
           <>
-            {inProgressChanges.length > 0 && (
-              <div className="os-changes-group">
-                {inProgressChanges.map((change, index) => (
-                  <div
-                    key={change.id}
-                    className={`os-change-item ${selectedChangeId === change.id ? 'selected' : ''}`}
-                    onClick={() => onSelectChange(change.id)}
-                    style={{ '--delay': `${index * 30}ms` } as React.CSSProperties}
-                  >
-                    <div className="os-change-indicator">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="os-change-content">
-                      <span className="os-change-name">
-                        <HighlightText text={change.name} query={searchQuery} />
-                      </span>
-                      <div className="os-change-meta">
-                        <StageBadge stage={change.currentStage} language={language} />
-                        <span className="os-change-artifacts">
-                          {change.artifacts.length} {language === 'zh' ? '文件' : 'files'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {inProgressChanges.map((change, index) => (
+              <div
+                key={change.name}
+                className={`os-change-item ${selectedChangeId === change.name ? 'selected' : ''}`}
+                onClick={() => onSelectChange(change.name)}
+                style={{ '--delay': `${index * 30}ms` } as React.CSSProperties}
+              >
+                <div className="os-change-indicator">
+                  {change.status === 'in-progress' ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Circle className="w-3.5 h-3.5" />
+                  )}
+                </div>
+                <div className="os-change-content">
+                  <span className="os-change-name">
+                    <HighlightText text={change.name} query={searchQuery} />
+                  </span>
+                  <ProgressBadge 
+                    completed={change.completedTasks}
+                    total={change.totalTasks}
+                    status={change.status}
+                    language={language}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {completedChanges.length > 0 && inProgressChanges.length > 0 && (
+              <div className="os-changes-group archived">
+                <div className="os-group-label">
+                  <Archive className="w-3 h-3" />
+                  <span>{language === 'zh' ? '已完成' : 'Completed'}</span>
+                </div>
               </div>
             )}
 
-            {archivedChanges.length > 0 && (
-              <div className="os-changes-group archived">
-                {inProgressChanges.length > 0 && (
-                  <div className="os-group-label">
-                    <Archive className="w-3 h-3" />
-                    <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
-                  </div>
-                )}
-                {archivedChanges.map((change, index) => (
-                  <div
-                    key={change.id}
-                    className={`os-change-item archived ${selectedChangeId === change.id ? 'selected' : ''}`}
-                    onClick={() => onSelectChange(change.id)}
-                    style={{ '--delay': `${(inProgressChanges.length + index) * 30}ms` } as React.CSSProperties}
-                  >
-                    <div className="os-change-indicator">
-                      <Archive className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="os-change-content">
-                      <span className="os-change-name">
-                        <HighlightText text={change.name} query={searchQuery} />
-                      </span>
-                      <div className="os-change-meta">
-                        <StageBadge stage={change.currentStage} language={language} />
-                        <span className="os-change-artifacts">
-                          {change.artifacts.length} {language === 'zh' ? '文件' : 'files'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {completedChanges.map((change, index) => (
+              <div
+                key={change.name}
+                className={`os-change-item archived ${selectedChangeId === change.name ? 'selected' : ''}`}
+                onClick={() => onSelectChange(change.name)}
+                style={{ '--delay': `${(inProgressChanges.length + index) * 30}ms` } as React.CSSProperties}
+              >
+                <div className="os-change-indicator">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <div className="os-change-content">
+                  <span className="os-change-name">
+                    <HighlightText text={change.name} query={searchQuery} />
+                  </span>
+                  <ProgressBadge 
+                    completed={change.completedTasks}
+                    total={change.totalTasks}
+                    status={change.status}
+                    language={language}
+                  />
+                </div>
               </div>
-            )}
+            ))}
           </>
         )}
       </div>

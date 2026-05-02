@@ -4,20 +4,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChangesList } from './ChangesList'
 import type { OpenSpecChangeInfo } from '../../types'
 
-const createMockChange = (id: string, name: string, status: 'in_progress' | 'archived' = 'in_progress', stage: OpenSpecChangeInfo['currentStage'] = 'propose'): OpenSpecChangeInfo => ({
-  id,
+const createMockChange = (
+  name: string, 
+  status: OpenSpecChangeInfo['status'] = 'no-tasks',
+  completedTasks = 0,
+  totalTasks = 0
+): OpenSpecChangeInfo => ({
   name,
+  completedTasks,
+  totalTasks,
+  lastModified: '2026-05-02T00:00:00Z',
   status,
-  currentStage: stage,
-  createdAt: '2026-05-02T00:00:00Z',
-  updatedAt: '2026-05-02T00:00:00Z',
-  artifacts: [],
 })
 
 const mockChanges: OpenSpecChangeInfo[] = [
-  createMockChange('change-1', 'add-feature-x'),
-  createMockChange('change-2', 'fix-bug-y'),
-  createMockChange('change-3', 'update-docs', 'archived'),
+  createMockChange('add-feature-x', 'in-progress', 2, 5),
+  createMockChange('fix-bug-y', 'no-tasks', 0, 0),
+  createMockChange('update-docs', 'complete', 3, 3),
 ]
 
 const defaultProps = {
@@ -120,45 +123,30 @@ describe('ChangesList', () => {
 
       await user.click(screen.getByText('add-feature-x'))
 
-      expect(defaultProps.onSelectChange).toHaveBeenCalledWith('change-1')
+      expect(defaultProps.onSelectChange).toHaveBeenCalledWith('add-feature-x')
     })
 
     it('shows selected state on clicked change', () => {
-      render(<ChangesList {...defaultProps} selectedChangeId="change-1" />)
+      render(<ChangesList {...defaultProps} selectedChangeId="add-feature-x" />)
 
       const selectedItem = document.querySelector('.os-change-item.selected')
       expect(selectedItem).toBeInTheDocument()
     })
   })
 
-  describe('Stage Display', () => {
-    it('shows stage badges for changes', () => {
+  describe('Progress Display', () => {
+    it('shows progress badges for changes', () => {
       render(<ChangesList {...defaultProps} />)
 
-      const stageBadges = document.querySelectorAll('.os-stage-badge')
-      expect(stageBadges.length).toBeGreaterThanOrEqual(2)
+      const progressBadges = document.querySelectorAll('.os-progress-badge')
+      expect(progressBadges.length).toBeGreaterThanOrEqual(2)
     })
 
-    it('shows stage label in correct language', () => {
+    it('shows completed changes in archived section', () => {
       render(<ChangesList {...defaultProps} />)
 
-      const stageBadges = document.querySelectorAll('.os-stage-badge')
-      expect(stageBadges.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Archived Section', () => {
-    it('shows archived group label', () => {
-      render(<ChangesList {...defaultProps} />)
-
-      expect(screen.getByText('已归档')).toBeInTheDocument()
-    })
-
-    it('shows archived items with reduced opacity', () => {
-      render(<ChangesList {...defaultProps} />)
-
-      const archivedItem = document.querySelector('.os-change-item.archived')
-      expect(archivedItem).toBeInTheDocument()
+      const groupLabel = document.querySelector('.os-group-label')
+      expect(groupLabel).toBeInTheDocument()
     })
   })
 
@@ -167,30 +155,7 @@ describe('ChangesList', () => {
       render(<ChangesList {...defaultProps} language="en" />)
 
       expect(screen.getByPlaceholderText('Search changes...')).toBeInTheDocument()
-      expect(screen.getByText('Archived')).toBeInTheDocument()
-    })
-
-    it('shows English stage labels', () => {
-      render(<ChangesList {...defaultProps} language="en" />)
-
-      const stageBadges = document.querySelectorAll('.os-stage-badge')
-      expect(stageBadges.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Artifacts Count', () => {
-    it('shows artifacts count for each change', () => {
-      const changesWithArtifacts = [
-        createMockChange('change-1', 'test-change', 'in_progress', 'apply'),
-      ]
-      changesWithArtifacts[0].artifacts = [
-        { name: 'proposal.md', path: '/path/proposal.md', type: 'proposal' },
-        { name: 'design.md', path: '/path/design.md', type: 'design' },
-      ]
-
-      render(<ChangesList {...defaultProps} changes={changesWithArtifacts} />)
-
-      expect(screen.getByText(/2.*文件/)).toBeInTheDocument()
+      expect(screen.getByText('Completed')).toBeInTheDocument()
     })
   })
 })
