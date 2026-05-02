@@ -19,6 +19,7 @@ pub struct OpenSpecArtifactInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OpenSpecChangeInfo {
     pub id: String,
     pub name: String,

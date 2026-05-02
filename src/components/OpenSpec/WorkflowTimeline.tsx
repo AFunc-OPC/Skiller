@@ -29,12 +29,21 @@ export function WorkflowTimeline({ currentStage, language }: WorkflowTimelinePro
 
           return (
             <div key={stage} className="os-stage">
-              <div
-                className={`os-stage-node ${
-                  isCompleted ? 'completed' : isCurrent ? 'current' : 'pending'
-                }`}
-              >
-                {isCompleted && <Check className="w-3 h-3" />}
+              <div className="os-stage-node-wrapper">
+                <div
+                  className={`os-stage-node ${
+                    isCompleted ? 'completed' : isCurrent ? 'current' : 'pending'
+                  }`}
+                >
+                  {isCompleted && <Check className="w-3 h-3" />}
+                </div>
+                {index < STAGES.length - 1 && (
+                  <div
+                    className={`os-stage-connector ${
+                      isCompleted ? 'completed' : ''
+                    }`}
+                  />
+                )}
               </div>
               <span
                 className={`os-stage-label ${
@@ -43,19 +52,6 @@ export function WorkflowTimeline({ currentStage, language }: WorkflowTimelinePro
               >
                 {STAGE_LABELS[stage][language]}
               </span>
-              {index < STAGES.length - 1 && (
-                <div
-                  className={`os-stage-connector ${
-                    isCompleted ? 'completed' : ''
-                  }`}
-                  style={{
-                    position: 'absolute',
-                    left: '100%',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                  }}
-                />
-              )}
             </div>
           )
         })}

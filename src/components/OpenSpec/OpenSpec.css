@@ -316,6 +316,11 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+}
+
+.os-stage-node-wrapper {
+  display: flex;
+  align-items: center;
   position: relative;
 }
 
@@ -371,6 +376,7 @@
   width: 2rem;
   height: 2px;
   background: var(--border-soft);
+  flex-shrink: 0;
 }
 
 .os-stage-connector.completed {
