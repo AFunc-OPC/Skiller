@@ -111,9 +111,7 @@ export function ProjectSkillCard({
             </div>
           </div>
 
-          {skill.description && (
-            <div className="ps-card-desc">{skill.description}</div>
-          )}
+          <div className="ps-card-desc">{skill.description || '-'}</div>
 
           <div className="ps-card-meta">
             <div className="ps-meta-item">

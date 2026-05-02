@@ -310,6 +310,7 @@
 .ps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-auto-rows: 1fr;
   gap: 8px;
   overflow-y: auto;
   flex: 1;
@@ -325,7 +326,15 @@
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
   animation: cardFadeIn 0.2s ease-out backwards;
-  height: fit-content;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
 }
 
 @keyframes cardFadeIn {
@@ -349,12 +358,6 @@
 
 .ps-card.disabled {
   opacity: 0.55;
-}
-
-.ps-card-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 .ps-card-header {

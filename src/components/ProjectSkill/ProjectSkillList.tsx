@@ -152,7 +152,7 @@ export function ProjectSkillList({
         <div className="ps-search">
           <Search className="ps-search-icon" />
           <input
-            type="search"
+            type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder={language === 'zh' ? '搜索技能...' : 'Search skills...'}
