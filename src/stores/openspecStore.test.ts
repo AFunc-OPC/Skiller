@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useOpenSpecStore } from './openspecStore'
 import * as openspecApi from '../api/openspec'
+import type { OpenSpecChangeInfo } from '../types'
 
 vi.mock('../api/openspec', () => ({
   openspecApi: {
@@ -57,7 +58,7 @@ describe('openspecStore', () => {
 
   describe('fetchChanges', () => {
     it('fetches and sets changes list', async () => {
-      const mockChanges = [
+      const mockChanges: OpenSpecChangeInfo[] = [
         {
           id: 'change-1',
           name: 'add-feature',
@@ -142,7 +143,7 @@ describe('openspecStore', () => {
   describe('reset', () => {
     it('resets store to initial state', () => {
       useOpenSpecStore.setState({
-        changes: [{ id: '1', name: 'test', status: 'in_progress', currentStage: 'propose', createdAt: '', updatedAt: '', artifacts: [] }],
+        changes: [{ id: '1', name: 'test', status: 'in_progress' as const, currentStage: 'propose' as const, createdAt: '', updatedAt: '', artifacts: [] }],
         selectedChangeId: '1',
         error: 'some error',
       })

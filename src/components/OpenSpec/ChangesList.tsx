@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, FolderOpen } from 'lucide-react'
-import type { OpenSpecChangeInfo } from '../../types'
+import { Search, Archive, Circle, CheckCircle2 } from 'lucide-react'
+import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 interface ChangesListProps {
   changes: OpenSpecChangeInfo[]
@@ -10,6 +10,15 @@ interface ChangesListProps {
   onSelectChange: (changeId: string) => void
   projectPath: string
   language: 'zh' | 'en'
+}
+
+const STAGE_CONFIG: Record<OpenSpecStage, { color: string; label: { zh: string; en: string } }> = {
+  propose: { color: '#6b7280', label: { zh: '提案', en: 'Propose' } },
+  new: { color: '#8b5cf6', label: { zh: '新建', en: 'New' } },
+  continue: { color: '#f59e0b', label: { zh: '迭代', en: 'Continue' } },
+  apply: { color: '#3b82f6', label: { zh: '实现', en: 'Apply' } },
+  verify: { color: '#10b981', label: { zh: '验证', en: 'Verify' } },
+  archive: { color: '#6b7280', label: { zh: '归档', en: 'Archive' } },
 }
 
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -28,9 +37,19 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   return (
     <>
       {before}
-      <mark>{match}</mark>
+      <mark className="os-highlight">{match}</mark>
       {after}
     </>
+  )
+}
+
+function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' | 'en' }) {
+  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.propose
+  return (
+    <span className="os-stage-badge" style={{ '--stage-color': config.color } as React.CSSProperties}>
+      <span className="os-stage-dot" />
+      <span className="os-stage-label">{config.label[language]}</span>
+    </span>
   )
 }
 
@@ -59,20 +78,23 @@ export function ChangesList({
   if (loading) {
     return (
       <div className="os-changes-list">
-        <div className="os-changes-header">
-          <div className="os-search">
-            <Search className="os-search-icon" />
-            <input
-              type="text"
-              className="os-search-input"
-              placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
-              disabled
-            />
-          </div>
+        <div className="os-changes-search">
+          <Search className="os-search-icon" />
+          <input
+            type="text"
+            className="os-search-input"
+            placeholder={language === 'zh' ? '搜索...' : 'Search...'}
+            disabled
+          />
         </div>
-        <div className="os-changes-content">
-          <div className="os-empty-changes">
-            <p>{language === 'zh' ? '加载中...' : 'Loading...'}</p>
+        <div className="os-changes-body">
+          <div className="os-loading-skeleton">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="os-skeleton-item">
+                <div className="os-skeleton-line os-skeleton-title" />
+                <div className="os-skeleton-line os-skeleton-meta" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -82,20 +104,18 @@ export function ChangesList({
   if (error) {
     return (
       <div className="os-changes-list">
-        <div className="os-changes-header">
-          <div className="os-search">
-            <Search className="os-search-icon" />
-            <input
-              type="text"
-              className="os-search-input"
-              placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
-              disabled
-            />
-          </div>
+        <div className="os-changes-search">
+          <Search className="os-search-icon" />
+          <input
+            type="text"
+            className="os-search-input"
+            placeholder={language === 'zh' ? '搜索...' : 'Search...'}
+            disabled
+          />
         </div>
-        <div className="os-changes-content">
-          <div className="os-empty-changes">
-            <p className="text-red-500">{error}</p>
+        <div className="os-changes-body">
+          <div className="os-error-state">
+            <p>{error}</p>
           </div>
         </div>
       </div>
@@ -104,89 +124,95 @@ export function ChangesList({
 
   return (
     <div className="os-changes-list">
-      <div className="os-changes-header">
-        <div className="os-search">
-          <Search className="os-search-icon" />
-          <input
-            type="text"
-            className="os-search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
-          />
-        </div>
+      <div className="os-changes-search">
+        <Search className="os-search-icon" />
+        <input
+          type="text"
+          className="os-search-input"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
+        />
+        {filteredChanges.length > 0 && (
+          <span className="os-changes-count">{filteredChanges.length}</span>
+        )}
       </div>
 
-      <div className="os-changes-content">
+      <div className="os-changes-body">
         {filteredChanges.length === 0 ? (
-          <div className="os-empty-changes">
-            <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <div className="os-empty-state">
+            <Circle className="os-empty-icon" />
             <p>
               {searchQuery
-                ? language === 'zh'
-                  ? '没有匹配的变更'
-                  : 'No matching changes'
-                : language === 'zh'
-                  ? '暂无变更'
-                  : 'No changes yet'}
+                ? language === 'zh' ? '无匹配结果' : 'No matches'
+                : language === 'zh' ? '暂无变更' : 'No changes'}
             </p>
           </div>
         ) : (
           <>
-            {inProgressChanges.map((change) => (
-              <div
-                key={change.id}
-                className={`os-change-card ${selectedChangeId === change.id ? 'selected' : ''}`}
-                onClick={() => onSelectChange(change.id)}
-              >
-                <div className="os-change-header">
-                  <span className="os-change-name">
-                    <HighlightText text={change.name} query={searchQuery} />
-                  </span>
-                  <span className="os-change-status in-progress">
-                    {language === 'zh' ? '进行中' : 'In Progress'}
-                  </span>
-                </div>
-                <div className="os-change-stage">
-                  {language === 'zh' ? '当前阶段' : 'Stage'}: {change.currentStage}
-                </div>
-              </div>
-            ))}
-
-            {archivedChanges.length > 0 && inProgressChanges.length > 0 && (
-              <div className="os-changes-divider">
-                <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
+            {inProgressChanges.length > 0 && (
+              <div className="os-changes-group">
+                {inProgressChanges.map((change, index) => (
+                  <div
+                    key={change.id}
+                    className={`os-change-item ${selectedChangeId === change.id ? 'selected' : ''}`}
+                    onClick={() => onSelectChange(change.id)}
+                    style={{ '--delay': `${index * 30}ms` } as React.CSSProperties}
+                  >
+                    <div className="os-change-indicator">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="os-change-content">
+                      <span className="os-change-name">
+                        <HighlightText text={change.name} query={searchQuery} />
+                      </span>
+                      <div className="os-change-meta">
+                        <StageBadge stage={change.currentStage} language={language} />
+                        <span className="os-change-artifacts">
+                          {change.artifacts.length} {language === 'zh' ? '文件' : 'files'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
-            {archivedChanges.map((change) => (
-              <div
-                key={change.id}
-                className={`os-change-card ${selectedChangeId === change.id ? 'selected' : ''}`}
-                onClick={() => onSelectChange(change.id)}
-              >
-                <div className="os-change-header">
-                  <span className="os-change-name">
-                    <HighlightText text={change.name} query={searchQuery} />
-                  </span>
-                  <span className="os-change-status archived">
-                    {language === 'zh' ? '已归档' : 'Archived'}
-                  </span>
-                </div>
-                <div className="os-change-stage">
-                  {language === 'zh' ? '当前阶段' : 'Stage'}: {change.currentStage}
-                </div>
+            {archivedChanges.length > 0 && (
+              <div className="os-changes-group archived">
+                {inProgressChanges.length > 0 && (
+                  <div className="os-group-label">
+                    <Archive className="w-3 h-3" />
+                    <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
+                  </div>
+                )}
+                {archivedChanges.map((change, index) => (
+                  <div
+                    key={change.id}
+                    className={`os-change-item archived ${selectedChangeId === change.id ? 'selected' : ''}`}
+                    onClick={() => onSelectChange(change.id)}
+                    style={{ '--delay': `${(inProgressChanges.length + index) * 30}ms` } as React.CSSProperties}
+                  >
+                    <div className="os-change-indicator">
+                      <Archive className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="os-change-content">
+                      <span className="os-change-name">
+                        <HighlightText text={change.name} query={searchQuery} />
+                      </span>
+                      <div className="os-change-meta">
+                        <StageBadge stage={change.currentStage} language={language} />
+                        <span className="os-change-artifacts">
+                          {change.artifacts.length} {language === 'zh' ? '文件' : 'files'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </>
         )}
-      </div>
-
-      <div className="os-changes-footer">
-        <button className="os-new-change-btn">
-          <Plus className="w-4 h-4" />
-          <span>{language === 'zh' ? '新建变更' : 'New Change'}</span>
-        </button>
       </div>
     </div>
   )

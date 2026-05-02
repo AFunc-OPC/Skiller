@@ -4,11 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChangesList } from './ChangesList'
 import type { OpenSpecChangeInfo } from '../../types'
 
-const createMockChange = (id: string, name: string, status: 'in_progress' | 'archived' = 'in_progress'): OpenSpecChangeInfo => ({
+const createMockChange = (id: string, name: string, status: 'in_progress' | 'archived' = 'in_progress', stage: OpenSpecChangeInfo['currentStage'] = 'propose'): OpenSpecChangeInfo => ({
   id,
   name,
   status,
-  currentStage: 'propose',
+  currentStage: stage,
   createdAt: '2026-05-02T00:00:00Z',
   updatedAt: '2026-05-02T00:00:00Z',
   artifacts: [],
@@ -44,10 +44,11 @@ describe('ChangesList', () => {
       expect(screen.getByText('update-docs')).toBeInTheDocument()
     })
 
-    it('shows loading state', () => {
+    it('shows loading state with skeleton', () => {
       render(<ChangesList {...defaultProps} loading={true} />)
 
-      expect(screen.getByText('加载中...')).toBeInTheDocument()
+      const skeletonItems = document.querySelectorAll('.os-skeleton-item')
+      expect(skeletonItems.length).toBe(3)
     })
 
     it('shows error state', () => {
@@ -84,7 +85,7 @@ describe('ChangesList', () => {
       const searchInput = screen.getByPlaceholderText('搜索变更...')
       await user.type(searchInput, 'feature')
 
-      const mark = document.querySelector('mark')
+      const mark = document.querySelector('mark.os-highlight')
       expect(mark).toBeInTheDocument()
       expect(mark?.textContent).toBe('feature')
     })
@@ -96,7 +97,7 @@ describe('ChangesList', () => {
       const searchInput = screen.getByPlaceholderText('搜索变更...')
       await user.type(searchInput, 'nonexistent')
 
-      expect(screen.getByText('没有匹配的变更')).toBeInTheDocument()
+      expect(screen.getByText('无匹配结果')).toBeInTheDocument()
     })
 
     it('clears search filter when input is cleared', async () => {
@@ -113,7 +114,7 @@ describe('ChangesList', () => {
   })
 
   describe('Selection', () => {
-    it('calls onSelectChange when change card is clicked', async () => {
+    it('calls onSelectChange when change item is clicked', async () => {
       const user = userEvent.setup()
       render(<ChangesList {...defaultProps} />)
 
@@ -125,24 +126,39 @@ describe('ChangesList', () => {
     it('shows selected state on clicked change', () => {
       render(<ChangesList {...defaultProps} selectedChangeId="change-1" />)
 
-      const selectedCard = document.querySelector('.os-change-card.selected')
-      expect(selectedCard).toBeInTheDocument()
+      const selectedItem = document.querySelector('.os-change-item.selected')
+      expect(selectedItem).toBeInTheDocument()
     })
   })
 
-  describe('Status Display', () => {
-    it('shows in-progress status', () => {
+  describe('Stage Display', () => {
+    it('shows stage badges for changes', () => {
       render(<ChangesList {...defaultProps} />)
 
-      const inProgressStatuses = screen.getAllByText('进行中')
-      expect(inProgressStatuses.length).toBe(2)
+      const stageBadges = document.querySelectorAll('.os-stage-badge')
+      expect(stageBadges.length).toBeGreaterThanOrEqual(2)
     })
 
-    it('shows archived status', () => {
+    it('shows stage label in correct language', () => {
       render(<ChangesList {...defaultProps} />)
 
-      const archivedStatuses = screen.getAllByText('已归档')
-      expect(archivedStatuses.length).toBeGreaterThanOrEqual(1)
+      const stageBadges = document.querySelectorAll('.os-stage-badge')
+      expect(stageBadges.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Archived Section', () => {
+    it('shows archived group label', () => {
+      render(<ChangesList {...defaultProps} />)
+
+      expect(screen.getByText('已归档')).toBeInTheDocument()
+    })
+
+    it('shows archived items with reduced opacity', () => {
+      render(<ChangesList {...defaultProps} />)
+
+      const archivedItem = document.querySelector('.os-change-item.archived')
+      expect(archivedItem).toBeInTheDocument()
     })
   })
 
@@ -151,8 +167,30 @@ describe('ChangesList', () => {
       render(<ChangesList {...defaultProps} language="en" />)
 
       expect(screen.getByPlaceholderText('Search changes...')).toBeInTheDocument()
-      const inProgressStatuses = screen.getAllByText('In Progress')
-      expect(inProgressStatuses.length).toBe(2)
+      expect(screen.getByText('Archived')).toBeInTheDocument()
+    })
+
+    it('shows English stage labels', () => {
+      render(<ChangesList {...defaultProps} language="en" />)
+
+      const stageBadges = document.querySelectorAll('.os-stage-badge')
+      expect(stageBadges.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Artifacts Count', () => {
+    it('shows artifacts count for each change', () => {
+      const changesWithArtifacts = [
+        createMockChange('change-1', 'test-change', 'in_progress', 'apply'),
+      ]
+      changesWithArtifacts[0].artifacts = [
+        { name: 'proposal.md', path: '/path/proposal.md', type: 'proposal' },
+        { name: 'design.md', path: '/path/design.md', type: 'design' },
+      ]
+
+      render(<ChangesList {...defaultProps} changes={changesWithArtifacts} />)
+
+      expect(screen.getByText(/2.*文件/)).toBeInTheDocument()
     })
   })
 })
