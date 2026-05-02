@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react'
+import { Check, Circle, Loader2 } from 'lucide-react'
 
 interface WorkflowTimelineProps {
   currentStage: string
@@ -7,13 +7,37 @@ interface WorkflowTimelineProps {
 
 const STAGES = ['propose', 'new', 'continue', 'apply', 'verify', 'archive']
 
-const STAGE_LABELS: Record<string, Record<'zh' | 'en', string>> = {
-  propose: { zh: '提案', en: 'Propose' },
-  new: { zh: '新建', en: 'New' },
-  continue: { zh: '迭代', en: 'Continue' },
-  apply: { zh: '实现', en: 'Apply' },
-  verify: { zh: '验证', en: 'Verify' },
-  archive: { zh: '归档', en: 'Archive' },
+const STAGE_CONFIG = {
+  propose: { 
+    icon: Circle, 
+    label: { zh: '提案', en: 'Propose' },
+    description: { zh: '定义问题', en: 'Define problem' }
+  },
+  new: { 
+    icon: Circle, 
+    label: { zh: '新建', en: 'New' },
+    description: { zh: '创建变更', en: 'Create change' }
+  },
+  continue: { 
+    icon: Circle, 
+    label: { zh: '迭代', en: 'Iterate' },
+    description: { zh: '完善设计', en: 'Refine design' }
+  },
+  apply: { 
+    icon: Circle, 
+    label: { zh: '实现', en: 'Apply' },
+    description: { zh: '编写代码', en: 'Write code' }
+  },
+  verify: { 
+    icon: Circle, 
+    label: { zh: '验证', en: 'Verify' },
+    description: { zh: '测试验证', en: 'Test & verify' }
+  },
+  archive: { 
+    icon: Circle, 
+    label: { zh: '归档', en: 'Archive' },
+    description: { zh: '完成归档', en: 'Complete' }
+  },
 }
 
 export function WorkflowTimeline({ currentStage, language }: WorkflowTimelineProps) {
@@ -21,37 +45,50 @@ export function WorkflowTimeline({ currentStage, language }: WorkflowTimelinePro
 
   return (
     <div className="os-timeline">
+      <div className="os-timeline-track">
+        <div 
+          className="os-timeline-progress" 
+          style={{ 
+            width: `${Math.max(0, (currentIndex / (STAGES.length - 1)) * 100)}%` 
+          }}
+        />
+      </div>
+      
       <div className="os-timeline-stages">
         {STAGES.map((stage, index) => {
           const isCompleted = index < currentIndex
           const isCurrent = index === currentIndex
-          const isPending = index > currentIndex
+          const config = STAGE_CONFIG[stage as keyof typeof STAGE_CONFIG]
 
           return (
-            <div key={stage} className="os-stage">
-              <div className="os-stage-node-wrapper">
-                <div
-                  className={`os-stage-node ${
-                    isCompleted ? 'completed' : isCurrent ? 'current' : 'pending'
-                  }`}
-                >
-                  {isCompleted && <Check className="w-3 h-3" />}
+            <div 
+              key={stage} 
+              className={`os-stage ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
+              style={{ '--stage-index': index } as React.CSSProperties}
+            >
+              <div className="os-stage-node-container">
+                <div className={`os-stage-node ${isCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                  <div className="os-node-inner">
+                    {isCompleted ? (
+                      <Check className="os-node-icon" />
+                    ) : isCurrent ? (
+                      <Loader2 className="os-node-icon animate-spin" />
+                    ) : (
+                      <span className="os-node-number">{index + 1}</span>
+                    )}
+                  </div>
+                  {isCurrent && <div className="os-node-pulse" />}
                 </div>
-                {index < STAGES.length - 1 && (
-                  <div
-                    className={`os-stage-connector ${
-                      isCompleted ? 'completed' : ''
-                    }`}
-                  />
-                )}
               </div>
-              <span
-                className={`os-stage-label ${
-                  isCurrent ? 'active' : ''
-                }`}
-              >
-                {STAGE_LABELS[stage][language]}
-              </span>
+              
+              <div className="os-stage-info">
+                <span className={`os-stage-label ${isCurrent ? 'active' : ''}`}>
+                  {config.label[language]}
+                </span>
+                <span className="os-stage-desc">
+                  {config.description[language]}
+                </span>
+              </div>
             </div>
           )
         })}

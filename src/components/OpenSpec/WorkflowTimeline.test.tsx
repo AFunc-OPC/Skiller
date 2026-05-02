@@ -22,7 +22,7 @@ describe('WorkflowTimeline', () => {
 
       expect(screen.getByText('Propose')).toBeInTheDocument()
       expect(screen.getByText('New')).toBeInTheDocument()
-      expect(screen.getByText('Continue')).toBeInTheDocument()
+      expect(screen.getByText('Iterate')).toBeInTheDocument()
       expect(screen.getByText('Apply')).toBeInTheDocument()
       expect(screen.getByText('Verify')).toBeInTheDocument()
       expect(screen.getByText('Archive')).toBeInTheDocument()
