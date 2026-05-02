@@ -4,6 +4,7 @@ import { openspecApi } from '../api/openspec'
 
 interface OpenSpecState {
   changes: OpenSpecChangeInfo[]
+  archivedChanges: OpenSpecChangeInfo[]
   selectedChangeId: string | null
   cliStatus: OpenSpecCliStatus | null
   loading: boolean
@@ -14,6 +15,7 @@ interface OpenSpecState {
   hasOpenSpecDirectory: boolean
 
   fetchChanges: (projectPath: string) => Promise<void>
+  fetchArchivedChanges: (projectPath: string) => Promise<void>
   selectChange: (changeId: string | null) => void
   checkCli: () => Promise<void>
   checkOpenSpecDirectory: (projectPath: string) => Promise<void>
@@ -24,6 +26,7 @@ interface OpenSpecState {
 
 export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   changes: [],
+  archivedChanges: [],
   selectedChangeId: null,
   cliStatus: null,
   loading: false,
@@ -40,6 +43,15 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
       set({ changes, loading: false })
     } catch (error) {
       set({ error: String(error), loading: false })
+    }
+  },
+
+  fetchArchivedChanges: async (projectPath: string) => {
+    try {
+      const archivedChanges = await openspecApi.listArchivedChanges(projectPath)
+      set({ archivedChanges })
+    } catch {
+      set({ archivedChanges: [] })
     }
   },
 
@@ -81,6 +93,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
     const state = get()
     await Promise.all([
       state.fetchChanges(projectPath),
+      state.fetchArchivedChanges(projectPath),
       state.checkCli(),
     ])
   },
@@ -88,6 +101,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   reset: () => {
     set({
       changes: [],
+      archivedChanges: [],
       selectedChangeId: null,
       error: null,
       commandError: null,

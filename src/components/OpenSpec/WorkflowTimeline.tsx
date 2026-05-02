@@ -1,37 +1,26 @@
-import { Check, Circle, Loader2 } from 'lucide-react'
+import { Check, Circle } from 'lucide-react'
 
 interface WorkflowTimelineProps {
   currentStage: string
+  completedTasks: number
+  totalTasks: number
+  artifacts: Array<{ name: string; type: string }>
+  status: string
   language: 'zh' | 'en'
 }
 
-const STAGES = ['propose', 'new', 'continue', 'apply', 'verify', 'archive']
+const STAGES = ['proposal', 'apply', 'archive']
 
 const STAGE_CONFIG = {
-  propose: { 
+  proposal: { 
     icon: Circle, 
-    label: { zh: '提案', en: 'Propose' },
+    label: { zh: '提案', en: 'Proposal' },
     description: { zh: '定义问题', en: 'Define problem' }
-  },
-  new: { 
-    icon: Circle, 
-    label: { zh: '新建', en: 'New' },
-    description: { zh: '创建变更', en: 'Create change' }
-  },
-  continue: { 
-    icon: Circle, 
-    label: { zh: '迭代', en: 'Iterate' },
-    description: { zh: '完善设计', en: 'Refine design' }
   },
   apply: { 
     icon: Circle, 
     label: { zh: '实现', en: 'Apply' },
     description: { zh: '编写代码', en: 'Write code' }
-  },
-  verify: { 
-    icon: Circle, 
-    label: { zh: '验证', en: 'Verify' },
-    description: { zh: '测试验证', en: 'Test & verify' }
   },
   archive: { 
     icon: Circle, 
@@ -40,8 +29,26 @@ const STAGE_CONFIG = {
   },
 }
 
-export function WorkflowTimeline({ currentStage, language }: WorkflowTimelineProps) {
+export function WorkflowTimeline({ 
+  currentStage, 
+  completedTasks, 
+  totalTasks, 
+  artifacts, 
+  status,
+  language 
+}: WorkflowTimelineProps) {
+  const hasProposal = artifacts.some(a => a.type === 'proposal')
+  const isApplyComplete = totalTasks > 0 && completedTasks === totalTasks
+  const isArchived = status === 'complete'
+  
+  const stageCompletion = {
+    proposal: hasProposal,
+    apply: isApplyComplete,
+    archive: isArchived,
+  }
+  
   const currentIndex = STAGES.indexOf(currentStage)
+  const completedCount = STAGES.filter(s => stageCompletion[s as keyof typeof stageCompletion]).length
 
   return (
     <div className="os-timeline">
@@ -49,30 +56,30 @@ export function WorkflowTimeline({ currentStage, language }: WorkflowTimelinePro
         <div 
           className="os-timeline-progress" 
           style={{ 
-            width: `${Math.max(0, (currentIndex / (STAGES.length - 1)) * 100)}%` 
+            width: `${Math.max(0, ((completedCount - 1) / (STAGES.length - 1)) * 100)}%` 
           }}
         />
       </div>
       
       <div className="os-timeline-stages">
         {STAGES.map((stage, index) => {
-          const isCompleted = index < currentIndex
-          const isCurrent = index === currentIndex
+          const isStageCompleted = stageCompletion[stage as keyof typeof stageCompletion]
+          const isCurrent = stage === currentStage && !isStageCompleted
           const config = STAGE_CONFIG[stage as keyof typeof STAGE_CONFIG]
 
           return (
             <div 
               key={stage} 
-              className={`os-stage ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
+              className={`os-stage ${isStageCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
               style={{ '--stage-index': index } as React.CSSProperties}
             >
               <div className="os-stage-node-container">
-                <div className={`os-stage-node ${isCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                <div className={`os-stage-node ${isStageCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
                   <div className="os-node-inner">
-                    {isCompleted ? (
+                    {isStageCompleted ? (
                       <Check className="os-node-icon" />
                     ) : isCurrent ? (
-                      <Loader2 className="os-node-icon animate-spin" />
+                      <Circle className="os-node-icon" />
                     ) : (
                       <span className="os-node-number">{index + 1}</span>
                     )}

@@ -149,7 +149,7 @@ describe('openspecStore', () => {
           totalTasks: 0, 
           lastModified: '', 
           status: 'no-tasks',
-          currentStage: 'propose',
+          currentStage: 'proposal',
           artifacts: [],
         }],
         selectedChangeId: 'test',

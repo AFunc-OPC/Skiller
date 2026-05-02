@@ -7,7 +7,7 @@ import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 const createMockChange = (
   name: string, 
   status: OpenSpecChangeInfo['status'] = 'no-tasks',
-  currentStage: OpenSpecStage = 'propose',
+  currentStage: OpenSpecStage = 'proposal',
   completedTasks = 0,
   totalTasks = 0
 ): OpenSpecChangeInfo => ({
@@ -22,12 +22,16 @@ const createMockChange = (
 
 const mockChanges: OpenSpecChangeInfo[] = [
   createMockChange('add-feature-x', 'in-progress', 'apply', 2, 5),
-  createMockChange('fix-bug-y', 'no-tasks', 'propose', 0, 0),
+  createMockChange('fix-bug-y', 'no-tasks', 'proposal', 0, 0),
+]
+
+const mockArchivedChanges: OpenSpecChangeInfo[] = [
   createMockChange('update-docs', 'complete', 'archive', 3, 3),
 ]
 
 const defaultProps = {
   changes: mockChanges,
+  archivedChanges: mockArchivedChanges,
   selectedChangeId: null,
   loading: false,
   error: null,
@@ -47,7 +51,13 @@ describe('ChangesList', () => {
 
       expect(screen.getByText('add-feature-x')).toBeInTheDocument()
       expect(screen.getByText('fix-bug-y')).toBeInTheDocument()
+    })
+
+    it('renders archived changes in separate section', () => {
+      render(<ChangesList {...defaultProps} />)
+
       expect(screen.getByText('update-docs')).toBeInTheDocument()
+      expect(screen.getByText('已归档')).toBeInTheDocument()
     })
 
     it('shows loading state with skeleton', () => {
@@ -64,7 +74,7 @@ describe('ChangesList', () => {
     })
 
     it('shows empty state when no changes', () => {
-      render(<ChangesList {...defaultProps} changes={[]} />)
+      render(<ChangesList {...defaultProps} changes={[]} archivedChanges={[]} />)
 
       expect(screen.getByText('暂无变更')).toBeInTheDocument()
     })

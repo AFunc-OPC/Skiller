@@ -615,6 +615,20 @@
     0 0 0 4px rgba(59, 130, 246, 0.15),
     0 4px 16px rgba(59, 130, 246, 0.2);
   transform: scale(1.08);
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 4px rgba(59, 130, 246, 0.15),
+      0 4px 16px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 5px rgba(59, 130, 246, 0.18),
+      0 4px 18px rgba(59, 130, 246, 0.25);
+  }
 }
 
 .os-node-inner {

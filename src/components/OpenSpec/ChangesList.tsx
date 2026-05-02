@@ -4,6 +4,7 @@ import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 interface ChangesListProps {
   changes: OpenSpecChangeInfo[]
+  archivedChanges: OpenSpecChangeInfo[]
   selectedChangeId: string | null
   loading: boolean
   error: string | null
@@ -35,16 +36,13 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 }
 
 const STAGE_CONFIG: Record<OpenSpecStage, { color: string; label: { zh: string; en: string } }> = {
-  propose: { color: '#6b7280', label: { zh: '提案', en: 'Propose' } },
-  new: { color: '#8b5cf6', label: { zh: '新建', en: 'New' } },
-  continue: { color: '#f59e0b', label: { zh: '迭代', en: 'Iterate' } },
+  proposal: { color: '#6b7280', label: { zh: '提案', en: 'Proposal' } },
   apply: { color: '#3b82f6', label: { zh: '实现', en: 'Apply' } },
-  verify: { color: '#10b981', label: { zh: '验证', en: 'Verify' } },
-  archive: { color: '#6b7280', label: { zh: '归档', en: 'Archive' } },
+  archive: { color: '#10b981', label: { zh: '归档', en: 'Archive' } },
 }
 
 function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' | 'en' }) {
-  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.propose
+  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.proposal
   return (
     <span className="os-stage-badge" style={{ '--stage-color': config.color } as React.CSSProperties}>
       <span className="os-stage-dot" />
@@ -55,6 +53,7 @@ function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' 
 
 export function ChangesList({
   changes,
+  archivedChanges,
   selectedChangeId,
   loading,
   error,
@@ -72,8 +71,13 @@ export function ChangesList({
     )
   }, [changes, searchQuery])
 
-  const inProgressChanges = filteredChanges.filter((c) => c.status !== 'complete')
-  const completedChanges = filteredChanges.filter((c) => c.status === 'complete')
+  const filteredArchivedChanges = useMemo(() => {
+    if (!searchQuery.trim()) return archivedChanges
+    const normalized = searchQuery.toLowerCase()
+    return archivedChanges.filter((change) =>
+      change.name.toLowerCase().includes(normalized)
+    )
+  }, [archivedChanges, searchQuery])
 
   if (loading) {
     return (
@@ -133,13 +137,13 @@ export function ChangesList({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
         />
-        {filteredChanges.length > 0 && (
-          <span className="os-changes-count">{filteredChanges.length}</span>
+        {filteredChanges.length + filteredArchivedChanges.length > 0 && (
+          <span className="os-changes-count">{filteredChanges.length + filteredArchivedChanges.length}</span>
         )}
       </div>
 
       <div className="os-changes-body">
-        {filteredChanges.length === 0 ? (
+        {filteredChanges.length === 0 && filteredArchivedChanges.length === 0 ? (
           <div className="os-empty-state">
             <Circle className="os-empty-icon" />
             <p>
@@ -150,7 +154,7 @@ export function ChangesList({
           </div>
         ) : (
           <>
-            {inProgressChanges.map((change, index) => (
+            {filteredChanges.map((change, index) => (
               <div
                 key={change.name}
                 className={`os-change-item ${selectedChangeId === change.name ? 'selected' : ''}`}
@@ -178,21 +182,21 @@ export function ChangesList({
               </div>
             ))}
 
-            {completedChanges.length > 0 && inProgressChanges.length > 0 && (
+            {filteredArchivedChanges.length > 0 && (
               <div className="os-changes-group archived">
                 <div className="os-group-label">
                   <Archive className="w-3 h-3" />
-                  <span>{language === 'zh' ? '已完成' : 'Completed'}</span>
+                  <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
                 </div>
               </div>
             )}
 
-            {completedChanges.map((change, index) => (
+            {filteredArchivedChanges.map((change, index) => (
               <div
                 key={change.name}
                 className={`os-change-item archived ${selectedChangeId === change.name ? 'selected' : ''}`}
                 onClick={() => onSelectChange(change.name)}
-                style={{ '--delay': `${(inProgressChanges.length + index) * 30}ms` } as React.CSSProperties}
+                style={{ '--delay': `${(filteredChanges.length + index) * 30}ms` } as React.CSSProperties}
               >
                 <div className="os-change-indicator">
                   <CheckCircle2 className="w-3.5 h-3.5" />

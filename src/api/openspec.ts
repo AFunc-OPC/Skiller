@@ -14,6 +14,10 @@ export const openspecApi = {
     return await invoke('list_openspec_changes', { projectPath })
   },
 
+  listArchivedChanges: async (projectPath: string): Promise<OpenSpecChangeInfo[]> => {
+    return await invoke('list_archived_changes', { projectPath })
+  },
+
   readArtifact: async (projectPath: string, changeId: string, fileName: string): Promise<string> => {
     return await invoke('read_openspec_artifact', { projectPath, changeId, fileName })
   },

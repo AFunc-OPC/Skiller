@@ -7,7 +7,7 @@ import { WorkflowTimeline } from './WorkflowTimeline'
 import { ArtifactPreview } from './ArtifactPreview'
 import { ActionButtons } from './ActionButtons'
 import { CliInstallPrompt } from './CliInstallPrompt'
-import type { Project } from '../../types'
+import type { Project, OpenSpecChangeInfo } from '../../types'
 import './OpenSpec.css'
 
 interface OpenSpecBoardProps {
@@ -19,12 +19,14 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   const { language } = useAppStore()
   const {
     changes,
+    archivedChanges,
     selectedChangeId,
     cliStatus,
     loading,
     error,
     hasOpenSpecDirectory,
     fetchChanges,
+    fetchArchivedChanges,
     selectChange,
     checkCli,
     checkOpenSpecDirectory,
@@ -39,10 +41,12 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   useEffect(() => {
     if (cliStatus?.installed) {
       fetchChanges(project.path)
+      fetchArchivedChanges(project.path)
     }
-  }, [cliStatus?.installed, fetchChanges, project.path])
+  }, [cliStatus?.installed, fetchChanges, fetchArchivedChanges, project.path])
 
-  const selectedChange = changes.find((c) => c.name === selectedChangeId)
+  const allChanges = [...changes, ...archivedChanges]
+  const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
 
   const handleRefresh = useCallback(() => {
     refresh(project.path)
@@ -101,6 +105,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
         <aside className="os-sidebar">
           <ChangesList
             changes={changes}
+            archivedChanges={archivedChanges}
             selectedChangeId={selectedChangeId}
             loading={loading}
             error={error}
@@ -115,6 +120,10 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
             <>
               <WorkflowTimeline
                 currentStage={selectedChange.currentStage}
+                completedTasks={selectedChange.completedTasks}
+                totalTasks={selectedChange.totalTasks}
+                artifacts={selectedChange.artifacts}
+                status={selectedChange.status}
                 language={language}
               />
               <ArtifactPreview

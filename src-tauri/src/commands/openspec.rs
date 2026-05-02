@@ -114,17 +114,14 @@ pub fn check_openspec_cli() -> Result<OpenSpecCliStatus, String> {
 
 fn determine_current_stage(artifacts: &[OpenSpecArtifactInfo]) -> String {
     let has_proposal = artifacts.iter().any(|a| a.artifact_type == "proposal");
-    let has_design = artifacts.iter().any(|a| a.artifact_type == "design");
     let has_tasks = artifacts.iter().any(|a| a.artifact_type == "tasks");
 
     if has_tasks {
         "apply".to_string()
-    } else if has_design {
-        "continue".to_string()
     } else if has_proposal {
-        "new".to_string()
+        "proposal".to_string()
     } else {
-        "propose".to_string()
+        "proposal".to_string()
     }
 }
 
@@ -210,11 +207,17 @@ pub fn read_openspec_artifact(
     change_id: String,
     file_name: String,
 ) -> Result<String, String> {
-    let artifact_path = Path::new(&project_path)
+    let changes_dir = Path::new(&project_path)
         .join("openspec")
-        .join("changes")
-        .join(&change_id)
-        .join(&file_name);
+        .join("changes");
+
+    let artifact_path = changes_dir.join(&change_id).join(&file_name);
+    
+    let artifact_path = if artifact_path.exists() {
+        artifact_path
+    } else {
+        changes_dir.join("archive").join(&change_id).join(&file_name)
+    };
 
     if !artifact_path.exists() {
         return Err(format!("Artifact file not found: {}", artifact_path.display()));
@@ -266,4 +269,54 @@ pub fn execute_openspec_command(
 pub fn check_openspec_directory(project_path: String) -> Result<bool, String> {
     let openspec_dir = Path::new(&project_path).join("openspec");
     Ok(openspec_dir.exists())
+}
+
+#[tauri::command]
+pub fn list_archived_changes(project_path: String) -> Result<Vec<OpenSpecChangeInfo>, String> {
+    let archive_dir = Path::new(&project_path)
+        .join("openspec")
+        .join("changes")
+        .join("archive");
+
+    if !archive_dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut archived_changes = Vec::new();
+
+    let entries = std::fs::read_dir(&archive_dir)
+        .map_err(|e| format!("Failed to read archive directory: {}", e))?;
+
+    for entry in entries.flatten() {
+        let change_path = entry.path();
+        if !change_path.is_dir() {
+            continue;
+        }
+
+        let name = change_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+        let artifacts = read_change_artifacts(&change_path);
+        let current_stage = "archive".to_string();
+
+        let last_modified = change_path.metadata()
+            .and_then(|m| m.modified())
+            .map(|t| {
+                let datetime: chrono::DateTime<chrono::Utc> = t.into();
+                datetime.to_rfc3339()
+            })
+            .unwrap_or_default();
+
+        archived_changes.push(OpenSpecChangeInfo {
+            name,
+            completed_tasks: 1,
+            total_tasks: 1,
+            last_modified,
+            status: "archived".to_string(),
+            current_stage,
+            artifacts,
+        });
+    }
+
+    archived_changes.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
+
+    Ok(archived_changes)
 }

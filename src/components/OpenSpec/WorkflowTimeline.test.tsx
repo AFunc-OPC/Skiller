@@ -2,99 +2,115 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { WorkflowTimeline } from './WorkflowTimeline'
 
-const STAGES = ['propose', 'new', 'continue', 'apply', 'verify', 'archive']
+const STAGES = ['proposal', 'apply', 'archive']
+
+const defaultProps = {
+  completedTasks: 0,
+  totalTasks: 5,
+  artifacts: [] as Array<{ name: string; type: string }>,
+  status: 'in-progress',
+  language: 'zh' as const,
+}
 
 describe('WorkflowTimeline', () => {
   describe('Rendering', () => {
     it('renders all stage labels in Chinese', () => {
-      render(<WorkflowTimeline currentStage="propose" language="zh" />)
+      render(<WorkflowTimeline {...defaultProps} currentStage="proposal" />)
 
       expect(screen.getByText('提案')).toBeInTheDocument()
-      expect(screen.getByText('新建')).toBeInTheDocument()
-      expect(screen.getByText('迭代')).toBeInTheDocument()
       expect(screen.getByText('实现')).toBeInTheDocument()
-      expect(screen.getByText('验证')).toBeInTheDocument()
       expect(screen.getByText('归档')).toBeInTheDocument()
     })
 
     it('renders all stage labels in English', () => {
-      render(<WorkflowTimeline currentStage="propose" language="en" />)
+      render(<WorkflowTimeline {...defaultProps} currentStage="proposal" language="en" />)
 
-      expect(screen.getByText('Propose')).toBeInTheDocument()
-      expect(screen.getByText('New')).toBeInTheDocument()
-      expect(screen.getByText('Iterate')).toBeInTheDocument()
+      expect(screen.getByText('Proposal')).toBeInTheDocument()
       expect(screen.getByText('Apply')).toBeInTheDocument()
-      expect(screen.getByText('Verify')).toBeInTheDocument()
       expect(screen.getByText('Archive')).toBeInTheDocument()
     })
   })
 
   describe('Stage States', () => {
-    it('marks propose as current when currentStage is propose', () => {
-      render(<WorkflowTimeline currentStage="propose" language="zh" />)
+    it('marks proposal as current when currentStage is proposal and no proposal artifact', () => {
+      render(<WorkflowTimeline {...defaultProps} currentStage="proposal" />)
 
       const stageLabels = document.querySelectorAll('.os-stage-label')
-      const proposeLabel = Array.from(stageLabels).find((label) => label.textContent === '提案')
-      expect(proposeLabel).toHaveClass('active')
+      const proposalLabel = Array.from(stageLabels).find((label) => label.textContent === '提案')
+      expect(proposalLabel).toHaveClass('active')
     })
 
-    it('marks propose and new as completed when currentStage is continue', () => {
-      render(<WorkflowTimeline currentStage="continue" language="zh" />)
+    it('marks proposal as completed when has proposal artifact', () => {
+      render(
+        <WorkflowTimeline 
+          {...defaultProps} 
+          currentStage="apply" 
+          artifacts={[{ name: 'proposal.md', type: 'proposal' }]} 
+        />
+      )
+
+      const completedNodes = document.querySelectorAll('.os-stage-node.completed')
+      expect(completedNodes.length).toBe(1)
+    })
+
+    it('marks apply as completed when tasks are 100% complete', () => {
+      render(
+        <WorkflowTimeline 
+          {...defaultProps} 
+          currentStage="apply"
+          completedTasks={5}
+          totalTasks={5}
+          artifacts={[{ name: 'proposal.md', type: 'proposal' }]} 
+        />
+      )
 
       const completedNodes = document.querySelectorAll('.os-stage-node.completed')
       expect(completedNodes.length).toBe(2)
     })
 
-    it('marks all previous stages as completed', () => {
-      render(<WorkflowTimeline currentStage="verify" language="zh" />)
+    it('marks all stages as completed when archived', () => {
+      render(
+        <WorkflowTimeline 
+          {...defaultProps} 
+          currentStage="archive"
+          completedTasks={5}
+          totalTasks={5}
+          status="complete"
+          artifacts={[{ name: 'proposal.md', type: 'proposal' }]} 
+        />
+      )
 
       const completedNodes = document.querySelectorAll('.os-stage-node.completed')
-      expect(completedNodes.length).toBe(4)
-    })
-
-    it('marks archive stage as current when currentStage is archive', () => {
-      render(<WorkflowTimeline currentStage="archive" language="zh" />)
-
-      const stageLabels = document.querySelectorAll('.os-stage-label')
-      const archiveLabel = Array.from(stageLabels).find((label) => label.textContent === '归档')
-      expect(archiveLabel).toHaveClass('active')
+      expect(completedNodes.length).toBe(3)
     })
   })
 
   describe('Visual Indicators', () => {
     it('shows check icon in completed stages', () => {
-      render(<WorkflowTimeline currentStage="apply" language="zh" />)
+      render(
+        <WorkflowTimeline 
+          {...defaultProps} 
+          currentStage="apply"
+          artifacts={[{ name: 'proposal.md', type: 'proposal' }]} 
+        />
+      )
 
-      const checkIcons = document.querySelectorAll('svg')
       const completedNodes = document.querySelectorAll('.os-stage-node.completed')
-      expect(completedNodes.length).toBeGreaterThan(0)
+      expect(completedNodes.length).toBe(1)
     })
 
     it('has current class on current stage node', () => {
-      render(<WorkflowTimeline currentStage="new" language="zh" />)
+      render(<WorkflowTimeline {...defaultProps} currentStage="apply" />)
 
       const currentNode = document.querySelector('.os-stage-node.current')
       expect(currentNode).toBeInTheDocument()
     })
 
     it('has pending class on future stages', () => {
-      render(<WorkflowTimeline currentStage="propose" language="zh" />)
+      render(<WorkflowTimeline {...defaultProps} currentStage="proposal" />)
 
       const pendingNodes = document.querySelectorAll('.os-stage-node.pending')
-      expect(pendingNodes.length).toBe(5)
-    })
-  })
-
-  describe('Stage Progression', () => {
-    it.each(STAGES)('correctly renders timeline for stage: %s', (stage) => {
-      render(<WorkflowTimeline currentStage={stage} language="en" />)
-
-      const stageIndex = STAGES.indexOf(stage)
-      const completedNodes = document.querySelectorAll('.os-stage-node.completed')
-      const pendingNodes = document.querySelectorAll('.os-stage-node.pending')
-
-      expect(completedNodes.length).toBe(stageIndex)
-      expect(pendingNodes.length).toBe(STAGES.length - stageIndex - 1)
+      expect(pendingNodes.length).toBe(2)
     })
   })
 })

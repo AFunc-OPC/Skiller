@@ -1,6 +1,6 @@
 export type OpenSpecChangeStatus = 'complete' | 'in-progress' | 'no-tasks'
 
-export type OpenSpecStage = 'propose' | 'new' | 'continue' | 'apply' | 'verify' | 'archive'
+export type OpenSpecStage = 'proposal' | 'apply' | 'archive'
 
 export type OpenSpecArtifactType = 'proposal' | 'design' | 'tasks' | 'spec'
 
