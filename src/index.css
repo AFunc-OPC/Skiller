@@ -2227,6 +2227,25 @@ body {
   animation: pm-fadeIn 0.3s ease-out backwards;
 }
 
+.pm-card:hover {
+  border-color: var(--accent-mint);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+}
+
+.pm-card-inner {
+  padding: 0.75rem;
+}
+
+.pm-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  animation: pm-fadeIn 0.3s ease-out backwards;
+}
+
 @keyframes pm-fadeIn {
   from {
     opacity: 0;
@@ -7589,6 +7608,12 @@ body {
   font-weight: 500;
   color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.pm-tag-empty {
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
 
 /* ── Card Meta ─────────────────────────────────────────────────── */

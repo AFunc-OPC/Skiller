@@ -63,32 +63,34 @@ export function SkillCard({ skill, searchKeyword = '', onClick, style, language 
           </span>
         </div>
         
-        {skill.description && (
-          <div className="pm-card-desc">{skill.description}</div>
-        )}
+        <div className="pm-card-desc">{skill.description || '-'}</div>
         
-        {skill.tags.length > 0 && (
-          <div className="pm-card-tags">
-            <Tag className="w-3 h-3 flex-shrink-0 text-gray-400" />
-            <div className="pm-tag-list">
-              {skill.tags.slice(0, 2).map((tagId, i) => {
-                const color = getTagColor(tagId)
-                return (
-                  <span
-                    key={i}
-                    className="pm-tag-chip"
-                    style={{ backgroundColor: color.bg, color: color.text }}
-                  >
-                    {getTagName(tagId)}
-                  </span>
-                )
-              })}
-              {skill.tags.length > 2 && (
-                <span className="pm-tag-more">+{skill.tags.length - 2}</span>
-              )}
-            </div>
+        <div className="pm-card-tags">
+          <Tag className="w-3 h-3 flex-shrink-0 text-gray-400" />
+          <div className="pm-tag-list">
+            {skill.tags.length > 0 ? (
+              <>
+                {skill.tags.slice(0, 2).map((tagId, i) => {
+                  const color = getTagColor(tagId)
+                  return (
+                    <span
+                      key={i}
+                      className="pm-tag-chip"
+                      style={{ backgroundColor: color.bg, color: color.text }}
+                    >
+                      {getTagName(tagId)}
+                    </span>
+                  )
+                })}
+                {skill.tags.length > 2 && (
+                  <span className="pm-tag-more">+{skill.tags.length - 2}</span>
+                )}
+              </>
+            ) : (
+              <span className="pm-tag-empty">-</span>
+            )}
           </div>
-        )}
+        </div>
         
         <div className="pm-card-meta">
           <div className="pm-meta-item">
