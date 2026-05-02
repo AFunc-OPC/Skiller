@@ -46,4 +46,4 @@ coverage/
 # AI Code
 .claude/
 .opencode/
-openspec/
+/openspec/

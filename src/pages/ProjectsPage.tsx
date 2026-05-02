@@ -7,6 +7,7 @@ import { desktopApi } from '../api/desktop'
 import { useSort } from '../hooks/useSort'
 import { SortDropdown } from '../components/shared'
 import { ProjectSkillList, ProjectSkillImportDialog } from '../components/ProjectSkill'
+import { OpenSpecBoard } from '../components/OpenSpec'
 import { distributionApi } from '../api/distribution'
 import { configApi } from '../api/config'
 import { t } from '../i18n'
@@ -228,6 +229,7 @@ export function ProjectsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [skillActionError, setSkillActionError] = useState<string | null>(null)
+  const [openspecBoardOpen, setOpenspecBoardOpen] = useState(false)
 
   const normalizeSkillActionError = useCallback((error: unknown) => {
     const rawMessage = error instanceof Error ? error.message : String(error)
@@ -922,6 +924,21 @@ export function ProjectsPage() {
                   <span className="sk-meta-value">{new Date(selectedProject.updated_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}</span>
                 </div>
               </div>
+
+              <div className="pm-drawer-openspec-btn">
+                <button
+                  className="pm-openspec-btn"
+                  onClick={() => setOpenspecBoardOpen(true)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  <span>{language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</span>
+                </button>
+              </div>
             </div>
             
             <div className="pm-drawer-main">
@@ -1005,6 +1022,15 @@ export function ProjectsPage() {
             </div>
           </div>
         </>
+      )}
+
+      {openspecBoardOpen && selectedProject && (
+        <div className="pm-openspec-board-overlay">
+          <OpenSpecBoard
+            project={selectedProject}
+            onBack={() => setOpenspecBoardOpen(false)}
+          />
+        </div>
       )}
     </div>
   )

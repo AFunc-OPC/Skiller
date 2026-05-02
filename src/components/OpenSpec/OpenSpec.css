@@ -1,0 +1,603 @@
+.os-board {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.os-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.os-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.os-back-btn:hover {
+  background: var(--bg-hover);
+}
+
+.os-title {
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.os-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.os-cli-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  background: var(--bg-tertiary);
+}
+
+.os-cli-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.os-cli-indicator.installed {
+  background: #10b981;
+}
+
+.os-cli-indicator.not-installed {
+  background: #ef4444;
+}
+
+.os-cli-version {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.os-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.os-refresh-btn:hover {
+  background: var(--bg-hover);
+}
+
+.os-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.os-sidebar {
+  width: 280px;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+}
+
+.os-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+.os-empty-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+
+/* Changes List */
+.os-changes-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.os-changes-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.os-search {
+  position: relative;
+}
+
+.os-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-tertiary);
+}
+
+.os-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.os-search-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.os-changes-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.os-change-card {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.os-change-card:hover {
+  background: var(--bg-hover);
+}
+
+.os-change-card.selected {
+  background: var(--bg-active);
+}
+
+.os-change-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.os-change-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.os-change-name mark {
+  background: #fef08a;
+  color: #1a1a1a;
+  padding: 0 0.125rem;
+  border-radius: 0.125rem;
+}
+
+.os-change-status {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+}
+
+.os-change-status.in-progress {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.os-change-status.archived {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.os-change-stage {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.os-changes-footer {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.os-new-change-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.os-new-change-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.os-empty-changes {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.os-empty-changes p {
+  margin-bottom: 1rem;
+}
+
+/* Workflow Timeline */
+.os-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+}
+
+.os-timeline-stages {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.os-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.os-stage-node {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.os-stage-node.completed {
+  border-color: #10b981;
+  background: #10b981;
+  color: white;
+}
+
+.os-stage-node.current {
+  border-color: #3b82f6;
+  background: transparent;
+  animation: pulse 2s infinite;
+}
+
+.os-stage-node.pending {
+  border-color: var(--border-color);
+  background: var(--bg-primary);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
+}
+
+.os-stage-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.os-stage-label.active {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.os-stage-connector {
+  width: 3rem;
+  height: 2px;
+  background: var(--border-color);
+  margin: 0 0.25rem;
+}
+
+.os-stage-connector.completed {
+  background: #10b981;
+}
+
+/* Artifact Preview */
+.os-artifact-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.os-artifact-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.os-artifact-tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.os-artifact-tab:hover {
+  background: var(--bg-hover);
+}
+
+.os-artifact-tab.active {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+
+.os-artifact-path {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+}
+
+.os-artifact-path:hover {
+  color: var(--accent-color);
+}
+
+.os-artifact-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.os-artifact-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+}
+
+.os-artifact-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ef4444;
+}
+
+/* Action Buttons */
+.os-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+}
+
+.os-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.os-action-btn.primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.os-action-btn.primary:hover {
+  opacity: 0.9;
+}
+
+.os-action-btn.secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.os-action-btn.secondary:hover {
+  background: var(--bg-hover);
+}
+
+.os-action-btn.danger {
+  background: #ef4444;
+  color: white;
+}
+
+.os-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* CLI Install Prompt */
+.os-cli-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.os-cli-prompt-icon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1.5rem;
+  color: #f59e0b;
+}
+
+.os-cli-prompt h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.os-cli-prompt p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.os-cli-install-commands {
+  background: var(--bg-tertiary);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  width: 100%;
+  max-width: 400px;
+}
+
+.os-cli-install-commands code {
+  display: block;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.os-cli-install-commands code:last-child {
+  margin-bottom: 0;
+}
+
+.os-recheck-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--accent-color);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.os-recheck-btn:hover {
+  opacity: 0.9;
+}
+
+/* Dialog */
+.os-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.os-dialog {
+  background: var(--bg-primary);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.os-dialog-header {
+  margin-bottom: 1rem;
+}
+
+.os-dialog-header h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.os-dialog-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.os-dialog-body {
+  margin-bottom: 1.5rem;
+}
+
+.os-dialog-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.os-dialog-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.os-dialog-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}

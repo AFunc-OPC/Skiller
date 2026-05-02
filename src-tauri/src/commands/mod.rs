@@ -7,3 +7,4 @@ pub mod repo;
 pub mod config;
 pub mod desktop;
 pub mod log;
+pub mod openspec;

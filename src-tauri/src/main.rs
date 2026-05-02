@@ -104,6 +104,11 @@ fn main() {
             skiller::commands::log::export_logs,
             skiller::commands::log::clear_logs,
             skiller::commands::log::get_log_stats,
+            skiller::commands::openspec::check_openspec_cli,
+            skiller::commands::openspec::list_openspec_changes,
+            skiller::commands::openspec::read_openspec_artifact,
+            skiller::commands::openspec::execute_openspec_command,
+            skiller::commands::openspec::check_openspec_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

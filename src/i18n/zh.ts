@@ -496,6 +496,21 @@ export const en = {
   projectSkillActionFailed: 'Action Failed',
   projectSkillActionAcknowledge: 'OK',
   projectSkillSourceUnavailable: 'The source skill folder is disabled or removed. Restore the source skill before enabling this reference.',
+  openspecBoard: 'OpenSpec Board',
+  openspecChanges: 'Changes',
+  openspecSearchChanges: 'Search changes...',
+  openspecNoChanges: 'No changes yet',
+  openspecNoMatching: 'No matching changes',
+  openspecInProgress: 'In Progress',
+  openspecArchived: 'Archived',
+  openspecCurrentStage: 'Current Stage',
+  openspecNewProposal: 'New Change',
+  openspecConfirmAction: 'Confirm Action',
+  openspecCliNotInstalled: 'OpenSpec CLI Not Installed',
+  openspecCliInstallHint: 'Please install OpenSpec CLI to use this feature',
+  openspecRecheck: 'Recheck',
+  openspecSelectChange: 'Select a change to view details',
+  openspecNoArtifacts: 'No artifacts yet',
 }
 
 export type Labels = typeof zh

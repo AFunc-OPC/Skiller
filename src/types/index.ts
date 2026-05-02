@@ -341,3 +341,4 @@ export interface ProxyConfig {
 }
 
 export * from './sort'
+export * from './openspec'

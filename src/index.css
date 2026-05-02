@@ -3197,6 +3197,49 @@ body {
   font-size: 0.75rem;
 }
 
+.pm-drawer-openspec-btn {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.pm-openspec-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pm-openspec-btn:hover {
+  border-color: var(--accent-color);
+  background: var(--bg-hover);
+}
+
+.pm-openspec-btn svg {
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-color);
+}
+
+.pm-openspec-board-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  background: var(--bg-primary);
+}
+
 .pm-drawer-content {
   flex: 1;
   overflow-y: auto;

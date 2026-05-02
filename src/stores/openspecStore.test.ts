@@ -1,0 +1,157 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useOpenSpecStore } from './openspecStore'
+import * as openspecApi from '../api/openspec'
+
+vi.mock('../api/openspec', () => ({
+  openspecApi: {
+    checkCli: vi.fn(),
+    listChanges: vi.fn(),
+    readArtifact: vi.fn(),
+    executeCommand: vi.fn(),
+    checkOpenSpecDirectory: vi.fn(),
+  },
+}))
+
+describe('openspecStore', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useOpenSpecStore.setState({
+      changes: [],
+      selectedChangeId: null,
+      cliStatus: null,
+      loading: false,
+      error: null,
+      commandLoading: false,
+      commandError: null,
+      lastCommandResult: null,
+      hasOpenSpecDirectory: false,
+    })
+  })
+
+  describe('checkCli', () => {
+    it('sets cliStatus when CLI is installed', async () => {
+      vi.mocked(openspecApi.openspecApi.checkCli).mockResolvedValue({
+        installed: true,
+        version: '1.0.0',
+      })
+
+      await useOpenSpecStore.getState().checkCli()
+
+      expect(useOpenSpecStore.getState().cliStatus).toEqual({
+        installed: true,
+        version: '1.0.0',
+      })
+    })
+
+    it('sets cliStatus to not installed on error', async () => {
+      vi.mocked(openspecApi.openspecApi.checkCli).mockRejectedValue(new Error('Not found'))
+
+      await useOpenSpecStore.getState().checkCli()
+
+      expect(useOpenSpecStore.getState().cliStatus).toEqual({
+        installed: false,
+        version: null,
+      })
+    })
+  })
+
+  describe('fetchChanges', () => {
+    it('fetches and sets changes list', async () => {
+      const mockChanges = [
+        {
+          id: 'change-1',
+          name: 'add-feature',
+          status: 'in_progress',
+          currentStage: 'propose',
+          createdAt: '2026-05-02T00:00:00Z',
+          updatedAt: '2026-05-02T00:00:00Z',
+          artifacts: [],
+        },
+      ]
+
+      vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
+
+      await useOpenSpecStore.getState().fetchChanges('/project/path')
+
+      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
+      expect(useOpenSpecStore.getState().loading).toBe(false)
+    })
+
+    it('sets error on fetch failure', async () => {
+      vi.mocked(openspecApi.openspecApi.listChanges).mockRejectedValue(new Error('Failed'))
+
+      await useOpenSpecStore.getState().fetchChanges('/project/path')
+
+      expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
+      expect(useOpenSpecStore.getState().loading).toBe(false)
+    })
+  })
+
+  describe('selectChange', () => {
+    it('sets selectedChangeId', () => {
+      useOpenSpecStore.getState().selectChange('change-1')
+
+      expect(useOpenSpecStore.getState().selectedChangeId).toBe('change-1')
+    })
+
+    it('clears selectedChangeId when null is passed', () => {
+      useOpenSpecStore.setState({ selectedChangeId: 'change-1' })
+
+      useOpenSpecStore.getState().selectChange(null)
+
+      expect(useOpenSpecStore.getState().selectedChangeId).toBeNull()
+    })
+  })
+
+  describe('executeAction', () => {
+    it('executes command and returns result', async () => {
+      const mockResult = {
+        success: true,
+        stdout: 'Done',
+        stderr: '',
+        exitCode: 0,
+      }
+
+      vi.mocked(openspecApi.openspecApi.executeCommand).mockResolvedValue(mockResult)
+
+      const result = await useOpenSpecStore.getState().executeAction(
+        '/project/path',
+        'propose',
+        ['change-name']
+      )
+
+      expect(result).toEqual(mockResult)
+      expect(useOpenSpecStore.getState().lastCommandResult).toEqual(mockResult)
+      expect(useOpenSpecStore.getState().commandLoading).toBe(false)
+    })
+
+    it('sets commandError on failure', async () => {
+      vi.mocked(openspecApi.openspecApi.executeCommand).mockRejectedValue(new Error('Command failed'))
+
+      const result = await useOpenSpecStore.getState().executeAction(
+        '/project/path',
+        'propose',
+        ['change-name']
+      )
+
+      expect(result).toBeNull()
+      expect(useOpenSpecStore.getState().commandError).toBe('Error: Command failed')
+    })
+  })
+
+  describe('reset', () => {
+    it('resets store to initial state', () => {
+      useOpenSpecStore.setState({
+        changes: [{ id: '1', name: 'test', status: 'in_progress', currentStage: 'propose', createdAt: '', updatedAt: '', artifacts: [] }],
+        selectedChangeId: '1',
+        error: 'some error',
+      })
+
+      useOpenSpecStore.getState().reset()
+
+      expect(useOpenSpecStore.getState().changes).toEqual([])
+      expect(useOpenSpecStore.getState().selectedChangeId).toBeNull()
+      expect(useOpenSpecStore.getState().error).toBeNull()
+    })
+  })
+})
