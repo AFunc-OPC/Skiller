@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Search, Archive, CheckCircle2, Circle, Loader2 } from 'lucide-react'
-import type { OpenSpecChangeInfo } from '../../types'
+import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 interface ChangesListProps {
   changes: OpenSpecChangeInfo[]
@@ -34,58 +34,22 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   )
 }
 
-function ProgressBadge({ 
-  completed, 
-  total, 
-  status,
-  language 
-}: { 
-  completed: number
-  total: number
-  status: string
-  language: 'zh' | 'en'
-}) {
-  const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
-  
-  let color = '#6b7280'
-  let label = language === 'zh' ? '无任务' : 'No tasks'
-  
-  if (status === 'complete') {
-    color = '#10b981'
-    label = language === 'zh' ? '已完成' : 'Complete'
-  } else if (status === 'in-progress') {
-    color = '#3b82f6'
-    label = language === 'zh' ? '进行中' : 'In Progress'
-  }
+const STAGE_CONFIG: Record<OpenSpecStage, { color: string; label: { zh: string; en: string } }> = {
+  propose: { color: '#6b7280', label: { zh: '提案', en: 'Propose' } },
+  new: { color: '#8b5cf6', label: { zh: '新建', en: 'New' } },
+  continue: { color: '#f59e0b', label: { zh: '迭代', en: 'Iterate' } },
+  apply: { color: '#3b82f6', label: { zh: '实现', en: 'Apply' } },
+  verify: { color: '#10b981', label: { zh: '验证', en: 'Verify' } },
+  archive: { color: '#6b7280', label: { zh: '归档', en: 'Archive' } },
+}
 
+function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' | 'en' }) {
+  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.propose
   return (
-    <div className="os-progress-badge" style={{ '--progress-color': color } as React.CSSProperties}>
-      <div className="os-progress-ring">
-        <svg viewBox="0 0 24 24" className="w-5 h-5">
-          <circle 
-            cx="12" cy="12" r="10" 
-            fill="none" 
-            stroke="var(--border-soft)" 
-            strokeWidth="2"
-          />
-          <circle 
-            cx="12" cy="12" r="10" 
-            fill="none" 
-            stroke={color} 
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeDasharray={`${percentage * 0.628} 100`}
-            transform="rotate(-90 12 12)"
-          />
-        </svg>
-      </div>
-      <div className="os-progress-info">
-        <span className="os-progress-label" style={{ color }}>{label}</span>
-        {total > 0 && (
-          <span className="os-progress-count">{completed}/{total}</span>
-        )}
-      </div>
-    </div>
+    <span className="os-stage-badge" style={{ '--stage-color': config.color } as React.CSSProperties}>
+      <span className="os-stage-dot" />
+      <span className="os-stage-label-text">{config.label[language]}</span>
+    </span>
   )
 }
 
@@ -204,12 +168,12 @@ export function ChangesList({
                   <span className="os-change-name">
                     <HighlightText text={change.name} query={searchQuery} />
                   </span>
-                  <ProgressBadge 
-                    completed={change.completedTasks}
-                    total={change.totalTasks}
-                    status={change.status}
-                    language={language}
-                  />
+                  <div className="os-change-meta">
+                    <StageBadge stage={change.currentStage} language={language} />
+                    <span className="os-change-progress">
+                      {change.completedTasks}/{change.totalTasks}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -237,12 +201,12 @@ export function ChangesList({
                   <span className="os-change-name">
                     <HighlightText text={change.name} query={searchQuery} />
                   </span>
-                  <ProgressBadge 
-                    completed={change.completedTasks}
-                    total={change.totalTasks}
-                    status={change.status}
-                    language={language}
-                  />
+                  <div className="os-change-meta">
+                    <StageBadge stage={change.currentStage} language={language} />
+                    <span className="os-change-progress">
+                      {change.completedTasks}/{change.totalTasks}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}

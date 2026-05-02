@@ -2,11 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChangesList } from './ChangesList'
-import type { OpenSpecChangeInfo } from '../../types'
+import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 const createMockChange = (
   name: string, 
   status: OpenSpecChangeInfo['status'] = 'no-tasks',
+  currentStage: OpenSpecStage = 'propose',
   completedTasks = 0,
   totalTasks = 0
 ): OpenSpecChangeInfo => ({
@@ -15,12 +16,14 @@ const createMockChange = (
   totalTasks,
   lastModified: '2026-05-02T00:00:00Z',
   status,
+  currentStage,
+  artifacts: [],
 })
 
 const mockChanges: OpenSpecChangeInfo[] = [
-  createMockChange('add-feature-x', 'in-progress', 2, 5),
-  createMockChange('fix-bug-y', 'no-tasks', 0, 0),
-  createMockChange('update-docs', 'complete', 3, 3),
+  createMockChange('add-feature-x', 'in-progress', 'apply', 2, 5),
+  createMockChange('fix-bug-y', 'no-tasks', 'propose', 0, 0),
+  createMockChange('update-docs', 'complete', 'archive', 3, 3),
 ]
 
 const defaultProps = {
@@ -134,19 +137,12 @@ describe('ChangesList', () => {
     })
   })
 
-  describe('Progress Display', () => {
-    it('shows progress badges for changes', () => {
+  describe('Stage Display', () => {
+    it('shows stage badges for changes', () => {
       render(<ChangesList {...defaultProps} />)
 
-      const progressBadges = document.querySelectorAll('.os-progress-badge')
-      expect(progressBadges.length).toBeGreaterThanOrEqual(2)
-    })
-
-    it('shows completed changes in archived section', () => {
-      render(<ChangesList {...defaultProps} />)
-
-      const groupLabel = document.querySelector('.os-group-label')
-      expect(groupLabel).toBeInTheDocument()
+      const stageBadges = document.querySelectorAll('.os-stage-badge')
+      expect(stageBadges.length).toBeGreaterThanOrEqual(2)
     })
   })
 
@@ -155,7 +151,6 @@ describe('ChangesList', () => {
       render(<ChangesList {...defaultProps} language="en" />)
 
       expect(screen.getByPlaceholderText('Search changes...')).toBeInTheDocument()
-      expect(screen.getByText('Completed')).toBeInTheDocument()
     })
   })
 })

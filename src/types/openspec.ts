@@ -1,5 +1,7 @@
 export type OpenSpecChangeStatus = 'complete' | 'in-progress' | 'no-tasks'
 
+export type OpenSpecStage = 'propose' | 'new' | 'continue' | 'apply' | 'verify' | 'archive'
+
 export type OpenSpecArtifactType = 'proposal' | 'design' | 'tasks' | 'spec'
 
 export interface OpenSpecArtifactInfo {
@@ -14,6 +16,8 @@ export interface OpenSpecChangeInfo {
   totalTasks: number
   lastModified: string
   status: OpenSpecChangeStatus
+  currentStage: OpenSpecStage
+  artifacts: OpenSpecArtifactInfo[]
 }
 
 export interface OpenSpecCliStatus {

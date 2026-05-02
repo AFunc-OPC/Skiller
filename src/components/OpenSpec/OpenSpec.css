@@ -354,6 +354,42 @@
   background: rgba(52, 211, 153, 0.3);
 }
 
+.os-change-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.os-stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background: color-mix(in srgb, var(--stage-color) 10%, transparent);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--stage-color);
+}
+
+.os-stage-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--stage-color);
+}
+
+.os-stage-label-text {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.os-change-progress {
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .os-progress-badge {
   display: flex;
   align-items: center;

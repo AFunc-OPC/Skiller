@@ -65,6 +65,8 @@ describe('openspecStore', () => {
           totalTasks: 5,
           lastModified: '2026-05-02T00:00:00Z',
           status: 'in-progress',
+          currentStage: 'apply',
+          artifacts: [],
         },
       ]
 
@@ -146,7 +148,9 @@ describe('openspecStore', () => {
           completedTasks: 0, 
           totalTasks: 0, 
           lastModified: '', 
-          status: 'no-tasks' as const 
+          status: 'no-tasks',
+          currentStage: 'propose',
+          artifacts: [],
         }],
         selectedChangeId: 'test',
         error: 'some error',

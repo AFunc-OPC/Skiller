@@ -25,11 +25,8 @@ pub struct OpenSpecChangeInfo {
     pub total_tasks: u32,
     pub last_modified: String,
     pub status: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OpenSpecListResponse {
-    pub changes: Vec<OpenSpecChangeInfo>,
+    pub current_stage: String,
+    pub artifacts: Vec<OpenSpecArtifactInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,14 +112,95 @@ pub fn check_openspec_cli() -> Result<OpenSpecCliStatus, String> {
     })
 }
 
+fn determine_current_stage(artifacts: &[OpenSpecArtifactInfo]) -> String {
+    let has_proposal = artifacts.iter().any(|a| a.artifact_type == "proposal");
+    let has_design = artifacts.iter().any(|a| a.artifact_type == "design");
+    let has_tasks = artifacts.iter().any(|a| a.artifact_type == "tasks");
+
+    if has_tasks {
+        "apply".to_string()
+    } else if has_design {
+        "continue".to_string()
+    } else if has_proposal {
+        "new".to_string()
+    } else {
+        "propose".to_string()
+    }
+}
+
+fn read_change_artifacts(change_path: &Path) -> Vec<OpenSpecArtifactInfo> {
+    let mut artifacts = Vec::new();
+    
+    if let Ok(entries) = std::fs::read_dir(change_path) {
+        for entry in entries.flatten() {
+            let artifact_path = entry.path();
+            let artifact_name = artifact_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+            
+            let artifact_type = if artifact_name == "proposal.md" {
+                "proposal".to_string()
+            } else if artifact_name == "design.md" {
+                "design".to_string()
+            } else if artifact_name == "tasks.md" {
+                "tasks".to_string()
+            } else if artifact_name.ends_with(".md") {
+                "spec".to_string()
+            } else {
+                continue;
+            };
+
+            artifacts.push(OpenSpecArtifactInfo {
+                name: artifact_name,
+                path: artifact_path.to_string_lossy().to_string(),
+                artifact_type,
+            });
+        }
+    }
+    
+    artifacts
+}
+
 #[tauri::command]
 pub fn list_openspec_changes(project_path: String) -> Result<Vec<OpenSpecChangeInfo>, String> {
     let json_output = run_openspec_command(&project_path, &["list", "--json"])?;
     
-    let response: OpenSpecListResponse = serde_json::from_str(&json_output)
+    #[derive(Deserialize)]
+    struct CliChange {
+        name: String,
+        #[serde(default)]
+        completed_tasks: u32,
+        #[serde(default)]
+        total_tasks: u32,
+        last_modified: String,
+        status: String,
+    }
+    
+    #[derive(Deserialize)]
+    struct CliResponse {
+        changes: Vec<CliChange>,
+    }
+    
+    let response: CliResponse = serde_json::from_str(&json_output)
         .map_err(|e| format!("Failed to parse openspec list output: {}", e))?;
     
-    Ok(response.changes)
+    let changes_dir = Path::new(&project_path).join("openspec").join("changes");
+    
+    let changes: Vec<OpenSpecChangeInfo> = response.changes.into_iter().map(|cli_change| {
+        let change_path = changes_dir.join(&cli_change.name);
+        let artifacts = read_change_artifacts(&change_path);
+        let current_stage = determine_current_stage(&artifacts);
+        
+        OpenSpecChangeInfo {
+            name: cli_change.name,
+            completed_tasks: cli_change.completed_tasks,
+            total_tasks: cli_change.total_tasks,
+            last_modified: cli_change.last_modified,
+            status: cli_change.status,
+            current_stage,
+            artifacts,
+        }
+    }).collect();
+    
+    Ok(changes)
 }
 
 #[tauri::command]
