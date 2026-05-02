@@ -1501,6 +1501,10 @@ pub fn confirm_overwrite_and_sync(skill_name: String, command: Option<String>) -
         )?;
     }
 
+    if let Err(e) = fs::remove_dir_all(&source_path) {
+        eprintln!("警告: 删除全局目录技能失败: {}", e);
+    }
+
     Ok(target_path.to_string_lossy().to_string())
 }
 
@@ -1540,6 +1544,10 @@ pub fn sync_skill_to_skiller(skill_name: String, command: Option<String>) -> Res
             &target_path,
             &FileSkillSourceMetadata::Npx { command },
         )?;
+    }
+
+    if let Err(e) = fs::remove_dir_all(&source_path) {
+        eprintln!("[Skiller] Warning: Failed to delete skill from global directory: {}", e);
     }
 
     Ok(SyncToSkillerResponse {
