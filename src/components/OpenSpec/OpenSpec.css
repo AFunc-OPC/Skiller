@@ -242,6 +242,16 @@
   letter-spacing: 0.08em;
   color: var(--text-secondary);
   opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.os-group-label:hover {
+  opacity: 1;
+}
+
+.os-group-count {
+  font-weight: 400;
+  opacity: 0.7;
 }
 
 .os-change-item {

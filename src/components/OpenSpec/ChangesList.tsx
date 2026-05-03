@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Archive, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import { Search, Archive, CheckCircle2, Circle, Loader2, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react'
 import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 interface ChangesListProps {
@@ -62,6 +62,8 @@ export function ChangesList({
   language,
 }: ChangesListProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeCollapsed, setActiveCollapsed] = useState(false)
+  const [archivedCollapsed, setArchivedCollapsed] = useState(true)
 
   const filteredChanges = useMemo(() => {
     if (!searchQuery.trim()) return changes
@@ -154,7 +156,26 @@ export function ChangesList({
           </div>
         ) : (
           <>
-            {filteredChanges.map((change, index) => (
+            {filteredChanges.length > 0 && (
+              <div className="os-changes-group active">
+                <div 
+                  className="os-group-label" 
+                  onClick={() => setActiveCollapsed(!activeCollapsed)}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  {activeCollapsed ? (
+                    <ChevronRight className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                  <FolderOpen className="w-3 h-3" />
+                  <span>{language === 'zh' ? '进行中' : 'Active'}</span>
+                  <span className="os-group-count">({filteredChanges.length})</span>
+                </div>
+              </div>
+            )}
+
+            {!activeCollapsed && filteredChanges.map((change, index) => (
               <div
                 key={change.name}
                 className={`os-change-item ${selectedChangeId === change.name ? 'selected' : ''}`}
@@ -184,14 +205,24 @@ export function ChangesList({
 
             {filteredArchivedChanges.length > 0 && (
               <div className="os-changes-group archived">
-                <div className="os-group-label">
+                <div 
+                  className="os-group-label" 
+                  onClick={() => setArchivedCollapsed(!archivedCollapsed)}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                >
+                  {archivedCollapsed ? (
+                    <ChevronRight className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
                   <Archive className="w-3 h-3" />
                   <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
+                  <span className="os-group-count">({filteredArchivedChanges.length})</span>
                 </div>
               </div>
             )}
 
-            {filteredArchivedChanges.map((change, index) => (
+            {!archivedCollapsed && filteredArchivedChanges.map((change, index) => (
               <div
                 key={change.name}
                 className={`os-change-item archived ${selectedChangeId === change.name ? 'selected' : ''}`}
