@@ -340,7 +340,7 @@ pub fn list_archived_changes(project_path: String) -> Result<Vec<OpenSpecChangeI
             completed_tasks: 1,
             total_tasks: 1,
             last_modified,
-            status: "archived".to_string(),
+            status: "complete".to_string(),
             current_stage,
             artifacts,
         });

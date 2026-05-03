@@ -96,7 +96,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
             disabled={loading}
             title={language === 'zh' ? '刷新' : 'Refresh'}
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className="w-4 h-4" />
           </button>
         </div>
       </div>

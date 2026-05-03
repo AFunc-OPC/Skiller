@@ -24,6 +24,10 @@ interface OpenSpecState {
   reset: () => void
 }
 
+function finishLoading(set: (state: Partial<OpenSpecState>) => void) {
+  requestAnimationFrame(() => set({ loading: false }))
+}
+
 export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   changes: [],
   archivedChanges: [],
@@ -40,18 +44,23 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const changes = await openspecApi.listChanges(projectPath)
-      set({ changes, loading: false })
+      set({ changes })
     } catch (error) {
-      set({ error: String(error), loading: false })
+      set({ error: String(error) })
+    } finally {
+      finishLoading(set)
     }
   },
 
   fetchArchivedChanges: async (projectPath: string) => {
+    set({ loading: true })
     try {
       const archivedChanges = await openspecApi.listArchivedChanges(projectPath)
       set({ archivedChanges })
     } catch {
       set({ archivedChanges: [] })
+    } finally {
+      finishLoading(set)
     }
   },
 
@@ -60,20 +69,26 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   },
 
   checkCli: async () => {
+    set({ loading: true })
     try {
       const cliStatus = await openspecApi.checkCli()
       set({ cliStatus })
     } catch (error) {
       set({ cliStatus: { installed: false, version: null } })
+    } finally {
+      finishLoading(set)
     }
   },
 
   checkOpenSpecDirectory: async (projectPath: string) => {
+    set({ loading: true })
     try {
       const hasOpenSpecDirectory = await openspecApi.checkOpenSpecDirectory(projectPath)
       set({ hasOpenSpecDirectory })
     } catch {
       set({ hasOpenSpecDirectory: false })
+    } finally {
+      finishLoading(set)
     }
   },
 
@@ -90,12 +105,20 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   },
 
   refresh: async (projectPath: string) => {
-    const state = get()
-    await Promise.all([
-      state.fetchChanges(projectPath),
-      state.fetchArchivedChanges(projectPath),
-      state.checkCli(),
-    ])
+    set({ loading: true, error: null })
+    try {
+      const [changes, archivedChanges, cliStatus] = await Promise.all([
+        openspecApi.listChanges(projectPath),
+        openspecApi.listArchivedChanges(projectPath).catch(() => []),
+        openspecApi.checkCli().catch(() => ({ installed: false, version: null })),
+      ])
+
+      set({ changes, archivedChanges, cliStatus })
+    } catch (error) {
+      set({ error: String(error) })
+    } finally {
+      finishLoading(set)
+    }
   },
 
   reset: () => {
