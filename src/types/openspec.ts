@@ -7,7 +7,9 @@ export type OpenSpecArtifactType = 'proposal' | 'design' | 'tasks' | 'spec'
 export interface OpenSpecArtifactInfo {
   name: string
   path: string
-  type: OpenSpecArtifactType
+  type: OpenSpecArtifactType | 'config'
+  category: 'config' | 'root' | 'specs'
+  displayName: string
 }
 
 export interface OpenSpecChangeInfo {

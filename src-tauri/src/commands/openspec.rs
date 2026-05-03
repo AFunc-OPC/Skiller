@@ -10,11 +10,14 @@ pub struct OpenSpecCliStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OpenSpecArtifactInfo {
     pub name: String,
     pub path: String,
     #[serde(rename = "type")]
     pub artifact_type: String,
+    pub category: String,
+    pub display_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -128,28 +131,55 @@ fn determine_current_stage(artifacts: &[OpenSpecArtifactInfo]) -> String {
 fn read_change_artifacts(change_path: &Path) -> Vec<OpenSpecArtifactInfo> {
     let mut artifacts = Vec::new();
     
+    // Read root level files
     if let Ok(entries) = std::fs::read_dir(change_path) {
         for entry in entries.flatten() {
             let artifact_path = entry.path();
             let artifact_name = artifact_path.file_name().unwrap_or_default().to_string_lossy().to_string();
             
-            let artifact_type = if artifact_name == "proposal.md" {
-                "proposal".to_string()
+            let (artifact_type, category) = if artifact_name == ".openspec.yaml" {
+                ("config".to_string(), "config".to_string())
+            } else if artifact_name == "proposal.md" {
+                ("proposal".to_string(), "root".to_string())
             } else if artifact_name == "design.md" {
-                "design".to_string()
+                ("design".to_string(), "root".to_string())
             } else if artifact_name == "tasks.md" {
-                "tasks".to_string()
-            } else if artifact_name.ends_with(".md") {
-                "spec".to_string()
+                ("tasks".to_string(), "root".to_string())
             } else {
                 continue;
             };
 
             artifacts.push(OpenSpecArtifactInfo {
-                name: artifact_name,
+                name: artifact_name.clone(),
                 path: artifact_path.to_string_lossy().to_string(),
                 artifact_type,
+                category,
+                display_name: artifact_name,
             });
+        }
+    }
+    
+    // Read specs directory
+    let specs_dir = change_path.join("specs");
+    if specs_dir.exists() && specs_dir.is_dir() {
+        if let Ok(subdirs) = std::fs::read_dir(&specs_dir) {
+            for subdir_entry in subdirs.flatten() {
+                let subdir_path = subdir_entry.path();
+                if subdir_path.is_dir() {
+                    let subdir_name = subdir_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    let spec_file = subdir_path.join("spec.md");
+                    
+                    if spec_file.exists() {
+                        artifacts.push(OpenSpecArtifactInfo {
+                            name: format!("specs/{}/spec.md", subdir_name),
+                            path: spec_file.to_string_lossy().to_string(),
+                            artifact_type: "spec".to_string(),
+                            category: "specs".to_string(),
+                            display_name: subdir_name,
+                        });
+                    }
+                }
+            }
         }
     }
     
