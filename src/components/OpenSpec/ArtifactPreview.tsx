@@ -12,14 +12,17 @@ import {
   Folder,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  Archive
 } from 'lucide-react'
 import { openspecApi } from '../../api/openspec'
-import type { OpenSpecArtifactInfo } from '../../types'
+import { useOpenSpecStore } from '../../stores/openspecStore'
+import type { OpenSpecArtifactInfo, OpenSpecChangeInfo } from '../../types'
 
 interface ArtifactPreviewProps {
   projectPath: string
   changeId: string
+  change: OpenSpecChangeInfo
   artifacts: OpenSpecArtifactInfo[]
   language: 'zh' | 'en'
 }
@@ -68,6 +71,7 @@ const CATEGORY_CONFIG: Record<string, {
 export function ArtifactPreview({
   projectPath,
   changeId,
+  change,
   artifacts,
   language,
 }: ArtifactPreviewProps) {
@@ -79,6 +83,10 @@ export function ArtifactPreview({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(['config', 'root', 'specs'])
   )
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  
+  const { executeAction, refresh } = useOpenSpecStore()
 
   const groupedArtifacts = artifacts.reduce((acc, artifact) => {
     const cat = artifact.category
@@ -157,6 +165,21 @@ export function ArtifactPreview({
     })
   }
 
+  const handleArchive = async () => {
+    setArchiving(true)
+    try {
+      const result = await executeAction(projectPath, 'archive', [changeId, '--yes'])
+      if (result?.success) {
+        refresh(projectPath)
+      }
+    } finally {
+      setArchiving(false)
+      setShowArchiveDialog(false)
+    }
+  }
+
+  const canArchive = change.currentStage !== 'archive'
+
   if (artifacts.length === 0) {
     return (
       <div className="os-artifact-preview os-artifact-empty">
@@ -216,7 +239,67 @@ export function ArtifactPreview({
               </div>
             )
           })}
+          
+          {canArchive && (
+            <div className="os-file-tree-footer">
+              <button
+                className="os-file-item os-archive-btn"
+                onClick={() => setShowArchiveDialog(true)}
+                disabled={archiving}
+              >
+                {archiving ? (
+                  <Loader2 className="os-file-icon w-4 h-4 animate-spin" />
+                ) : (
+                  <Archive className="os-file-icon" />
+                )}
+                <span className="os-file-name">
+                  {language === 'zh' ? '归档此变更' : 'Archive Change'}
+                </span>
+              </button>
+            </div>
+          )}
         </nav>
+        
+        {showArchiveDialog && (
+          <div className="os-dialog-overlay" onClick={() => setShowArchiveDialog(false)}>
+            <div className="os-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="os-dialog-header">
+                <h3>{language === 'zh' ? '确认归档' : 'Confirm Archive'}</h3>
+                <p>
+                  {language === 'zh'
+                    ? `确定要归档变更 "${changeId}" 吗？归档后将移至归档目录。`
+                    : `Are you sure you want to archive "${changeId}"? It will be moved to the archive directory.`}
+                </p>
+              </div>
+              <div className="os-dialog-footer">
+                <button
+                  className="os-action-btn secondary"
+                  onClick={() => setShowArchiveDialog(false)}
+                  disabled={archiving}
+                >
+                  {language === 'zh' ? '取消' : 'Cancel'}
+                </button>
+                <button
+                  className="os-action-btn primary"
+                  onClick={handleArchive}
+                  disabled={archiving}
+                >
+                  {archiving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{language === 'zh' ? '归档中...' : 'Archiving...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="w-4 h-4" />
+                      <span>{language === 'zh' ? '确认归档' : 'Archive'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </aside>
 
       <main className="os-artifact-main">

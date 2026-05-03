@@ -137,6 +137,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
               <ArtifactPreview
                 projectPath={project.path}
                 changeId={selectedChange.name}
+                change={selectedChange}
                 artifacts={selectedChange.artifacts}
                 language={language}
               />

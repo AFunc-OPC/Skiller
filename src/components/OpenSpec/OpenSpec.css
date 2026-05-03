@@ -922,6 +922,31 @@
   white-space: nowrap;
 }
 
+.os-file-tree-footer {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.os-archive-btn {
+  padding-left: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.os-archive-btn:hover {
+  color: var(--accent-coral);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+[data-theme="dark"] .os-archive-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.os-archive-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .os-artifact-main {
   flex: 1;
   display: flex;
