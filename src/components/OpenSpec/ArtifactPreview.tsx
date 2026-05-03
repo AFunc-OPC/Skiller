@@ -239,26 +239,26 @@ export function ArtifactPreview({
               </div>
             )
           })}
-          
-          {canArchive && (
-            <div className="os-file-tree-footer">
-              <button
-                className="os-file-item os-archive-btn"
-                onClick={() => setShowArchiveDialog(true)}
-                disabled={archiving}
-              >
-                {archiving ? (
-                  <Loader2 className="os-file-icon w-4 h-4 animate-spin" />
-                ) : (
-                  <Archive className="os-file-icon" />
-                )}
-                <span className="os-file-name">
-                  {language === 'zh' ? '归档此变更' : 'Archive Change'}
-                </span>
-              </button>
-            </div>
-          )}
         </nav>
+        
+        {canArchive && (
+          <div className="os-file-tree-footer">
+            <button
+              className="os-archive-btn"
+              onClick={() => setShowArchiveDialog(true)}
+              disabled={archiving}
+            >
+              {archiving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Archive className="w-4 h-4" />
+              )}
+              <span>
+                {language === 'zh' ? '归档此变更' : 'Archive Change'}
+              </span>
+            </button>
+          </div>
+        )}
         
         {showArchiveDialog && (
           <div className="os-dialog-overlay" onClick={() => setShowArchiveDialog(false)}>
