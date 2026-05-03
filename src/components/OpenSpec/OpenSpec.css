@@ -961,7 +961,7 @@
   word-break: break-all;
 }
 
-.os-action-btn {
+.os-icon-action-btn {
   width: 28px;
   height: 28px;
   display: flex;
@@ -975,17 +975,17 @@
   transition: all 0.15s;
 }
 
-.os-action-btn:hover {
+.os-icon-action-btn:hover {
   border-color: var(--accent-mint);
   color: var(--accent-mint);
 }
 
-.os-action-btn svg {
+.os-icon-action-btn svg {
   width: 14px;
   height: 14px;
 }
 
-.os-action-btn.copied {
+.os-icon-action-btn.copied {
   border-color: var(--accent-mint);
   color: var(--accent-mint);
   background: rgba(16, 185, 129, 0.1);

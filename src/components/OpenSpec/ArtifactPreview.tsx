@@ -239,21 +239,21 @@ export function ArtifactPreview({
                 {activeArtifact.path}
               </span>
               <button 
-                className={`os-action-btn ${copied ? 'copied' : ''}`}
+                className={`os-icon-action-btn ${copied ? 'copied' : ''}`}
                 onClick={handleCopyPath}
                 title={language === 'zh' ? '复制路径' : 'Copy Path'}
               >
                 {copied ? <Check /> : <Copy />}
               </button>
               <button 
-                className="os-action-btn" 
+                className="os-icon-action-btn" 
                 onClick={handleOpenFile}
                 title={language === 'zh' ? '打开文件' : 'Open File'}
               >
                 <ExternalLink />
               </button>
               <button 
-                className="os-action-btn" 
+                className="os-icon-action-btn" 
                 onClick={handleOpenInFileManager}
                 title={language === 'zh' ? '在文件夹中显示' : 'Reveal in Folder'}
               >
