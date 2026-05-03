@@ -24,9 +24,18 @@ pub async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, Stri
 
 #[tauri::command]
 pub async fn open_folder(path: String, app: tauri::AppHandle) -> Result<(), String> {
-    use tauri_plugin_opener::OpenerExt;
-    
-    let expanded_path = expand_tilde(&path);
-    let _ = app.opener().open_path(&expanded_path, None::<&str>);
-    Ok(())
+  use tauri_plugin_opener::OpenerExt;
+  
+  let expanded_path = expand_tilde(&path);
+  let _ = app.opener().open_path(&expanded_path, None::<&str>);
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn open_file(path: String, app: tauri::AppHandle) -> Result<(), String> {
+  use tauri_plugin_opener::OpenerExt;
+  
+  let expanded_path = expand_tilde(&path);
+  let _ = app.opener().open_path(&expanded_path, None::<&str>);
+  Ok(())
 }

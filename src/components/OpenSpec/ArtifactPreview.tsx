@@ -9,7 +9,10 @@ import {
   Loader2, 
   FolderOpen,
   ChevronRight,
-  Folder
+  Folder,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react'
 import { openspecApi } from '../../api/openspec'
 import type { OpenSpecArtifactInfo } from '../../types'
@@ -72,6 +75,7 @@ export function ArtifactPreview({
   const [content, setContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(['config', 'root', 'specs'])
   )
@@ -122,6 +126,23 @@ export function ArtifactPreview({
     const { desktopApi } = await import('../../api/desktop')
     const parentDir = activeArtifact.path.substring(0, activeArtifact.path.lastIndexOf('/'))
     desktopApi.openFolder(parentDir)
+  }
+
+  const handleOpenFile = async () => {
+    if (!activeArtifact) return
+    const { desktopApi } = await import('../../api/desktop')
+    desktopApi.openFile(activeArtifact.path)
+  }
+
+  const handleCopyPath = async () => {
+    if (!activeArtifact) return
+    try {
+      await navigator.clipboard.writeText(activeArtifact.path)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy path:', err)
+    }
   }
 
   const toggleCategory = (category: string) => {
@@ -213,13 +234,36 @@ export function ArtifactPreview({
                 )
               })()}
             </div>
-            <button 
-              className="os-path-btn" 
-              onClick={handleOpenInFileManager}
-              title={activeArtifact.path}
-            >
-              {language === 'zh' ? '在文件夹中显示' : 'Reveal in Folder'}
-            </button>
+            <div className="os-content-actions">
+              <span className="os-file-path" title={activeArtifact.path}>
+                {activeArtifact.path}
+              </span>
+              <button 
+                className={`os-action-btn ${copied ? 'copied' : ''}`}
+                onClick={handleCopyPath}
+                title={language === 'zh' ? '复制路径' : 'Copy Path'}
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+              <button 
+                className="os-action-btn" 
+                onClick={handleOpenFile}
+                title={language === 'zh' ? '打开文件' : 'Open File'}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+              <button 
+                className="os-action-btn" 
+                onClick={handleOpenInFileManager}
+                title={language === 'zh' ? '在文件夹中显示' : 'Reveal in Folder'}
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </header>
         )}
 

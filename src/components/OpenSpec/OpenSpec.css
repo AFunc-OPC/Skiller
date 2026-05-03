@@ -105,6 +105,7 @@
 }
 
 .os-content {
+  position: relative;
   display: flex;
   flex: 1;
   overflow: hidden;
@@ -906,6 +907,7 @@
   padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--border-soft);
   background: var(--bg-elevated);
+  gap: 1rem;
 }
 
 .os-content-title {
@@ -915,31 +917,58 @@
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.os-content-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.os-file-path {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  word-break: break-all;
+}
+
+.os-action-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.os-action-btn:hover {
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+}
+
+.os-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.os-action-btn.copied {
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .os-title-icon {
   width: 15px;
   height: 15px;
-}
-
-.os-path-btn {
-  padding: 0.25rem 0.625rem;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.6875rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.os-path-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--accent-mint);
-}
-
-[data-theme="dark"] .os-path-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .os-artifact-content {
@@ -1284,4 +1313,43 @@
 .os-meta-value {
   font-size: 0.875rem;
   color: var(--text-primary);
+}
+
+.os-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--bg-base) 85%, transparent);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: 12px;
+}
+
+.os-loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--accent-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.os-content-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.os-refresh-btn {
+  position: relative;
+}
+
+.os-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

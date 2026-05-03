@@ -100,6 +100,7 @@ fn main() {
             skiller::commands::config::get_effective_proxy,
             skiller::commands::desktop::select_folder,
             skiller::commands::desktop::open_folder,
+            skiller::commands::desktop::open_file,
             skiller::commands::log::get_logs,
             skiller::commands::log::export_logs,
             skiller::commands::log::clear_logs,

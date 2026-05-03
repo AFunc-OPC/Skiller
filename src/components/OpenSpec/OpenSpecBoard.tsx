@@ -102,7 +102,15 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
       </div>
 
       <div className="os-content">
-        <aside className="os-sidebar">
+        {loading && (
+          <div className="os-loading-overlay">
+            <div className="os-loading-spinner">
+              <RefreshCw className="w-6 h-6 animate-spin" />
+              <span>{language === 'zh' ? '加载中...' : 'Loading...'}</span>
+            </div>
+          </div>
+        )}
+        <aside className={`os-sidebar ${loading ? 'os-content-loading' : ''}`}>
           <ChangesList
             changes={changes}
             archivedChanges={archivedChanges}

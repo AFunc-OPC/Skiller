@@ -8,4 +8,8 @@ export const desktopApi = {
   openFolder: async (path: string): Promise<void> => {
     return await invoke('open_folder', { path })
   },
+  
+  openFile: async (path: string): Promise<void> => {
+    return await invoke('open_file', { path })
+  },
 }
