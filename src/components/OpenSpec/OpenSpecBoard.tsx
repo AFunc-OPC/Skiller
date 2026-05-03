@@ -91,7 +91,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
             <span className="os-cli-version">{cliStatus.version || 'OpenSpec'}</span>
           </div>
           <button
-            className="os-refresh-btn"
+            className={`os-refresh-btn ${loading ? 'is-loading' : ''}`}
             onClick={handleRefresh}
             disabled={loading}
             title={language === 'zh' ? '刷新' : 'Refresh'}

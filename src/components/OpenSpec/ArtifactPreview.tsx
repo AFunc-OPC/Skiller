@@ -243,25 +243,21 @@ export function ArtifactPreview({
                 onClick={handleCopyPath}
                 title={language === 'zh' ? '复制路径' : 'Copy Path'}
               >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
+                {copied ? <Check /> : <Copy />}
               </button>
               <button 
                 className="os-action-btn" 
                 onClick={handleOpenFile}
                 title={language === 'zh' ? '打开文件' : 'Open File'}
               >
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink />
               </button>
               <button 
                 className="os-action-btn" 
                 onClick={handleOpenInFileManager}
                 title={language === 'zh' ? '在文件夹中显示' : 'Reveal in Folder'}
               >
-                <FolderOpen className="w-3.5 h-3.5" />
+                <FolderOpen />
               </button>
             </div>
           </header>
