@@ -7,6 +7,7 @@ interface WorkflowTimelineProps {
   artifacts: Array<{ name: string; type: string }>
   status: string
   language: 'zh' | 'en'
+  isArchived?: boolean
 }
 
 const STAGES = ['proposal', 'apply', 'archive']
@@ -35,11 +36,11 @@ export function WorkflowTimeline({
   totalTasks, 
   artifacts, 
   status,
-  language 
+  language,
+  isArchived = false
 }: WorkflowTimelineProps) {
   const hasProposal = artifacts.some(a => a.type === 'proposal')
   const isApplyComplete = totalTasks > 0 && completedTasks === totalTasks
-  const isArchived = status === 'complete'
   
   const stageCompletion = {
     proposal: hasProposal,

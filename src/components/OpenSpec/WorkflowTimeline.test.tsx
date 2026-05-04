@@ -75,7 +75,7 @@ describe('WorkflowTimeline', () => {
           currentStage="archive"
           completedTasks={5}
           totalTasks={5}
-          status="complete"
+          isArchived={true}
           artifacts={[{ name: 'proposal.md', type: 'proposal' }]} 
         />
       )

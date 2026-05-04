@@ -46,6 +46,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
+  const isSelectedChangeArchived = selectedChange ? archivedChanges.some((c) => c.name === selectedChange.name) : false
 
   const handleRefresh = useCallback(() => {
     refresh(project.path)
@@ -132,6 +133,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
                 artifacts={selectedChange.artifacts}
                 status={selectedChange.status}
                 language={language}
+                isArchived={isSelectedChangeArchived}
               />
               <ArtifactPreview
                 projectPath={project.path}
