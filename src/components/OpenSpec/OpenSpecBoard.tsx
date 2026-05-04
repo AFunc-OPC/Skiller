@@ -1,12 +1,13 @@
-import { useEffect, useCallback } from 'react'
-import { ArrowLeft, RefreshCw } from 'lucide-react'
+import { useEffect, useCallback, useState, useRef } from 'react'
+import { ArrowLeft, RefreshCw, Settings } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
 import { WorkflowTimeline } from './WorkflowTimeline'
 import { ArtifactPreview } from './ArtifactPreview'
 import { CliInstallPrompt } from './CliInstallPrompt'
-import type { Project, OpenSpecChangeInfo } from '../../types'
+import { OpenSpecSettingsDialog } from './OpenSpecSettingsDialog'
+import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings } from '../../types'
 import './OpenSpec.css'
 
 interface OpenSpecBoardProps {
@@ -25,26 +26,59 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     error,
     hasOpenSpecDirectory,
     initialized,
+    settings,
     fetchAllChanges,
     selectChange,
     checkOpenSpecDirectory,
     refresh,
     reset,
+    loadSettings,
+    saveSettings,
   } = useOpenSpecStore()
+  
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     checkOpenSpecDirectory(project.path)
+    loadSettings(project.id)
     
     return () => {
       reset()
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
     }
-  }, [project.path])
+  }, [project.path, project.id])
 
   useEffect(() => {
     if (hasOpenSpecDirectory && !initialized) {
       fetchAllChanges(project.path)
     }
   }, [hasOpenSpecDirectory, initialized, project.path])
+  
+  useEffect(() => {
+    if (settings.autoRefreshInterval > 0 && !loading) {
+      timerRef.current = setInterval(() => {
+        refresh(project.path)
+      }, settings.autoRefreshInterval * 1000)
+      
+      setCountdown(settings.autoRefreshInterval)
+      countdownRef.current = setInterval(() => {
+        setCountdown(c => c > 0 ? c - 1 : settings.autoRefreshInterval)
+      }, 1000)
+      
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current)
+        if (countdownRef.current) clearInterval(countdownRef.current)
+      }
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
+      setCountdown(0)
+    }
+  }, [settings.autoRefreshInterval, project.path, loading])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
@@ -57,6 +91,10 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   const handleSelectChange = useCallback((changeId: string) => {
     selectChange(changeId)
   }, [selectChange])
+  
+  const handleSaveSettings = useCallback((newSettings: OpenSpecBoardSettings) => {
+    saveSettings(project.id, newSettings)
+  }, [project.id, saveSettings])
 
   if (!cliStatus?.installed) {
     return (
@@ -99,6 +137,16 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
             title={language === 'zh' ? '刷新' : 'Refresh'}
           >
             <RefreshCw className="w-4 h-4" />
+            {countdown > 0 && !loading && (
+              <span className="os-countdown-badge">{countdown}s</span>
+            )}
+          </button>
+          <button
+            className="os-refresh-btn"
+            onClick={() => setSettingsDialogOpen(true)}
+            title={language === 'zh' ? '设置' : 'Settings'}
+          >
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -156,6 +204,14 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
           )}
         </main>
       </div>
+      
+      <OpenSpecSettingsDialog
+        isOpen={settingsDialogOpen}
+        onClose={() => setSettingsDialogOpen(false)}
+        settings={settings}
+        onSave={handleSaveSettings}
+        language={language}
+      />
     </div>
   )
 }

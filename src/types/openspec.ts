@@ -49,3 +49,7 @@ export interface OpenSpecReadArtifactRequest {
   changeId: string
   fileName: string
 }
+
+export interface OpenSpecBoardSettings {
+  autoRefreshInterval: number
+}

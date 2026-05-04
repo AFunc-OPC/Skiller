@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import type { OpenSpecChangeInfo, OpenSpecCliStatus, OpenSpecCommandResult } from '../types'
+import type { OpenSpecChangeInfo, OpenSpecCliStatus, OpenSpecCommandResult, OpenSpecBoardSettings } from '../types'
 import { openspecApi } from '../api/openspec'
+import { configApi } from '../api/config'
 
 interface OpenSpecState {
   changes: OpenSpecChangeInfo[]
@@ -14,6 +15,7 @@ interface OpenSpecState {
   lastCommandResult: OpenSpecCommandResult | null
   hasOpenSpecDirectory: boolean
   initialized: boolean
+  settings: OpenSpecBoardSettings
 
   fetchAllChanges: (projectPath: string) => Promise<void>
   fetchChanges: (projectPath: string) => Promise<void>
@@ -24,6 +26,8 @@ interface OpenSpecState {
   executeAction: (projectPath: string, command: string, args: string[]) => Promise<OpenSpecCommandResult | null>
   refresh: (projectPath: string) => Promise<void>
   reset: () => void
+  loadSettings: (projectId: string) => Promise<void>
+  saveSettings: (projectId: string, settings: OpenSpecBoardSettings) => Promise<void>
 }
 
 function finishLoading(set: (state: Partial<OpenSpecState>) => void) {
@@ -42,6 +46,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   lastCommandResult: null,
   hasOpenSpecDirectory: false,
   initialized: false,
+  settings: { autoRefreshInterval: 0 },
 
   fetchAllChanges: async (projectPath: string) => {
     if (get().initialized) return
@@ -150,6 +155,30 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
       commandError: null,
       lastCommandResult: null,
       initialized: false,
+      settings: { autoRefreshInterval: 0 },
     })
+  },
+
+  loadSettings: async (projectId: string) => {
+    try {
+      const settingsJson = await configApi.get(`openspec_board_settings_${projectId}`)
+      if (settingsJson) {
+        const settings = JSON.parse(settingsJson) as OpenSpecBoardSettings
+        set({ settings })
+      } else {
+        set({ settings: { autoRefreshInterval: 0 } })
+      }
+    } catch {
+      set({ settings: { autoRefreshInterval: 0 } })
+    }
+  },
+
+  saveSettings: async (projectId: string, settings: OpenSpecBoardSettings) => {
+    try {
+      await configApi.set(`openspec_board_settings_${projectId}`, JSON.stringify(settings))
+      set({ settings })
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+    }
   },
 }))
