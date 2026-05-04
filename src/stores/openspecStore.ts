@@ -155,7 +155,6 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
       commandError: null,
       lastCommandResult: null,
       initialized: false,
-      settings: { autoRefreshInterval: 0 },
     })
   },
 

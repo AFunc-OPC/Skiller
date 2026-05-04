@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, ChevronDown, Check } from 'lucide-react'
 import type { OpenSpecBoardSettings } from '../../types'
 import './OpenSpec.css'
@@ -36,6 +36,12 @@ export function OpenSpecSettingsDialog({
   const [activeTab, setActiveTab] = useState<SettingsTab>('auto-refresh')
   const [localSettings, setLocalSettings] = useState<OpenSpecBoardSettings>(settings)
   const [selectOpen, setSelectOpen] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSettings(settings)
+    }
+  }, [isOpen, settings])
 
   const t = (key: string) => {
     const labels = {
