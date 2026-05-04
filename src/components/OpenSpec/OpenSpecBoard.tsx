@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react'
-import { ArrowLeft, RefreshCw, Settings } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Settings, FolderOpen, Copy, Check } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
@@ -8,6 +8,7 @@ import { ArtifactPreview } from './ArtifactPreview'
 import { CliInstallPrompt } from './CliInstallPrompt'
 import { OpenSpecSettingsDialog } from './OpenSpecSettingsDialog'
 import { OpenSpecInitDialog } from './OpenSpecInitDialog'
+import { desktopApi } from '../../api/desktop'
 import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings } from '../../types'
 import './OpenSpec.css'
 
@@ -28,13 +29,11 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     hasOpenSpecDirectory,
     initialized,
     settings,
-    needsInit,
     initLoading,
     initError,
     fetchAllChanges,
     selectChange,
     checkOpenSpecDirectory,
-    checkInitStatus,
     initOpenSpec,
     refresh,
     reset,
@@ -43,26 +42,50 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   } = useOpenSpecStore()
   
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
+  const [initDialogDismissed, setInitDialogDismissed] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [copied, setCopied] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
+  const handleCopyPath = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(project.path)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch (error) {
+      console.error('Failed to copy:', error)
+    }
+  }, [project.path])
+
+  const handleOpenFolder = useCallback(async () => {
+    try {
+      await desktopApi.openFolder(project.path)
+    } catch (error) {
+      console.error('Failed to open folder:', error)
+    }
+  }, [project.path])
+
   useEffect(() => {
-    checkInitStatus(project.path)
-    loadSettings(project.id)
+    const init = async () => {
+      await checkOpenSpecDirectory(project.path)
+      loadSettings(project.id)
+    }
+    init()
     
     return () => {
       reset()
+      setInitDialogDismissed(false)
       if (timerRef.current) clearInterval(timerRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
     }
   }, [project.path, project.id])
 
   useEffect(() => {
-    if (!needsInit && !initialized) {
+    if (hasOpenSpecDirectory && !initialized) {
       fetchAllChanges(project.path)
     }
-  }, [needsInit, initialized, project.path])
+  }, [hasOpenSpecDirectory, initialized, project.path])
   
   useEffect(() => {
     if (settings.autoRefreshInterval > 0 && !loading && initialized) {
@@ -107,6 +130,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   }, [project.path, initOpenSpec])
 
   const handleInitClose = useCallback(() => {
+    setInitDialogDismissed(true)
     reset()
   }, [reset])
 
@@ -118,9 +142,31 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
             <ArrowLeft className="w-4 h-4" />
             <span>{language === 'zh' ? '返回' : 'Back'}</span>
           </button>
-          <h1 className="os-title">
-            {project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}
-          </h1>
+          <div className="os-title">
+            <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
+            <div className="os-title-path-row">
+              <code className="os-title-path">{project.path}</code>
+              <div className="os-title-path-actions">
+                <button
+                  onClick={handleCopyPath}
+                  className={copied ? 'os-action-copied' : ''}
+                  title={language === 'zh' ? '复制路径' : 'Copy path'}
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+                <button
+                  onClick={handleOpenFolder}
+                  title={language === 'zh' ? '打开文件夹' : 'Open folder'}
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="os-content">
           <CliInstallPrompt language={language} />
@@ -136,9 +182,31 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
           <ArrowLeft className="w-4 h-4" />
           <span>{language === 'zh' ? '返回' : 'Back'}</span>
         </button>
-        <h1 className="os-title">
-          {project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}
-        </h1>
+        <div className="os-title">
+          <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
+          <div className="os-title-path-row">
+            <code className="os-title-path">{project.path}</code>
+            <div className="os-title-path-actions">
+              <button
+                onClick={handleCopyPath}
+                className={copied ? 'os-action-copied' : ''}
+                title={language === 'zh' ? '复制路径' : 'Copy path'}
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </button>
+              <button
+                onClick={handleOpenFolder}
+                title={language === 'zh' ? '打开文件夹' : 'Open folder'}
+              >
+                <FolderOpen className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="os-header-actions">
           <div className="os-cli-status">
             <span className="os-cli-indicator installed" />
@@ -229,7 +297,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
       />
 
       <OpenSpecInitDialog
-        isOpen={needsInit}
+        isOpen={!hasOpenSpecDirectory && cliStatus?.installed === true && !initDialogDismissed}
         onClose={handleInitClose}
         onInit={handleInit}
         loading={initLoading}

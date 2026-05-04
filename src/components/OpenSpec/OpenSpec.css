@@ -37,10 +37,72 @@
 
 .os-title {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.os-title h1 {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  white-space: nowrap;
+}
+
+.os-title-path-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.os-title-path {
+  flex: 1;
+  font-size: 0.75rem;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  color: var(--text-secondary);
+  background: var(--bg-base);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  word-break: break-all;
+  min-width: 0;
+  max-width: 400px;
+}
+
+.os-title-path-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.os-title-path-actions button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.os-title-path-actions button:hover {
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.os-action-copied {
+  border-color: var(--accent-mint) !important;
+  color: var(--accent-mint) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
 }
 
 .os-header-actions {

@@ -16,7 +16,6 @@ interface OpenSpecState {
   hasOpenSpecDirectory: boolean
   initialized: boolean
   settings: OpenSpecBoardSettings
-  needsInit: boolean
   initLoading: boolean
   initError: string | null
 
@@ -31,7 +30,6 @@ interface OpenSpecState {
   reset: () => void
   loadSettings: (projectId: string) => Promise<void>
   saveSettings: (projectId: string, settings: OpenSpecBoardSettings) => Promise<void>
-  checkInitStatus: (projectPath: string) => Promise<void>
   initOpenSpec: (projectPath: string, tools: string[]) => Promise<void>
 }
 
@@ -52,7 +50,6 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   hasOpenSpecDirectory: false,
   initialized: false,
   settings: { autoRefreshInterval: 0 },
-  needsInit: false,
   initLoading: false,
   initError: null,
 
@@ -115,14 +112,11 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   },
 
   checkOpenSpecDirectory: async (projectPath: string) => {
-    set({ loading: true })
     try {
       const hasOpenSpecDirectory = await openspecApi.checkOpenSpecDirectory(projectPath)
       set({ hasOpenSpecDirectory })
     } catch {
       set({ hasOpenSpecDirectory: false })
-    } finally {
-      finishLoading(set)
     }
   },
 
@@ -163,7 +157,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
       commandError: null,
       lastCommandResult: null,
       initialized: false,
-      needsInit: false,
+      hasOpenSpecDirectory: false,
       initLoading: false,
       initError: null,
     })
@@ -192,31 +186,13 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
     }
   },
 
-  checkInitStatus: async (projectPath: string) => {
-    set({ loading: true })
-    try {
-      const result = await openspecApi.checkOpenSpecInit(projectPath)
-      set({ 
-        needsInit: result.needsInit,
-        initError: result.error || null,
-      })
-    } catch (error) {
-      set({ 
-        needsInit: false,
-        initError: String(error),
-      })
-    } finally {
-      finishLoading(set)
-    }
-  },
-
   initOpenSpec: async (projectPath: string, tools: string[]) => {
     set({ initLoading: true, initError: null })
     try {
       const result = await openspecApi.initOpenSpec(projectPath, tools)
       if (result.success) {
         set({ 
-          needsInit: false,
+          hasOpenSpecDirectory: true,
           initLoading: false,
           initError: null,
         })

@@ -207,7 +207,7 @@ export function ProjectsPage() {
     batchToggleProjectSkills,
     clearProjectSkills,
   } = useProjectStore()
-  const { checkCli, checkOpenSpecDirectory, fetchChanges, fetchArchivedChanges, loading: openspecLoading } = useOpenSpecStore()
+  const { loading: openspecLoading } = useOpenSpecStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [query, setQuery] = useState('')
@@ -232,7 +232,7 @@ export function ProjectsPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [skillActionError, setSkillActionError] = useState<string | null>(null)
   const [openspecBoardOpen, setOpenspecBoardOpen] = useState(false)
-  const [openspecBoardLoading, setOpenspecBoardLoading] = useState(false)
+  const [openspecBtnLoading, setOpenspecBtnLoading] = useState(false)
 
   const normalizeSkillActionError = useCallback((error: unknown) => {
     const rawMessage = error instanceof Error ? error.message : String(error)
@@ -399,23 +399,10 @@ export function ProjectsPage() {
     }
   }
   
-  const handleOpenOpenspecBoard = async () => {
+  const handleOpenOpenspecBoard = () => {
     if (!selectedProject) return
-    
-    setOpenspecBoardLoading(true)
-    try {
-      await checkCli()
-      await checkOpenSpecDirectory(selectedProject.path)
-      await Promise.all([
-        fetchChanges(selectedProject.path),
-        fetchArchivedChanges(selectedProject.path)
-      ])
-      setOpenspecBoardOpen(true)
-    } catch (error) {
-      console.error('Failed to load OpenSpec board:', error)
-    } finally {
-      setOpenspecBoardLoading(false)
-    }
+    setOpenspecBtnLoading(true)
+    setOpenspecBoardOpen(true)
   }
   
   const handleEditField = (field: string, value: string) => {
@@ -949,23 +936,16 @@ export function ProjectsPage() {
 
               <div className="pm-drawer-openspec-btn">
                 <button
-                  className={`pm-openspec-btn ${openspecBoardLoading ? 'is-loading' : ''}`}
+                  className={`pm-openspec-btn ${openspecBtnLoading || openspecLoading ? 'is-loading' : ''}`}
                   onClick={handleOpenOpenspecBoard}
-                  disabled={openspecBoardLoading}
+                  disabled={openspecBtnLoading || openspecLoading}
                 >
-                  {openspecBoardLoading ? (
-                    <svg className="pm-openspec-spinner" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7" rx="1" />
-                      <rect x="14" y="3" width="7" height="7" rx="1" />
-                      <rect x="3" y="14" width="7" height="7" rx="1" />
-                      <rect x="14" y="14" width="7" height="7" rx="1" />
-                    </svg>
-                  )}
+                  <svg className={openspecBtnLoading || openspecLoading ? 'pm-openspec-spinner' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
                   <span>{language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</span>
                 </button>
               </div>
@@ -1058,7 +1038,10 @@ export function ProjectsPage() {
         <div className="pm-openspec-board-overlay">
           <OpenSpecBoard
             project={selectedProject}
-            onBack={() => setOpenspecBoardOpen(false)}
+            onBack={() => {
+              setOpenspecBoardOpen(false)
+              setOpenspecBtnLoading(false)
+            }}
           />
         </div>
       )}
