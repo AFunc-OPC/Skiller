@@ -2101,3 +2101,571 @@
 .os-settings-btn-save:hover {
   opacity: 0.9;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   OpenSpec Init Dialog
+   ═══════════════════════════════════════════════════════════════ */
+
+.os-init-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: os-fade-in 0.2s ease;
+}
+
+.os-init-dialog {
+  background: var(--bg-elevated);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 150vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: os-spinner-in 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.os-init-dialog-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.os-init-dialog-description {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.os-init-dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.os-init-dialog-action-btn {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.os-init-dialog-action-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--accent-mint);
+}
+
+.os-init-dialog-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-tools {
+  flex: 1;
+  min-height: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: var(--bg-base);
+  margin-bottom: 1rem;
+}
+
+.os-init-dialog-tools::-webkit-scrollbar {
+  width: 6px;
+}
+
+.os-init-dialog-tools::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.os-init-dialog-tools::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+
+.os-init-dialog-tools::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.os-init-dialog-tool-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+
+.os-init-dialog-tool-item:last-child {
+  margin-bottom: 0;
+}
+
+.os-init-dialog-tool-item:hover {
+  background: var(--bg-elevated);
+}
+
+.os-init-dialog-tool-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent-mint);
+}
+
+.os-init-dialog-tool-item span {
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.os-init-dialog-error {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.os-init-dialog-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.os-init-dialog-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.os-init-dialog-btn-cancel {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-soft);
+}
+
+.os-init-dialog-btn-cancel:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.os-init-dialog-btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-btn-init {
+  background: var(--accent-mint);
+  color: white;
+}
+
+.os-init-dialog-btn-init:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.os-init-dialog-btn-init:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.os-init-dialog-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Init Dialog Search */
+.os-init-dialog-search {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.os-init-dialog-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.os-init-dialog-search-input {
+  width: 100%;
+  padding: 0.5rem 2.25rem 0.5rem 2.25rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  transition: all 0.15s;
+}
+
+.os-init-dialog-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.os-init-dialog-search-input:focus {
+  outline: none;
+  border-color: var(--accent-mint);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+}
+
+.os-init-dialog-search-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--border-soft);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.os-init-dialog-search-clear:hover {
+  background: var(--text-secondary);
+  color: white;
+}
+
+.os-init-dialog-search-clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-highlight {
+  background: rgba(16, 185, 129, 0.25);
+  color: var(--accent-mint);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .os-init-dialog-highlight {
+  background: rgba(52, 211, 153, 0.3);
+  color: var(--accent-mint);
+}
+
+.os-init-dialog-selected-count {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--accent-mint);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.os-init-dialog-no-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
+/* Init Dialog Multiselect */
+.os-init-dialog-multiselect {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.os-init-dialog-multiselect-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: var(--bg-base);
+  cursor: pointer;
+  transition: all 0.15s;
+  gap: 0.5rem;
+}
+
+.os-init-dialog-multiselect-trigger:hover {
+  border-color: var(--accent-mint);
+}
+
+.os-init-dialog-multiselect-trigger.open {
+  border-color: var(--accent-mint);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+}
+
+.os-init-dialog-multiselect-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  flex: 1;
+  min-height: 28px;
+  align-items: center;
+}
+
+.os-init-dialog-multiselect-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.os-init-dialog-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--accent-mint);
+  font-size: 0.75rem;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-weight: 500;
+}
+
+.os-init-dialog-tag-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent-mint);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.os-init-dialog-tag-remove:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.os-init-dialog-tag-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-multiselect-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.os-init-dialog-multiselect-chevron.open {
+  transform: rotate(180deg);
+}
+
+.os-init-dialog-multiselect-dropdown {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  background: var(--bg-elevated);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  max-height: 300px;
+  animation: os-dropdown-in 0.2s ease;
+}
+
+@keyframes os-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.os-init-dialog-multiselect-search {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.os-init-dialog-multiselect-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  transition: all 0.15s;
+}
+
+.os-init-dialog-multiselect-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.os-init-dialog-multiselect-search-input:focus {
+  outline: none;
+  border-color: var(--accent-mint);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+}
+
+.os-init-dialog-multiselect-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-base);
+}
+
+.os-init-dialog-multiselect-action-btn {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.os-init-dialog-multiselect-action-btn:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-color: var(--accent-mint);
+}
+
+.os-init-dialog-multiselect-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.os-init-dialog-multiselect-options {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.25rem;
+  max-height: 220px;
+}
+
+.os-init-dialog-multiselect-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.os-init-dialog-multiselect-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.os-init-dialog-multiselect-options::-webkit-scrollbar-thumb {
+  background: var(--border-soft);
+  border-radius: 3px;
+}
+
+.os-init-dialog-multiselect-options::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.os-init-dialog-multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.os-init-dialog-multiselect-option:hover {
+  background: var(--bg-base);
+}
+
+.os-init-dialog-multiselect-option.selected {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.os-init-dialog-multiselect-checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.os-init-dialog-multiselect-option.selected .os-init-dialog-multiselect-checkbox {
+  background: var(--accent-mint);
+  border-color: var(--accent-mint);
+  color: white;
+}
+
+.os-init-dialog-multiselect-option-text {
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
+.os-init-dialog-multiselect-no-results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-style: italic;
+}

@@ -53,3 +53,14 @@ export interface OpenSpecReadArtifactRequest {
 export interface OpenSpecBoardSettings {
   autoRefreshInterval: number
 }
+
+export interface CheckInitResult {
+  needsInit: boolean
+  error?: string
+}
+
+export interface InitResult {
+  success: boolean
+  message?: string
+  error?: string
+}

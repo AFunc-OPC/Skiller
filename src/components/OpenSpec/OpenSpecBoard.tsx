@@ -7,6 +7,7 @@ import { WorkflowTimeline } from './WorkflowTimeline'
 import { ArtifactPreview } from './ArtifactPreview'
 import { CliInstallPrompt } from './CliInstallPrompt'
 import { OpenSpecSettingsDialog } from './OpenSpecSettingsDialog'
+import { OpenSpecInitDialog } from './OpenSpecInitDialog'
 import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings } from '../../types'
 import './OpenSpec.css'
 
@@ -27,9 +28,14 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     hasOpenSpecDirectory,
     initialized,
     settings,
+    needsInit,
+    initLoading,
+    initError,
     fetchAllChanges,
     selectChange,
     checkOpenSpecDirectory,
+    checkInitStatus,
+    initOpenSpec,
     refresh,
     reset,
     loadSettings,
@@ -42,7 +48,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    checkOpenSpecDirectory(project.path)
+    checkInitStatus(project.path)
     loadSettings(project.id)
     
     return () => {
@@ -53,13 +59,13 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   }, [project.path, project.id])
 
   useEffect(() => {
-    if (hasOpenSpecDirectory && !initialized) {
+    if (!needsInit && !initialized) {
       fetchAllChanges(project.path)
     }
-  }, [hasOpenSpecDirectory, initialized, project.path])
+  }, [needsInit, initialized, project.path])
   
   useEffect(() => {
-    if (settings.autoRefreshInterval > 0 && !loading) {
+    if (settings.autoRefreshInterval > 0 && !loading && initialized) {
       timerRef.current = setInterval(() => {
         refresh(project.path)
       }, settings.autoRefreshInterval * 1000)
@@ -78,7 +84,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
       if (countdownRef.current) clearInterval(countdownRef.current)
       setCountdown(0)
     }
-  }, [settings.autoRefreshInterval, project.path, loading])
+  }, [settings.autoRefreshInterval, project.path, loading, initialized])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
@@ -95,6 +101,14 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   const handleSaveSettings = useCallback((newSettings: OpenSpecBoardSettings) => {
     saveSettings(project.id, newSettings)
   }, [project.id, saveSettings])
+
+  const handleInit = useCallback(async (tools: string[]) => {
+    await initOpenSpec(project.path, tools)
+  }, [project.path, initOpenSpec])
+
+  const handleInitClose = useCallback(() => {
+    reset()
+  }, [reset])
 
   if (!cliStatus?.installed) {
     return (
@@ -211,6 +225,15 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
         onClose={() => setSettingsDialogOpen(false)}
         settings={settings}
         onSave={handleSaveSettings}
+        language={language}
+      />
+
+      <OpenSpecInitDialog
+        isOpen={needsInit}
+        onClose={handleInitClose}
+        onInit={handleInit}
+        loading={initLoading}
+        error={initError}
         language={language}
       />
     </div>

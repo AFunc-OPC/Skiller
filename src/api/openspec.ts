@@ -3,6 +3,8 @@ import type {
   OpenSpecChangeInfo,
   OpenSpecCliStatus,
   OpenSpecCommandResult,
+  CheckInitResult,
+  InitResult,
 } from '../types'
 
 export interface OpenSpecBoardData {
@@ -39,5 +41,13 @@ export const openspecApi = {
 
   checkOpenSpecDirectory: async (projectPath: string): Promise<boolean> => {
     return await invoke('check_openspec_directory', { projectPath })
+  },
+
+  checkOpenSpecInit: async (projectPath: string): Promise<CheckInitResult> => {
+    return await invoke('check_openspec_init', { projectPath })
+  },
+
+  initOpenSpec: async (projectPath: string, tools: string[]): Promise<InitResult> => {
+    return await invoke('init_openspec', { projectPath, tools })
   },
 }

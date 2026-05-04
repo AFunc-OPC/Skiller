@@ -41,6 +41,21 @@ pub struct OpenSpecCommandResult {
     pub exit_code: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CheckInitResult {
+    pub needs_init: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InitResult {
+    pub success: bool,
+    pub message: Option<String>,
+    pub error: Option<String>,
+}
+
 fn get_shell() -> String {
     std::env::var("SHELL").unwrap_or_else(|_| {
         if cfg!(target_os = "windows") {
@@ -506,4 +521,83 @@ pub fn fetch_openspec_board_data(project_path: String) -> Result<OpenSpecBoardDa
         cli_installed: true,
         cli_version,
     })
+}
+
+#[tauri::command]
+pub fn check_openspec_init(project_path: String) -> Result<CheckInitResult, String> {
+    let shell = get_shell();
+    let cmd = "openspec list --json";
+
+    let output = if cfg!(target_os = "windows") {
+        Command::new(&shell)
+            .args(&["/C", cmd])
+            .current_dir(&project_path)
+            .output()
+            .map_err(|e| format!("Failed to execute openspec: {}", e))?
+    } else {
+        Command::new(&shell)
+            .args(&["-i", "-l", "-c", cmd])
+            .current_dir(&project_path)
+            .output()
+            .map_err(|e| format!("Failed to execute openspec: {}", e))?
+    };
+
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+    if output.status.success() {
+        Ok(CheckInitResult {
+            needs_init: false,
+            error: None,
+        })
+    } else {
+        if stderr.contains("No OpenSpec changes directory found") {
+            Ok(CheckInitResult {
+                needs_init: true,
+                error: None,
+            })
+        } else {
+            Ok(CheckInitResult {
+                needs_init: false,
+                error: Some(stderr),
+            })
+        }
+    }
+}
+
+#[tauri::command]
+pub fn init_openspec(project_path: String, tools: Vec<String>) -> Result<InitResult, String> {
+    let shell = get_shell();
+    let tools_str = tools.join(",");
+    let cmd = format!("openspec init --tools {}", tools_str);
+
+    let output = if cfg!(target_os = "windows") {
+        Command::new(&shell)
+            .args(&["/C", &cmd])
+            .current_dir(&project_path)
+            .output()
+            .map_err(|e| format!("Failed to execute openspec init: {}", e))?
+    } else {
+        Command::new(&shell)
+            .args(&["-i", "-l", "-c", &cmd])
+            .current_dir(&project_path)
+            .output()
+            .map_err(|e| format!("Failed to execute openspec init: {}", e))?
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+
+    if output.status.success() {
+        Ok(InitResult {
+            success: true,
+            message: Some(if stdout.is_empty() { "Initialization successful".to_string() } else { stdout }),
+            error: None,
+        })
+    } else {
+        Ok(InitResult {
+            success: false,
+            message: None,
+            error: Some(if stderr.is_empty() { "Initialization failed".to_string() } else { stderr }),
+        })
+    }
 }
