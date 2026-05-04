@@ -160,7 +160,6 @@
 
 .os-sidebar {
   width: 280px;
-  border-right: 1px solid var(--border-soft);
   display: flex;
   flex-direction: column;
   background: var(--bg-elevated);

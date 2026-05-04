@@ -173,7 +173,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
           />
         </aside>
 
-        <main className="os-main">
+        <main className={`os-main ${loading ? 'os-content-loading' : ''}`}>
           {selectedChange ? (
             <>
               <WorkflowTimeline

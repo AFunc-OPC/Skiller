@@ -1,0 +1,118 @@
+<h2>OpenSpec 看板设置弹框设计 (v2)</h2>
+<p class="subtitle">根据反馈优化：下拉选择 + 保存立即生效</p>
+
+<div class="mockup">
+  <div class="mockup-header">定时刷新设置区</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <h4 style="margin: 0 0 0.5rem; font-size: 0.9375rem;">定时刷新</h4>
+    <p style="margin: 0 0 1.25rem; font-size: 0.8125rem; color: var(--text-secondary);">
+      自动刷新看板数据，保持数据同步
+    </p>
+    
+    <div style="margin-bottom: 1.25rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--bg-base); border-radius: 0.5rem; border: 1px solid var(--border-soft);">
+        <div>
+          <div style="font-weight: 500; font-size: 0.875rem;">启用定时刷新</div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            仅在当前项目看板打开时生效
+          </div>
+        </div>
+        <div style="width: 44px; height: 24px; border-radius: 12px; background: var(--accent-mint); position: relative;">
+          <div style="position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; border-radius: 50%; background: white;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 1.25rem;">
+      <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.5rem;">
+        刷新间隔
+      </label>
+      <select style="width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); background: var(--bg-base); font-size: 0.875rem; color: var(--text-primary);">
+        <option>5 秒</option>
+        <option selected>10 秒（推荐）</option>
+        <option>30 秒</option>
+        <option>1 分钟</option>
+        <option>5 分钟</option>
+      </select>
+    </div>
+    
+    <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-soft);">
+      <button style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); background: transparent; font-size: 0.875rem; cursor: pointer;">
+        取消
+      </button>
+      <button style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background: var(--accent-mint); color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer;">
+        保存并生效
+      </button>
+    </div>
+  </div>
+</div>
+
+<h3>交互流程</h3>
+<div class="mockup">
+  <div class="mockup-body" style="padding: 1rem;">
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-mint); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; flex-shrink: 0;">1</div>
+        <div>
+          <div style="font-weight: 500; font-size: 0.875rem;">点击设置按钮</div>
+          <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">打开设置弹框，显示当前配置</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-mint); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; flex-shrink: 0;">2</div>
+        <div>
+          <div style="font-weight: 500; font-size: 0.875rem;">修改配置</div>
+          <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">开启/关闭定时刷新，选择刷新间隔</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--accent-mint); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; flex-shrink: 0;">3</div>
+        <div>
+          <div style="font-weight: 500; font-size: 0.875rem;">点击「保存并生效」</div>
+          <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            <ul style="margin: 0.25rem 0; padding-left: 1.25rem;">
+              <li>配置保存到项目级存储</li>
+              <li>如果启用了定时刷新，立即启动定时器</li>
+              <li>如果关闭了定时刷新，立即停止定时器</li>
+              <li>关闭弹框，显示成功提示</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>完整功能设计</h3>
+  
+  <div style="display: grid; gap: 1rem;">
+    <div style="padding: 1rem; background: var(--bg-base); border-radius: 0.5rem; border: 1px solid var(--border-soft);">
+      <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">📁 数据存储</div>
+      <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8125rem; color: var(--text-secondary);">
+        <li>存储位置：<code>openspec_board_settings.{projectId}</code></li>
+        <li>存储内容：<code>{"autoRefresh": true, "interval": 10}</code></li>
+        <li>项目隔离：每个项目独立配置</li>
+      </ul>
+    </div>
+    
+    <div style="padding: 1rem; background: var(--bg-base); border-radius: 0.5rem; border: 1px solid var(--border-soft);">
+      <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">⏱ 定时器管理</div>
+      <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8125rem; color: var(--text-secondary);">
+        <li>打开看板时：读取配置，如已启用则启动定时器</li>
+        <li>关闭看板时：清除定时器</li>
+        <li>保存设置时：立即应用新配置（重启定时器或停止）</li>
+        <li>刷新执行：调用 <code>refresh(projectPath)</code>，显示 loading 状态</li>
+      </ul>
+    </div>
+    
+    <div style="padding: 1rem; background: var(--bg-base); border-radius: 0.5rem; border: 1px solid var(--border-soft);">
+      <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem;">🎨 视觉反馈</div>
+      <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8125rem; color: var(--text-secondary);">
+        <li>定时刷新开启时：刷新按钮旁显示倒计时小气泡</li>
+        <li>正在刷新时：按钮显示 loading 动画</li>
+        <li>设置保存成功：Toast 提示「设置已生效」</li>
+      </ul>
+    </div>
+  </div>
+</div>

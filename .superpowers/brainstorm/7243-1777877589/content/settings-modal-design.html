@@ -1,0 +1,119 @@
+<h2>OpenSpec 看板设置弹框设计</h2>
+<p class="subtitle">在刷新按钮旁边添加设置入口，支持定时刷新等功能</p>
+
+<div class="mockup">
+  <div class="mockup-header">效果预览：Header 区域</div>
+  <div class="mockup-body" style="padding: 1rem; background: var(--bg-elevated);">
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0;">
+      <div class="mock-button" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;">
+        <span>←</span> 返回
+      </div>
+      <h3 style="flex: 1; margin: 0;">项目名 - OpenSpec 看板</h3>
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; border-radius: 1rem; background: var(--bg-base);">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+          <span style="font-size: 0.75rem;">OpenSpec v1.0</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <div class="mock-button" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem;">
+            🔄
+          </div>
+          <div class="mock-button" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; border: 2px solid var(--accent-mint);">
+            ⚙️
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>弹框布局</h3>
+<div class="mockup">
+  <div class="mockup-header">设置弹框 (Modal)</div>
+  <div class="mockup-body" style="padding: 0;">
+    <div style="display: flex; min-height: 400px;">
+      <div style="width: 160px; border-right: 1px solid var(--border-soft); background: var(--bg-base);">
+        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-soft); font-weight: 600; font-size: 0.875rem;">
+          设置
+        </div>
+        <div style="padding: 0.5rem;">
+          <div style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: var(--accent-mint); color: white; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+            ⏱ 定时刷新
+          </div>
+          <div style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-secondary);">
+            📁 数据源
+          </div>
+          <div style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.8125rem; color: var(--text-secondary);">
+            🎨 显示
+          </div>
+        </div>
+      </div>
+      <div style="flex: 1; padding: 1.5rem;">
+        <h4 style="margin: 0 0 0.5rem; font-size: 0.9375rem;">定时刷新</h4>
+        <p style="margin: 0 0 1.25rem; font-size: 0.8125rem; color: var(--text-secondary);">
+          自动刷新看板数据，保持数据同步
+        </p>
+        
+        <div style="margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--bg-base); border-radius: 0.5rem; border: 1px solid var(--border-soft);">
+            <div>
+              <div style="font-weight: 500; font-size: 0.875rem;">启用定时刷新</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                仅在当前看板打开时生效
+              </div>
+            </div>
+            <div style="width: 44px; height: 24px; border-radius: 12px; background: var(--accent-mint); position: relative;">
+              <div style="position: absolute; right: 2px; top: 2px; width: 20px; height: 20px; border-radius: 50%; background: white;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 1.25rem;">
+          <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.5rem;">
+            刷新间隔
+          </label>
+          <div style="display: flex; gap: 0.5rem;">
+            <div style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); text-align: center; font-size: 0.8125rem;">
+              5秒
+            </div>
+            <div style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 2px solid var(--accent-mint); text-align: center; font-size: 0.8125rem; font-weight: 600;">
+              10秒
+            </div>
+            <div style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); text-align: center; font-size: 0.8125rem;">
+              30秒
+            </div>
+            <div style="flex: 1; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); text-align: center; font-size: 0.8125rem;">
+              60秒
+            </div>
+            <input type="text" placeholder="自定义" style="width: 70px; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-soft); font-size: 0.8125rem; text-align: center;">
+          </div>
+        </div>
+        
+        <div style="padding: 0.75rem 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem; font-size: 0.8125rem; color: var(--accent-mint);">
+          ✓ 设置已保存，将在下次打开看板时生效
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>设计要点</h4>
+    <ul>
+      <li><strong>项目隔离</strong>：每个项目的设置独立存储</li>
+      <li><strong>作用域明确</strong>：仅在对应项目看板打开时生效</li>
+      <li><strong>默认配置</strong>：默认关闭，开启后默认10秒间隔</li>
+      <li><strong>预设+自定义</strong>：提供常用间隔选项，也支持自定义秒数</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>技术实现</h4>
+    <ul>
+      <li>设置存储在项目级配置中（非全局）</li>
+      <li>使用 <code>configApi.set/get</code> 持久化</li>
+      <li>组件卸载时清除定时器</li>
+      <li>刷新时显示 loading 状态</li>
+    </ul>
+  </div>
+</div>
