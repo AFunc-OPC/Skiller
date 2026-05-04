@@ -24,22 +24,27 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     loading,
     error,
     hasOpenSpecDirectory,
+    initialized,
     fetchAllChanges,
     selectChange,
-    checkCli,
     checkOpenSpecDirectory,
     refresh,
+    reset,
   } = useOpenSpecStore()
 
   useEffect(() => {
     checkOpenSpecDirectory(project.path)
-  }, [checkOpenSpecDirectory, project.path])
+    
+    return () => {
+      reset()
+    }
+  }, [project.path])
 
   useEffect(() => {
-    if (hasOpenSpecDirectory) {
+    if (hasOpenSpecDirectory && !initialized) {
       fetchAllChanges(project.path)
     }
-  }, [hasOpenSpecDirectory, fetchAllChanges, project.path])
+  }, [hasOpenSpecDirectory, initialized, project.path])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)

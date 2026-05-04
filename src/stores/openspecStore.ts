@@ -13,6 +13,7 @@ interface OpenSpecState {
   commandError: string | null
   lastCommandResult: OpenSpecCommandResult | null
   hasOpenSpecDirectory: boolean
+  initialized: boolean
 
   fetchAllChanges: (projectPath: string) => Promise<void>
   fetchChanges: (projectPath: string) => Promise<void>
@@ -40,8 +41,10 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   commandError: null,
   lastCommandResult: null,
   hasOpenSpecDirectory: false,
+  initialized: false,
 
   fetchAllChanges: async (projectPath: string) => {
+    if (get().initialized) return
     set({ loading: true, error: null })
     try {
       const data = await openspecApi.fetchBoardData(projectPath)
@@ -49,6 +52,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
         changes: data.changes,
         archivedChanges: data.archivedChanges,
         cliStatus: { installed: data.cliInstalled, version: data.cliVersion },
+        initialized: true,
       })
     } catch (error) {
       set({ error: String(error) })
@@ -124,13 +128,12 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   refresh: async (projectPath: string) => {
     set({ loading: true, error: null })
     try {
-      const [changes, archivedChanges, cliStatus] = await Promise.all([
-        openspecApi.listChanges(projectPath),
-        openspecApi.listArchivedChanges(projectPath).catch(() => []),
-        openspecApi.checkCli().catch(() => ({ installed: false, version: null })),
-      ])
-
-      set({ changes, archivedChanges, cliStatus })
+      const data = await openspecApi.fetchBoardData(projectPath)
+      set({ 
+        changes: data.changes,
+        archivedChanges: data.archivedChanges,
+        cliStatus: { installed: data.cliInstalled, version: data.cliVersion },
+      })
     } catch (error) {
       set({ error: String(error) })
     } finally {
@@ -146,6 +149,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
       error: null,
       commandError: null,
       lastCommandResult: null,
+      initialized: false,
     })
   },
 }))

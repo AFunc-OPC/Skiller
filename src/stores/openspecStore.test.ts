@@ -137,10 +137,13 @@ describe('openspecStore', () => {
         installed: true,
         version: '1.0.0',
       })
+      expect(useOpenSpecStore.getState().initialized).toBe(true)
       expect(useOpenSpecStore.getState().loading).toBe(false)
     })
 
     it('handles errors gracefully', async () => {
+      useOpenSpecStore.setState({ initialized: false })
+      
       vi.mocked(openspecApi.openspecApi.fetchBoardData).mockRejectedValue(new Error('Failed'))
 
       await useOpenSpecStore.getState().fetchAllChanges('/project/path')
@@ -149,6 +152,14 @@ describe('openspecStore', () => {
 
       expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
       expect(useOpenSpecStore.getState().loading).toBe(false)
+    })
+
+    it('skips fetch if already initialized', async () => {
+      useOpenSpecStore.setState({ initialized: true })
+      
+      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+
+      expect(openspecApi.openspecApi.fetchBoardData).not.toHaveBeenCalled()
     })
   })
 
