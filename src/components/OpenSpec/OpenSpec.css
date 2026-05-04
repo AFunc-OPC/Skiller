@@ -171,8 +171,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* padding: 1.5rem; */
-  gap: 1.5rem;
   background: var(--bg-base);
   transition: opacity 0.3s ease;
 }
@@ -549,7 +547,6 @@
   flex-direction: column;
   padding: 0.875rem 1.25rem 0.625rem;
   background: var(--bg-elevated);
-  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -779,7 +776,6 @@
   flex: 1;
   display: flex;
   background: var(--bg-elevated);
-  border-radius: 0.75rem;
   overflow: hidden;
 }
 
