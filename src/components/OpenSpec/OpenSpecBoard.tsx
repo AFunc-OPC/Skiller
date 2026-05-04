@@ -32,15 +32,14 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   } = useOpenSpecStore()
 
   useEffect(() => {
-    checkCli()
     checkOpenSpecDirectory(project.path)
-  }, [checkCli, checkOpenSpecDirectory, project.path])
+  }, [checkOpenSpecDirectory, project.path])
 
   useEffect(() => {
-    if (cliStatus?.installed) {
+    if (hasOpenSpecDirectory) {
       fetchAllChanges(project.path)
     }
-  }, [cliStatus?.installed, fetchAllChanges, project.path])
+  }, [hasOpenSpecDirectory, fetchAllChanges, project.path])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)

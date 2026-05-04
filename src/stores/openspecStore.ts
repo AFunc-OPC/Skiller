@@ -44,11 +44,12 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   fetchAllChanges: async (projectPath: string) => {
     set({ loading: true, error: null })
     try {
-      const [changes, archivedChanges] = await Promise.all([
-        openspecApi.listChanges(projectPath),
-        openspecApi.listArchivedChanges(projectPath).catch(() => []),
-      ])
-      set({ changes, archivedChanges })
+      const data = await openspecApi.fetchBoardData(projectPath)
+      set({ 
+        changes: data.changes,
+        archivedChanges: data.archivedChanges,
+        cliStatus: { installed: data.cliInstalled, version: data.cliVersion },
+      })
     } catch (error) {
       set({ error: String(error) })
     } finally {

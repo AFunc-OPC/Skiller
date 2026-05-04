@@ -8,6 +8,7 @@ vi.mock('../api/openspec', () => ({
     checkCli: vi.fn(),
     listChanges: vi.fn(),
     listArchivedChanges: vi.fn(),
+    fetchBoardData: vi.fn(),
     readArtifact: vi.fn(),
     executeCommand: vi.fn(),
     checkOpenSpecDirectory: vi.fn(),
@@ -94,7 +95,7 @@ describe('openspecStore', () => {
   })
 
   describe('fetchAllChanges', () => {
-    it('fetches both changes and archived changes in parallel', async () => {
+    it('fetches board data with changes and cli status', async () => {
       const mockChanges: OpenSpecChangeInfo[] = [
         {
           name: 'add-feature',
@@ -119,8 +120,12 @@ describe('openspecStore', () => {
         },
       ]
 
-      vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
-      vi.mocked(openspecApi.openspecApi.listArchivedChanges).mockResolvedValue(mockArchivedChanges)
+      vi.mocked(openspecApi.openspecApi.fetchBoardData).mockResolvedValue({
+        changes: mockChanges,
+        archivedChanges: mockArchivedChanges,
+        cliInstalled: true,
+        cliVersion: '1.0.0',
+      })
 
       await useOpenSpecStore.getState().fetchAllChanges('/project/path')
       
@@ -128,31 +133,21 @@ describe('openspecStore', () => {
 
       expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
       expect(useOpenSpecStore.getState().archivedChanges).toEqual(mockArchivedChanges)
+      expect(useOpenSpecStore.getState().cliStatus).toEqual({
+        installed: true,
+        version: '1.0.0',
+      })
       expect(useOpenSpecStore.getState().loading).toBe(false)
     })
 
-    it('handles archived changes failure gracefully', async () => {
-      const mockChanges: OpenSpecChangeInfo[] = [
-        {
-          name: 'add-feature',
-          completedTasks: 2,
-          totalTasks: 5,
-          lastModified: '2026-05-02T00:00:00Z',
-          status: 'in-progress',
-          currentStage: 'apply',
-          artifacts: [],
-        },
-      ]
-
-      vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
-      vi.mocked(openspecApi.openspecApi.listArchivedChanges).mockRejectedValue(new Error('Archive error'))
+    it('handles errors gracefully', async () => {
+      vi.mocked(openspecApi.openspecApi.fetchBoardData).mockRejectedValue(new Error('Failed'))
 
       await useOpenSpecStore.getState().fetchAllChanges('/project/path')
       
       await new Promise(resolve => requestAnimationFrame(resolve))
 
-      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
-      expect(useOpenSpecStore.getState().archivedChanges).toEqual([])
+      expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
       expect(useOpenSpecStore.getState().loading).toBe(false)
     })
   })

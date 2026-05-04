@@ -5,6 +5,13 @@ import type {
   OpenSpecCommandResult,
 } from '../types'
 
+export interface OpenSpecBoardData {
+  changes: OpenSpecChangeInfo[]
+  archivedChanges: OpenSpecChangeInfo[]
+  cliInstalled: boolean
+  cliVersion: string | null
+}
+
 export const openspecApi = {
   checkCli: async (): Promise<OpenSpecCliStatus> => {
     return await invoke('check_openspec_cli')
@@ -16,6 +23,10 @@ export const openspecApi = {
 
   listArchivedChanges: async (projectPath: string): Promise<OpenSpecChangeInfo[]> => {
     return await invoke('list_archived_changes', { projectPath })
+  },
+
+  fetchBoardData: async (projectPath: string): Promise<OpenSpecBoardData> => {
+    return await invoke('fetch_openspec_board_data', { projectPath })
   },
 
   readArtifact: async (projectPath: string, changeId: string, fileName: string): Promise<string> => {

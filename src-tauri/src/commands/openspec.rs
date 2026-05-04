@@ -54,19 +54,19 @@ fn get_shell() -> String {
 }
 
 fn run_openspec_command(project_path: &str, args: &[&str]) -> Result<String, String> {
-    let shell = get_shell();
     let args_str = args.join(" ");
     let cmd = format!("openspec {}", args_str);
 
     let output = if cfg!(target_os = "windows") {
-        Command::new(&shell)
+        Command::new("cmd")
             .args(&["/C", &cmd])
             .current_dir(project_path)
             .output()
             .map_err(|e| format!("Failed to execute openspec: {}", e))?
     } else {
-        Command::new(&shell)
-            .args(&["-i", "-l", "-c", &cmd])
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg(&cmd)
             .current_dir(project_path)
             .output()
             .map_err(|e| format!("Failed to execute openspec: {}", e))?
@@ -91,15 +91,15 @@ pub fn check_openspec_cli() -> Result<OpenSpecCliStatus, String> {
         });
     }
 
-    let shell = get_shell();
     let output = if cfg!(target_os = "windows") {
-        Command::new(&shell)
+        Command::new("cmd")
             .args(&["/C", "openspec --version"])
             .output()
             .map_err(|e| format!("Failed to get openspec version: {}", e))?
     } else {
-        Command::new(&shell)
-            .args(&["-i", "-l", "-c", "openspec --version"])
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg("openspec --version")
             .output()
             .map_err(|e| format!("Failed to get openspec version: {}", e))?
     };
@@ -353,4 +353,157 @@ pub fn list_archived_changes(project_path: String) -> Result<Vec<OpenSpecChangeI
     archived_changes.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
 
     Ok(archived_changes)
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenSpecBoardData {
+    pub changes: Vec<OpenSpecChangeInfo>,
+    pub archived_changes: Vec<OpenSpecChangeInfo>,
+    pub cli_installed: bool,
+    pub cli_version: Option<String>,
+}
+
+#[tauri::command]
+pub fn fetch_openspec_board_data(project_path: String) -> Result<OpenSpecBoardData, String> {
+    let cli_installed = check_command_available("openspec", "--version");
+    
+    if !cli_installed {
+        return Ok(OpenSpecBoardData {
+            changes: Vec::new(),
+            archived_changes: Vec::new(),
+            cli_installed: false,
+            cli_version: None,
+        });
+    }
+
+    let version_output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(&["/C", "openspec --version"])
+            .output()
+            .ok()
+    } else {
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg("openspec --version")
+            .output()
+            .ok()
+    };
+
+    let cli_version = version_output
+        .and_then(|o| if o.status.success() {
+            Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+        } else {
+            None
+        });
+
+    let changes_json = match run_openspec_command(&project_path, &["list", "--json"]) {
+        Ok(json) => json,
+        Err(_) => {
+            return Ok(OpenSpecBoardData {
+                changes: Vec::new(),
+                archived_changes: Vec::new(),
+                cli_installed: true,
+                cli_version,
+            });
+        }
+    };
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct CliChange {
+        name: String,
+        #[serde(default)]
+        completed_tasks: u32,
+        #[serde(default)]
+        total_tasks: u32,
+        last_modified: String,
+        status: String,
+    }
+    
+    #[derive(Deserialize)]
+    struct CliResponse {
+        changes: Vec<CliChange>,
+    }
+    
+    let response: CliResponse = match serde_json::from_str(&changes_json) {
+        Ok(r) => r,
+        Err(_) => {
+            return Ok(OpenSpecBoardData {
+                changes: Vec::new(),
+                archived_changes: Vec::new(),
+                cli_installed: true,
+                cli_version,
+            });
+        }
+    };
+
+    let changes_dir = Path::new(&project_path).join("openspec").join("changes");
+    
+    let changes: Vec<OpenSpecChangeInfo> = response.changes.into_par_iter().map(|cli_change| {
+        let change_path = changes_dir.join(&cli_change.name);
+        let artifacts = read_change_artifacts(&change_path);
+        let current_stage = determine_current_stage(&artifacts);
+        
+        OpenSpecChangeInfo {
+            name: cli_change.name,
+            completed_tasks: cli_change.completed_tasks,
+            total_tasks: cli_change.total_tasks,
+            last_modified: cli_change.last_modified,
+            status: cli_change.status,
+            current_stage,
+            artifacts,
+        }
+    }).collect();
+
+    let archive_dir = changes_dir.join("archive");
+    let archived_changes = if archive_dir.exists() {
+        let entries: Vec<_> = std::fs::read_dir(&archive_dir)
+            .ok()
+            .into_iter()
+            .flat_map(|dir| dir.flatten())
+            .collect();
+
+        let mut archived: Vec<OpenSpecChangeInfo> = entries
+            .into_par_iter()
+            .filter_map(|entry| {
+                let change_path = entry.path();
+                if !change_path.is_dir() {
+                    return None;
+                }
+
+                let name = change_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let artifacts = read_change_artifacts(&change_path);
+
+                let last_modified = change_path.metadata()
+                    .and_then(|m| m.modified())
+                    .map(|t| {
+                        let datetime: chrono::DateTime<chrono::Utc> = t.into();
+                        datetime.to_rfc3339()
+                    })
+                    .unwrap_or_default();
+
+                Some(OpenSpecChangeInfo {
+                    name,
+                    completed_tasks: 1,
+                    total_tasks: 1,
+                    last_modified,
+                    status: "complete".to_string(),
+                    current_stage: "archive".to_string(),
+                    artifacts,
+                })
+            })
+            .collect();
+
+        archived.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
+        archived
+    } else {
+        Vec::new()
+    };
+
+    Ok(OpenSpecBoardData {
+        changes,
+        archived_changes,
+        cli_installed: true,
+        cli_version,
+    })
 }
