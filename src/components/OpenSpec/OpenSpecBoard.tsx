@@ -24,8 +24,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     loading,
     error,
     hasOpenSpecDirectory,
-    fetchChanges,
-    fetchArchivedChanges,
+    fetchAllChanges,
     selectChange,
     checkCli,
     checkOpenSpecDirectory,
@@ -39,10 +38,9 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
 
   useEffect(() => {
     if (cliStatus?.installed) {
-      fetchChanges(project.path)
-      fetchArchivedChanges(project.path)
+      fetchAllChanges(project.path)
     }
-  }, [cliStatus?.installed, fetchChanges, fetchArchivedChanges, project.path])
+  }, [cliStatus?.installed, fetchAllChanges, project.path])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)

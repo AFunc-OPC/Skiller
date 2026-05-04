@@ -7,6 +7,7 @@ vi.mock('../api/openspec', () => ({
   openspecApi: {
     checkCli: vi.fn(),
     listChanges: vi.fn(),
+    listArchivedChanges: vi.fn(),
     readArtifact: vi.fn(),
     executeCommand: vi.fn(),
     checkOpenSpecDirectory: vi.fn(),
@@ -73,6 +74,8 @@ describe('openspecStore', () => {
       vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
 
       await useOpenSpecStore.getState().fetchChanges('/project/path')
+      
+      await new Promise(resolve => requestAnimationFrame(resolve))
 
       expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
       expect(useOpenSpecStore.getState().loading).toBe(false)
@@ -82,8 +85,74 @@ describe('openspecStore', () => {
       vi.mocked(openspecApi.openspecApi.listChanges).mockRejectedValue(new Error('Failed'))
 
       await useOpenSpecStore.getState().fetchChanges('/project/path')
+      
+      await new Promise(resolve => requestAnimationFrame(resolve))
 
       expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
+      expect(useOpenSpecStore.getState().loading).toBe(false)
+    })
+  })
+
+  describe('fetchAllChanges', () => {
+    it('fetches both changes and archived changes in parallel', async () => {
+      const mockChanges: OpenSpecChangeInfo[] = [
+        {
+          name: 'add-feature',
+          completedTasks: 2,
+          totalTasks: 5,
+          lastModified: '2026-05-02T00:00:00Z',
+          status: 'in-progress',
+          currentStage: 'apply',
+          artifacts: [],
+        },
+      ]
+
+      const mockArchivedChanges: OpenSpecChangeInfo[] = [
+        {
+          name: 'old-feature',
+          completedTasks: 1,
+          totalTasks: 1,
+          lastModified: '2026-04-01T00:00:00Z',
+          status: 'complete',
+          currentStage: 'archive',
+          artifacts: [],
+        },
+      ]
+
+      vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
+      vi.mocked(openspecApi.openspecApi.listArchivedChanges).mockResolvedValue(mockArchivedChanges)
+
+      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+      
+      await new Promise(resolve => requestAnimationFrame(resolve))
+
+      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
+      expect(useOpenSpecStore.getState().archivedChanges).toEqual(mockArchivedChanges)
+      expect(useOpenSpecStore.getState().loading).toBe(false)
+    })
+
+    it('handles archived changes failure gracefully', async () => {
+      const mockChanges: OpenSpecChangeInfo[] = [
+        {
+          name: 'add-feature',
+          completedTasks: 2,
+          totalTasks: 5,
+          lastModified: '2026-05-02T00:00:00Z',
+          status: 'in-progress',
+          currentStage: 'apply',
+          artifacts: [],
+        },
+      ]
+
+      vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
+      vi.mocked(openspecApi.openspecApi.listArchivedChanges).mockRejectedValue(new Error('Archive error'))
+
+      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+      
+      await new Promise(resolve => requestAnimationFrame(resolve))
+
+      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
+      expect(useOpenSpecStore.getState().archivedChanges).toEqual([])
       expect(useOpenSpecStore.getState().loading).toBe(false)
     })
   })

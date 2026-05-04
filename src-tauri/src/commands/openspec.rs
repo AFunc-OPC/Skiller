@@ -1,4 +1,5 @@
 use crate::utils::shell::check_command_available;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Command;
@@ -212,7 +213,7 @@ pub fn list_openspec_changes(project_path: String) -> Result<Vec<OpenSpecChangeI
     
     let changes_dir = Path::new(&project_path).join("openspec").join("changes");
     
-    let changes: Vec<OpenSpecChangeInfo> = response.changes.into_iter().map(|cli_change| {
+    let changes: Vec<OpenSpecChangeInfo> = response.changes.into_par_iter().map(|cli_change| {
         let change_path = changes_dir.join(&cli_change.name);
         let artifacts = read_change_artifacts(&change_path);
         let current_stage = determine_current_stage(&artifacts);
@@ -312,39 +313,42 @@ pub fn list_archived_changes(project_path: String) -> Result<Vec<OpenSpecChangeI
         return Ok(Vec::new());
     }
 
-    let mut archived_changes = Vec::new();
+    let entries: Vec<_> = std::fs::read_dir(&archive_dir)
+        .map_err(|e| format!("Failed to read archive directory: {}", e))?
+        .filter_map(|e| e.ok())
+        .collect();
 
-    let entries = std::fs::read_dir(&archive_dir)
-        .map_err(|e| format!("Failed to read archive directory: {}", e))?;
+    let mut archived_changes: Vec<OpenSpecChangeInfo> = entries
+        .into_par_iter()
+        .filter_map(|entry| {
+            let change_path = entry.path();
+            if !change_path.is_dir() {
+                return None;
+            }
 
-    for entry in entries.flatten() {
-        let change_path = entry.path();
-        if !change_path.is_dir() {
-            continue;
-        }
+            let name = change_path.file_name().unwrap_or_default().to_string_lossy().to_string();
+            let artifacts = read_change_artifacts(&change_path);
+            let current_stage = "archive".to_string();
 
-        let name = change_path.file_name().unwrap_or_default().to_string_lossy().to_string();
-        let artifacts = read_change_artifacts(&change_path);
-        let current_stage = "archive".to_string();
+            let last_modified = change_path.metadata()
+                .and_then(|m| m.modified())
+                .map(|t| {
+                    let datetime: chrono::DateTime<chrono::Utc> = t.into();
+                    datetime.to_rfc3339()
+                })
+                .unwrap_or_default();
 
-        let last_modified = change_path.metadata()
-            .and_then(|m| m.modified())
-            .map(|t| {
-                let datetime: chrono::DateTime<chrono::Utc> = t.into();
-                datetime.to_rfc3339()
+            Some(OpenSpecChangeInfo {
+                name,
+                completed_tasks: 1,
+                total_tasks: 1,
+                last_modified,
+                status: "complete".to_string(),
+                current_stage,
+                artifacts,
             })
-            .unwrap_or_default();
-
-        archived_changes.push(OpenSpecChangeInfo {
-            name,
-            completed_tasks: 1,
-            total_tasks: 1,
-            last_modified,
-            status: "complete".to_string(),
-            current_stage,
-            artifacts,
-        });
-    }
+        })
+        .collect();
 
     archived_changes.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
 

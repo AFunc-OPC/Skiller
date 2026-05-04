@@ -14,6 +14,7 @@ interface OpenSpecState {
   lastCommandResult: OpenSpecCommandResult | null
   hasOpenSpecDirectory: boolean
 
+  fetchAllChanges: (projectPath: string) => Promise<void>
   fetchChanges: (projectPath: string) => Promise<void>
   fetchArchivedChanges: (projectPath: string) => Promise<void>
   selectChange: (changeId: string | null) => void
@@ -39,6 +40,21 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   commandError: null,
   lastCommandResult: null,
   hasOpenSpecDirectory: false,
+
+  fetchAllChanges: async (projectPath: string) => {
+    set({ loading: true, error: null })
+    try {
+      const [changes, archivedChanges] = await Promise.all([
+        openspecApi.listChanges(projectPath),
+        openspecApi.listArchivedChanges(projectPath).catch(() => []),
+      ])
+      set({ changes, archivedChanges })
+    } catch (error) {
+      set({ error: String(error) })
+    } finally {
+      finishLoading(set)
+    }
+  },
 
   fetchChanges: async (projectPath: string) => {
     set({ loading: true, error: null })
