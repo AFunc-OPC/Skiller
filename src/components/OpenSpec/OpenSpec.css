@@ -163,6 +163,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-elevated);
+  transition: opacity 0.3s ease;
 }
 
 .os-main {
@@ -173,6 +174,7 @@
   /* padding: 1.5rem; */
   gap: 1.5rem;
   background: var(--bg-base);
+  transition: opacity 0.3s ease;
 }
 
 .os-empty-main {
@@ -1755,13 +1757,23 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: color-mix(in srgb, var(--bg-base) 85%, transparent);
-  backdrop-filter: blur(4px);
+  background: color-mix(in srgb, var(--bg-base) 70%, transparent);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
   border-radius: 12px;
+  animation: os-fade-in 0.25s ease;
+}
+
+@keyframes os-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .os-loading-spinner {
@@ -1772,11 +1784,24 @@
   color: var(--accent-mint);
   font-size: 0.875rem;
   font-weight: 500;
+  animation: os-spinner-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes os-spinner-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .os-content-loading {
-  opacity: 0.5;
+  opacity: 0.6;
   pointer-events: none;
+  filter: blur(1px);
 }
 
 .os-settings-dialog {
