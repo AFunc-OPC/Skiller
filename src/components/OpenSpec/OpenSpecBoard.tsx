@@ -186,6 +186,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
                 isArchived={isSelectedChangeArchived}
               />
               <ArtifactPreview
+                key={`${selectedChange.name}-${selectedChange.lastModified}`}
                 projectPath={project.path}
                 changeId={selectedChange.name}
                 change={selectedChange}
