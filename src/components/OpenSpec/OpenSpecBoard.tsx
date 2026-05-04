@@ -5,7 +5,6 @@ import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
 import { WorkflowTimeline } from './WorkflowTimeline'
 import { ArtifactPreview } from './ArtifactPreview'
-import { ActionButtons } from './ActionButtons'
 import { CliInstallPrompt } from './CliInstallPrompt'
 import type { Project, OpenSpecChangeInfo } from '../../types'
 import './OpenSpec.css'
@@ -139,11 +138,6 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
                 changeId={selectedChange.name}
                 change={selectedChange}
                 artifacts={selectedChange.artifacts}
-                language={language}
-              />
-              <ActionButtons
-                projectPath={project.path}
-                change={selectedChange}
                 language={language}
               />
             </>
