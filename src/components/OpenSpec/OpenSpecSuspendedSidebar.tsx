@@ -2,11 +2,23 @@ import { useAppStore } from '../../stores/appStore'
 import type { SuspendedOpenSpecBoard } from '../../types'
 import './OpenSpec.css'
 
-const PROJECT_COLORS = [
-  '#667eea', '#f093fb', '#4facfe', '#43e97b',
-  '#fa709a', '#a18cd1', '#ff9a9e', '#a1c4fd',
-  '#d299c2', '#89f7fe', '#cd9cf2', '#fddb92',
-  '#9890e3', '#f6d365', '#96fbc4', '#ffecd2',
+const LIGHT_COLORS = [
+  '#FFE4E1',
+  '#FFE4B5',
+  '#FFFACD',
+  '#E0FFE0',
+  '#E0FFFF',
+  '#E6E6FA',
+  '#FFE4F3',
+  '#F0FFF0',
+  '#F5F5DC',
+  '#E8E8E8',
+  '#B0E0E6',
+  '#AFEEEE',
+  '#98FB98',
+  '#DDA0DD',
+  '#FFB6C1',
+  '#FFDAB9',
 ]
 
 function hashString(str: string): number {
@@ -21,7 +33,7 @@ function hashString(str: string): number {
 
 function getProjectColor(name: string): string {
   const hash = hashString(name)
-  return PROJECT_COLORS[hash % PROJECT_COLORS.length]
+  return LIGHT_COLORS[hash % LIGHT_COLORS.length]
 }
 
 function isBase64Image(str: string | null): boolean {
@@ -36,7 +48,7 @@ interface SuspendedBoardItemProps {
 }
 
 function SuspendedBoardItem({ board, isActive, onClick }: SuspendedBoardItemProps) {
-  const color = getProjectColor(board.projectName)
+  const bgColor = getProjectColor(board.projectName)
   const isImage = isBase64Image(board.projectIcon)
   const displayText = board.projectIcon || board.projectName.charAt(0).toUpperCase()
   
@@ -54,7 +66,7 @@ function SuspendedBoardItem({ board, isActive, onClick }: SuspendedBoardItemProp
         ) : (
           <div
             className="os-suspended-icon"
-            style={{ backgroundColor: color }}
+            style={{ backgroundColor: bgColor }}
           >
             {displayText}
           </div>
