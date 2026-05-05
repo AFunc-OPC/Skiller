@@ -26,12 +26,27 @@ interface OpenSpecBoardProps {
 
 export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }: OpenSpecBoardProps) {
   const { language, suspendedBoards, suspendOpenSpecBoard } = useAppStore()
-  const { pauseAutoRefresh } = useOpenSpecStore()
+  const {
+    getProjectState,
+    setCurrentProject,
+    fetchAllChanges,
+    selectChange,
+    checkOpenSpecDirectory,
+    initOpenSpec,
+    refresh,
+    resetProject,
+    loadSettings,
+    saveSettings,
+    pauseAutoRefresh,
+    resumeAutoRefresh,
+    cliStatus,
+  } = useOpenSpecStore()
+  
+  const projectState = getProjectState(project.id)
   const {
     changes,
     archivedChanges,
     selectedChangeId,
-    cliStatus,
     loading,
     error,
     hasOpenSpecDirectory,
@@ -40,16 +55,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     initLoading,
     initError,
     isPaused,
-    fetchAllChanges,
-    selectChange,
-    checkOpenSpecDirectory,
-    initOpenSpec,
-    refresh,
-    reset,
-    loadSettings,
-    saveSettings,
-    resumeAutoRefresh,
-  } = useOpenSpecStore()
+  } = projectState
   
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
   const [initDialogDismissed, setInitDialogDismissed] = useState(false)
@@ -80,25 +86,26 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
 
   useEffect(() => {
     const init = async () => {
-      await checkOpenSpecDirectory(project.path)
+      setCurrentProject(project.id)
+      await checkOpenSpecDirectory(project.id, project.path)
       if (initialState?.settings) {
         await loadSettings(project.id)
         await new Promise(resolve => setTimeout(resolve, 0))
         if (initialState.selectedChangeId !== undefined) {
-          selectChange(initialState.selectedChangeId)
+          selectChange(project.id, initialState.selectedChangeId)
         }
       } else {
         await loadSettings(project.id)
       }
       if (initialState?.settings || initialState?.selectedChangeId !== undefined) {
-        resumeAutoRefresh()
+        resumeAutoRefresh(project.id)
       }
     }
     init()
     
     return () => {
       if (!isSwitchingProjectRef.current) {
-        reset()
+        resetProject(project.id)
         setInitDialogDismissed(false)
       }
       if (timerRef.current) clearInterval(timerRef.current)
@@ -108,14 +115,14 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
 
   useEffect(() => {
     if (hasOpenSpecDirectory && !initialized) {
-      fetchAllChanges(project.path)
+      fetchAllChanges(project.id, project.path)
     }
-  }, [hasOpenSpecDirectory, initialized, project.path])
+  }, [hasOpenSpecDirectory, initialized, project.id, project.path])
   
   useEffect(() => {
     if (settings.autoRefreshInterval > 0 && !loading && initialized && !isPaused) {
       timerRef.current = setInterval(() => {
-        refresh(project.path)
+        refresh(project.id, project.path)
       }, settings.autoRefreshInterval * 1000)
       
       setCountdown(settings.autoRefreshInterval)
@@ -132,32 +139,32 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
       if (countdownRef.current) clearInterval(countdownRef.current)
       setCountdown(0)
     }
-  }, [settings.autoRefreshInterval, project.path, loading, initialized, isPaused])
+  }, [settings.autoRefreshInterval, project.id, project.path, loading, initialized, isPaused])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
   const isSelectedChangeArchived = selectedChange ? archivedChanges.some((c) => c.name === selectedChange.name) : false
 
   const handleRefresh = useCallback(() => {
-    refresh(project.path)
-  }, [refresh, project.path])
+    refresh(project.id, project.path)
+  }, [refresh, project.id, project.path])
 
   const handleSelectChange = useCallback((changeId: string) => {
-    selectChange(changeId)
-  }, [selectChange])
+    selectChange(project.id, changeId)
+  }, [project.id, selectChange])
   
   const handleSaveSettings = useCallback((newSettings: OpenSpecBoardSettings) => {
     saveSettings(project.id, newSettings)
   }, [project.id, saveSettings])
 
   const handleInit = useCallback(async (tools: string[]) => {
-    await initOpenSpec(project.path, tools)
-  }, [project.path, initOpenSpec])
+    await initOpenSpec(project.id, project.path, tools)
+  }, [project.id, project.path, initOpenSpec])
 
   const handleInitClose = useCallback(() => {
     setInitDialogDismissed(true)
-    reset()
-  }, [reset])
+    resetProject(project.id)
+  }, [project.id, resetProject])
 
   const handleBack = useCallback(() => {
     isSwitchingProjectRef.current = true
@@ -173,7 +180,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
         settings,
       }
     )
-    pauseAutoRefresh()
+    pauseAutoRefresh(project.id)
     onBack()
   }, [project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard, pauseAutoRefresh, onBack])
 
@@ -197,9 +204,10 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
           settings,
         }
       )
+      pauseAutoRefresh(project.id)
       onSwitchProject(projectId)
     }
-  }, [onSwitchProject, project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard])
+  }, [onSwitchProject, project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard, pauseAutoRefresh])
 
   const currentBoard: SuspendedOpenSpecBoard = {
     projectId: project.id,
@@ -365,6 +373,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
               />
               <ArtifactPreview
                 key={`${selectedChange.name}-${selectedChange.lastModified}`}
+                projectId={project.id}
                 projectPath={project.path}
                 changeId={selectedChange.name}
                 change={selectedChange}

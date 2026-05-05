@@ -3,12 +3,13 @@ import { Plus, Loader2 } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 
 interface NewChangeDialogProps {
+  projectId: string
   projectPath: string
   language: 'zh' | 'en'
   onClose: () => void
 }
 
-export function NewChangeDialog({ projectPath, language, onClose }: NewChangeDialogProps) {
+export function NewChangeDialog({ projectId, projectPath, language, onClose }: NewChangeDialogProps) {
   const { executeAction, commandLoading, refresh } = useOpenSpecStore()
   const [changeName, setChangeName] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +33,7 @@ export function NewChangeDialog({ projectPath, language, onClose }: NewChangeDia
     const result = await executeAction(projectPath, 'propose', [kebabName])
 
     if (result?.success) {
-      refresh(projectPath)
+      refresh(projectId, projectPath)
       onClose()
     } else {
       setError(result?.stderr || 'Unknown error')

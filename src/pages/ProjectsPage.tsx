@@ -207,7 +207,6 @@ export function ProjectsPage() {
     batchToggleProjectSkills,
     clearProjectSkills,
   } = useProjectStore()
-  const { loading: openspecLoading } = useOpenSpecStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [query, setQuery] = useState('')
@@ -218,6 +217,10 @@ export function ProjectsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const openspecLoading = useOpenSpecStore((s) => {
+    if (!selectedProject) return false
+    return s.getProjectState(selectedProject.id).loading
+  })
   const [dragOver, setDragOver] = useState(false)
   const [newProjectPath, setNewProjectPath] = useState('')
   const [newProjectName, setNewProjectName] = useState('')

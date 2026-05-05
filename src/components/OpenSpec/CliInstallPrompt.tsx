@@ -6,7 +6,7 @@ interface CliInstallPromptProps {
 }
 
 export function CliInstallPrompt({ language }: CliInstallPromptProps) {
-  const { checkCli, loading } = useOpenSpecStore()
+  const { checkCli, commandLoading } = useOpenSpecStore()
 
   const handleRecheck = () => {
     checkCli()
@@ -30,9 +30,9 @@ export function CliInstallPrompt({ language }: CliInstallPromptProps) {
       <button
         className="os-recheck-btn"
         onClick={handleRecheck}
-        disabled={loading}
+        disabled={commandLoading}
       >
-        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-4 h-4 ${commandLoading ? 'animate-spin' : ''}`} />
         <span>{language === 'zh' ? '重新检测' : 'Recheck'}</span>
       </button>
     </div>

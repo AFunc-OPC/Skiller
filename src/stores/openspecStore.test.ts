@@ -3,6 +3,9 @@ import { useOpenSpecStore } from './openspecStore'
 import * as openspecApi from '../api/openspec'
 import type { OpenSpecChangeInfo } from '../types'
 
+const PROJECT_ID = 'project-1'
+const PROJECT_PATH = '/project/path'
+
 vi.mock('../api/openspec', () => ({
   openspecApi: {
     checkCli: vi.fn(),
@@ -19,15 +22,12 @@ describe('openspecStore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useOpenSpecStore.setState({
-      changes: [],
-      selectedChangeId: null,
+      currentProjectId: null,
+      projectStates: {},
       cliStatus: null,
-      loading: false,
-      error: null,
       commandLoading: false,
       commandError: null,
       lastCommandResult: null,
-      hasOpenSpecDirectory: false,
     })
   })
 
@@ -74,23 +74,25 @@ describe('openspecStore', () => {
 
       vi.mocked(openspecApi.openspecApi.listChanges).mockResolvedValue(mockChanges)
 
-      await useOpenSpecStore.getState().fetchChanges('/project/path')
+      await useOpenSpecStore.getState().fetchChanges(PROJECT_ID, PROJECT_PATH)
       
       await new Promise(resolve => requestAnimationFrame(resolve))
 
-      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
-      expect(useOpenSpecStore.getState().loading).toBe(false)
+      const projectState = useOpenSpecStore.getState().getProjectState(PROJECT_ID)
+      expect(projectState.changes).toEqual(mockChanges)
+      expect(projectState.loading).toBe(false)
     })
 
     it('sets error on fetch failure', async () => {
       vi.mocked(openspecApi.openspecApi.listChanges).mockRejectedValue(new Error('Failed'))
 
-      await useOpenSpecStore.getState().fetchChanges('/project/path')
+      await useOpenSpecStore.getState().fetchChanges(PROJECT_ID, PROJECT_PATH)
       
       await new Promise(resolve => requestAnimationFrame(resolve))
 
-      expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
-      expect(useOpenSpecStore.getState().loading).toBe(false)
+      const projectState = useOpenSpecStore.getState().getProjectState(PROJECT_ID)
+      expect(projectState.error).toBe('Error: Failed')
+      expect(projectState.loading).toBe(false)
     })
   })
 
@@ -127,37 +129,44 @@ describe('openspecStore', () => {
         cliVersion: '1.0.0',
       })
 
-      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+      await useOpenSpecStore.getState().fetchAllChanges(PROJECT_ID, PROJECT_PATH)
       
       await new Promise(resolve => requestAnimationFrame(resolve))
 
-      expect(useOpenSpecStore.getState().changes).toEqual(mockChanges)
-      expect(useOpenSpecStore.getState().archivedChanges).toEqual(mockArchivedChanges)
+      const projectState = useOpenSpecStore.getState().getProjectState(PROJECT_ID)
+      expect(projectState.changes).toEqual(mockChanges)
+      expect(projectState.archivedChanges).toEqual(mockArchivedChanges)
       expect(useOpenSpecStore.getState().cliStatus).toEqual({
         installed: true,
         version: '1.0.0',
       })
-      expect(useOpenSpecStore.getState().initialized).toBe(true)
-      expect(useOpenSpecStore.getState().loading).toBe(false)
+      expect(projectState.initialized).toBe(true)
+      expect(projectState.loading).toBe(false)
     })
 
     it('handles errors gracefully', async () => {
-      useOpenSpecStore.setState({ initialized: false })
-      
       vi.mocked(openspecApi.openspecApi.fetchBoardData).mockRejectedValue(new Error('Failed'))
 
-      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+      await useOpenSpecStore.getState().fetchAllChanges(PROJECT_ID, PROJECT_PATH)
       
       await new Promise(resolve => requestAnimationFrame(resolve))
 
-      expect(useOpenSpecStore.getState().error).toBe('Error: Failed')
-      expect(useOpenSpecStore.getState().loading).toBe(false)
+      const projectState = useOpenSpecStore.getState().getProjectState(PROJECT_ID)
+      expect(projectState.error).toBe('Error: Failed')
+      expect(projectState.loading).toBe(false)
     })
 
     it('skips fetch if already initialized', async () => {
-      useOpenSpecStore.setState({ initialized: true })
+      useOpenSpecStore.setState({
+        projectStates: {
+          [PROJECT_ID]: {
+            ...useOpenSpecStore.getState().getProjectState(PROJECT_ID),
+            initialized: true,
+          },
+        },
+      })
       
-      await useOpenSpecStore.getState().fetchAllChanges('/project/path')
+      await useOpenSpecStore.getState().fetchAllChanges(PROJECT_ID, PROJECT_PATH)
 
       expect(openspecApi.openspecApi.fetchBoardData).not.toHaveBeenCalled()
     })
@@ -165,17 +174,24 @@ describe('openspecStore', () => {
 
   describe('selectChange', () => {
     it('sets selectedChangeId', () => {
-      useOpenSpecStore.getState().selectChange('add-feature')
+      useOpenSpecStore.getState().selectChange(PROJECT_ID, 'add-feature')
 
-      expect(useOpenSpecStore.getState().selectedChangeId).toBe('add-feature')
+      expect(useOpenSpecStore.getState().getProjectState(PROJECT_ID).selectedChangeId).toBe('add-feature')
     })
 
     it('clears selectedChangeId when null is passed', () => {
-      useOpenSpecStore.setState({ selectedChangeId: 'add-feature' })
+      useOpenSpecStore.setState({
+        projectStates: {
+          [PROJECT_ID]: {
+            ...useOpenSpecStore.getState().getProjectState(PROJECT_ID),
+            selectedChangeId: 'add-feature',
+          },
+        },
+      })
 
-      useOpenSpecStore.getState().selectChange(null)
+      useOpenSpecStore.getState().selectChange(PROJECT_ID, null)
 
-      expect(useOpenSpecStore.getState().selectedChangeId).toBeNull()
+      expect(useOpenSpecStore.getState().getProjectState(PROJECT_ID).selectedChangeId).toBeNull()
     })
   })
 
@@ -215,27 +231,33 @@ describe('openspecStore', () => {
     })
   })
 
-  describe('reset', () => {
-    it('resets store to initial state', () => {
+  describe('resetProject', () => {
+    it('resets a project state to initial state', () => {
       useOpenSpecStore.setState({
-        changes: [{ 
-          name: 'test', 
-          completedTasks: 0, 
-          totalTasks: 0, 
-          lastModified: '', 
-          status: 'no-tasks',
-          currentStage: 'proposal',
-          artifacts: [],
-        }],
-        selectedChangeId: 'test',
-        error: 'some error',
+        projectStates: {
+          [PROJECT_ID]: {
+            ...useOpenSpecStore.getState().getProjectState(PROJECT_ID),
+            changes: [{ 
+              name: 'test', 
+              completedTasks: 0, 
+              totalTasks: 0, 
+              lastModified: '', 
+              status: 'no-tasks',
+              currentStage: 'proposal',
+              artifacts: [],
+            }],
+            selectedChangeId: 'test',
+            error: 'some error',
+          },
+        },
       })
 
-      useOpenSpecStore.getState().reset()
+      useOpenSpecStore.getState().resetProject(PROJECT_ID)
 
-      expect(useOpenSpecStore.getState().changes).toEqual([])
-      expect(useOpenSpecStore.getState().selectedChangeId).toBeNull()
-      expect(useOpenSpecStore.getState().error).toBeNull()
+      const projectState = useOpenSpecStore.getState().getProjectState(PROJECT_ID)
+      expect(projectState.changes).toEqual([])
+      expect(projectState.selectedChangeId).toBeNull()
+      expect(projectState.error).toBeNull()
     })
   })
 })

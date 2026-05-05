@@ -25,6 +25,7 @@ import { useOpenSpecStore } from '../../stores/openspecStore'
 import type { OpenSpecArtifactInfo, OpenSpecChangeInfo } from '../../types'
 
 interface ArtifactPreviewProps {
+  projectId: string
   projectPath: string
   changeId: string
   change: OpenSpecChangeInfo
@@ -93,6 +94,7 @@ function normalizeHeadingText(value: string): string {
 }
 
 export function ArtifactPreview({
+  projectId,
   projectPath,
   changeId,
   change,
@@ -327,7 +329,7 @@ export function ArtifactPreview({
     try {
       const result = await executeAction(projectPath, 'archive', [changeId, '--yes'])
       if (result?.success) {
-        refresh(projectPath)
+        refresh(projectId, projectPath)
       }
     } finally {
       setArchiving(false)
