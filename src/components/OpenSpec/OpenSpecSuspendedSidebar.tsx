@@ -43,11 +43,11 @@ function isBase64Image(str: string | null): boolean {
 
 interface SuspendedBoardItemProps {
   board: SuspendedOpenSpecBoard
-  isActive: boolean
+  isActive?: boolean
   onClick: () => void
 }
 
-function SuspendedBoardItem({ board, isActive, onClick }: SuspendedBoardItemProps) {
+export function SuspendedBoardItem({ board, isActive, onClick }: SuspendedBoardItemProps) {
   const bgColor = getProjectColor(board.projectName)
   const isImage = isBase64Image(board.projectIcon)
   const displayText = board.projectIcon || board.projectName.charAt(0).toUpperCase()

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react'
-import { ArrowLeft, RefreshCw, Settings, FolderOpen, Copy, Check } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Settings, FolderOpen, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
@@ -9,21 +9,24 @@ import { CliInstallPrompt } from './CliInstallPrompt'
 import { OpenSpecSettingsDialog } from './OpenSpecSettingsDialog'
 import { OpenSpecInitDialog } from './OpenSpecInitDialog'
 import { OpenSpecSuspendButton } from './OpenSpecSuspendButton'
+import { SuspendedBoardItem } from './OpenSpecSuspendedSidebar'
 import { desktopApi } from '../../api/desktop'
-import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings } from '../../types'
+import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings, SuspendedOpenSpecBoard } from '../../types'
 import './OpenSpec.css'
 
 interface OpenSpecBoardProps {
   project: Project
   onBack: () => void
+  onSwitchProject?: (projectId: string) => void
   initialState?: {
     selectedChangeId?: string | null
     settings?: OpenSpecBoardSettings
   }
 }
 
-export function OpenSpecBoard({ project, onBack, initialState }: OpenSpecBoardProps) {
-  const { language, removeSuspendedBoard } = useAppStore()
+export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }: OpenSpecBoardProps) {
+  const { language, suspendedBoards, suspendOpenSpecBoard } = useAppStore()
+  const { pauseAutoRefresh } = useOpenSpecStore()
   const {
     changes,
     archivedChanges,
@@ -52,6 +55,7 @@ export function OpenSpecBoard({ project, onBack, initialState }: OpenSpecBoardPr
   const [initDialogDismissed, setInitDialogDismissed] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [projectSidebarCollapsed, setProjectSidebarCollapsed] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -153,13 +157,60 @@ export function OpenSpecBoard({ project, onBack, initialState }: OpenSpecBoardPr
   }, [reset])
 
   const handleBack = useCallback(() => {
-    removeSuspendedBoard(project.id)
+    suspendOpenSpecBoard(
+      {
+        id: project.id,
+        name: project.name,
+        path: project.path,
+        icon: project.icon,
+      },
+      {
+        selectedChangeId,
+        settings,
+      }
+    )
+    pauseAutoRefresh()
     onBack()
-  }, [project.id, onBack])
+  }, [project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard, pauseAutoRefresh, onBack])
 
   const handleSuspend = useCallback(() => {
     onBack()
   }, [onBack])
+
+  const handleSwitchProject = useCallback((projectId: string) => {
+    if (onSwitchProject && projectId !== project.id) {
+      suspendOpenSpecBoard(
+        {
+          id: project.id,
+          name: project.name,
+          path: project.path,
+          icon: project.icon,
+        },
+        {
+          selectedChangeId,
+          settings,
+        }
+      )
+      onSwitchProject(projectId)
+    }
+  }, [onSwitchProject, project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard])
+
+  const currentBoard: SuspendedOpenSpecBoard = {
+    projectId: project.id,
+    projectName: project.name,
+    projectIcon: project.icon,
+    projectPath: project.path,
+    suspendedAt: Date.now(),
+    state: {
+      selectedChangeId,
+      settings,
+    },
+  }
+
+  const allBoards = [
+    currentBoard,
+    ...suspendedBoards.filter(b => b.projectId !== project.id),
+  ]
 
   if (!cliStatus?.installed) {
     return (
@@ -325,6 +376,41 @@ export function OpenSpecBoard({ project, onBack, initialState }: OpenSpecBoardPr
             </div>
           )}
         </main>
+
+        {allBoards.length > 1 && (
+          <aside className={`os-board-sidebar ${projectSidebarCollapsed ? 'collapsed' : ''}`}>
+            <div className="os-board-sidebar-content">
+              <div className="os-board-sidebar-header">
+                <span>{language === 'zh' ? '项目' : 'Projects'}</span>
+                <span className="os-board-sidebar-count">{allBoards.length}</span>
+              </div>
+              <div className="os-board-sidebar-list">
+                {allBoards.map(board => (
+                  <SuspendedBoardItem
+                    key={board.projectId}
+                    board={board}
+                    isActive={board.projectId === project.id}
+                    onClick={() => handleSwitchProject(board.projectId)}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              className="os-board-sidebar-toggle"
+              onClick={() => setProjectSidebarCollapsed(c => !c)}
+              title={projectSidebarCollapsed 
+                ? (language === 'zh' ? '展开' : 'Expand')
+                : (language === 'zh' ? '收起' : 'Collapse')
+              }
+            >
+              {projectSidebarCollapsed ? (
+                <ChevronLeft className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+          </aside>
+        )}
       </div>
       
       <OpenSpecSettingsDialog

@@ -1068,6 +1068,7 @@ export function ProjectsPage() {
               setOpenspecBoardOpen(false)
               setOpenspecBtnLoading(false)
             }}
+            onSwitchProject={handleResumeSuspendedBoard}
             initialState={(() => {
               const { suspendedBoards } = useAppStore.getState()
               const board = suspendedBoards.find(b => b.projectId === selectedProject.id)
