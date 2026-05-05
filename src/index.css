@@ -107,7 +107,7 @@ body {
 .workspace {
   flex: 1;
   overflow: hidden;
-  padding: 1rem;
+  padding: 0.3rem;
   padding-right: 0;
   display: flex;
   gap: 0;
