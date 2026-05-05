@@ -2880,3 +2880,26 @@
 [data-theme="dark"] .os-suspended-item-active .os-suspended-name {
   color: #ffb74d;
 }
+
+.os-suspended-close-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.os-suspended-close-all:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.os-suspended-close-all svg {
+  width: 16px;
+  height: 16px;
+}

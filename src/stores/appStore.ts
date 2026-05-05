@@ -16,6 +16,7 @@ interface AppState {
   resumeOpenSpecBoard: (projectId: string) => SuspendedOpenSpecBoard | null
   removeSuspendedBoard: (projectId: string) => void
   setPendingResumeProjectId: (projectId: string | null) => void
+  clearAllSuspendedBoards: () => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -62,5 +63,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setPendingResumeProjectId: (projectId) => {
     set({ pendingResumeProjectId: projectId })
+  },
+  clearAllSuspendedBoards: () => {
+    set({
+      suspendedBoards: [],
+      activeSuspendedBoardId: null,
+      pendingResumeProjectId: null,
+    })
   },
 }))

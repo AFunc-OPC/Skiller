@@ -72,6 +72,7 @@ interface OpenSpecSuspendedSidebarProps {
 export function OpenSpecSuspendedSidebar({ onBoardClick }: OpenSpecSuspendedSidebarProps) {
   const suspendedBoards = useAppStore(s => s.suspendedBoards)
   const activeSuspendedBoardId = useAppStore(s => s.activeSuspendedBoardId)
+  const clearAllSuspendedBoards = useAppStore(s => s.clearAllSuspendedBoards)
   
   if (suspendedBoards.length === 0) return null
   
@@ -90,6 +91,16 @@ export function OpenSpecSuspendedSidebar({ onBoardClick }: OpenSpecSuspendedSide
           />
         ))}
       </div>
+      <button 
+        className="os-suspended-close-all"
+        onClick={clearAllSuspendedBoards}
+        title="退出全部"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
     </aside>
   )
 }
