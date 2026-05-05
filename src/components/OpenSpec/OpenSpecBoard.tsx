@@ -50,6 +50,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     loading,
     error,
     hasOpenSpecDirectory,
+    checkingDirectory,
     initialized,
     settings,
     initLoading,
@@ -452,11 +453,12 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
         onClose={() => setSettingsDialogOpen(false)}
         settings={settings}
         onSave={handleSaveSettings}
+        onInitTools={handleInit}
         language={language}
       />
 
       <OpenSpecInitDialog
-        isOpen={!hasOpenSpecDirectory && cliStatus?.installed === true && !initDialogDismissed}
+        isOpen={!checkingDirectory && !hasOpenSpecDirectory && cliStatus?.installed === true && !initDialogDismissed}
         onClose={handleInitClose}
         onInit={handleInit}
         loading={initLoading}

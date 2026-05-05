@@ -10,6 +10,7 @@ interface ProjectState {
   loading: boolean
   error: string | null
   hasOpenSpecDirectory: boolean
+  checkingDirectory: boolean
   initialized: boolean
   settings: OpenSpecBoardSettings
   initLoading: boolean
@@ -50,8 +51,9 @@ const DEFAULT_PROJECT_STATE: ProjectState = {
   loading: false,
   error: null,
   hasOpenSpecDirectory: false,
+  checkingDirectory: false,
   initialized: false,
-  settings: { autoRefreshInterval: 0 },
+  settings: { autoRefreshInterval: 0, configuredTools: [] },
   initLoading: false,
   initError: null,
   isPaused: false,
@@ -246,24 +248,36 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
     const { projectStates } = get()
     const projectState = projectStates[projectId] || DEFAULT_PROJECT_STATE
     
+    set({
+      projectStates: {
+        ...projectStates,
+        [projectId]: {
+          ...projectState,
+          checkingDirectory: true,
+        },
+      },
+    })
+    
     try {
       const hasOpenSpecDirectory = await openspecApi.checkOpenSpecDirectory(projectPath)
       set({
         projectStates: {
-          ...projectStates,
+          ...get().projectStates,
           [projectId]: {
-            ...projectState,
+            ...get().projectStates[projectId],
             hasOpenSpecDirectory,
+            checkingDirectory: false,
           },
         },
       })
     } catch {
       set({
         projectStates: {
-          ...projectStates,
+          ...get().projectStates,
           [projectId]: {
-            ...projectState,
+            ...get().projectStates[projectId],
             hasOpenSpecDirectory: false,
+            checkingDirectory: false,
           },
         },
       })
@@ -343,7 +357,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
           projectStates: {
             ...get().projectStates,
             [projectId]: {
-              ...get().projectStates[projectId],
+              ...projectState,
               settings,
             },
           },
@@ -353,8 +367,8 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
           projectStates: {
             ...get().projectStates,
             [projectId]: {
-              ...get().projectStates[projectId],
-              settings: { autoRefreshInterval: 0 },
+              ...projectState,
+              settings: { autoRefreshInterval: 0, configuredTools: [] },
             },
           },
         })
@@ -364,8 +378,8 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
         projectStates: {
           ...get().projectStates,
           [projectId]: {
-            ...get().projectStates[projectId],
-            settings: { autoRefreshInterval: 0 },
+            ...projectState,
+            settings: { autoRefreshInterval: 0, configuredTools: [] },
           },
         },
       })
@@ -376,11 +390,12 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
     try {
       await configApi.set(`openspec_board_settings_${projectId}`, JSON.stringify(settings))
       const { projectStates } = get()
+      const projectState = projectStates[projectId] || DEFAULT_PROJECT_STATE
       set({
         projectStates: {
           ...projectStates,
           [projectId]: {
-            ...projectStates[projectId],
+            ...projectState,
             settings,
           },
         },

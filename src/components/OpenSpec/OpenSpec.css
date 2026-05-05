@@ -2233,6 +2233,9 @@
 }
 
 .os-settings-btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   border: none;
@@ -2246,6 +2249,11 @@
 
 .os-settings-btn-save:hover {
   opacity: 0.9;
+}
+
+.os-settings-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ═══════════════════════════════════════════════════════════════

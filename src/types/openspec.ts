@@ -52,6 +52,7 @@ export interface OpenSpecReadArtifactRequest {
 
 export interface OpenSpecBoardSettings {
   autoRefreshInterval: number
+  configuredTools: string[]
 }
 
 export interface CheckInitResult {
