@@ -58,6 +58,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
   const [projectSidebarCollapsed, setProjectSidebarCollapsed] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
+  const isSwitchingProjectRef = useRef(false)
 
   const handleCopyPath = useCallback(async () => {
     try {
@@ -96,8 +97,10 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     init()
     
     return () => {
-      reset()
-      setInitDialogDismissed(false)
+      if (!isSwitchingProjectRef.current) {
+        reset()
+        setInitDialogDismissed(false)
+      }
       if (timerRef.current) clearInterval(timerRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
     }
@@ -157,6 +160,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
   }, [reset])
 
   const handleBack = useCallback(() => {
+    isSwitchingProjectRef.current = true
     suspendOpenSpecBoard(
       {
         id: project.id,
@@ -174,11 +178,13 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
   }, [project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard, pauseAutoRefresh, onBack])
 
   const handleSuspend = useCallback(() => {
+    isSwitchingProjectRef.current = true
     onBack()
   }, [onBack])
 
   const handleSwitchProject = useCallback((projectId: string) => {
     if (onSwitchProject && projectId !== project.id) {
+      isSwitchingProjectRef.current = true
       suspendOpenSpecBoard(
         {
           id: project.id,
