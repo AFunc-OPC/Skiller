@@ -79,9 +79,15 @@ fn run_openspec_command(project_path: &str, args: &[&str]) -> Result<String, Str
             .output()
             .map_err(|e| format!("Failed to execute openspec: {}", e))?
     } else {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg(&cmd)
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| {
+            if cfg!(target_os = "macos") {
+                "/bin/zsh".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
+        Command::new(&shell)
+            .args(&["-i", "-l", "-c", &cmd])
             .current_dir(project_path)
             .output()
             .map_err(|e| format!("Failed to execute openspec: {}", e))?
