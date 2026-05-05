@@ -39,10 +39,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         settings: state.settings,
       },
     }
-    set((s) => ({
-      suspendedBoards: [...s.suspendedBoards.filter(b => b.projectId !== project.id), suspendedBoard],
-      activeSuspendedBoardId: project.id,
-    }))
+    set((s) => {
+      const existingIndex = s.suspendedBoards.findIndex(b => b.projectId === project.id)
+      const suspendedBoards = existingIndex >= 0
+        ? s.suspendedBoards.map((board, index) => index === existingIndex ? suspendedBoard : board)
+        : [...s.suspendedBoards, suspendedBoard]
+
+      return {
+        suspendedBoards,
+        activeSuspendedBoardId: project.id,
+      }
+    })
   },
   resumeOpenSpecBoard: (projectId) => {
     const { suspendedBoards } = get()

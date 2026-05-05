@@ -221,10 +221,9 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     },
   }
 
-  const allBoards = [
-    currentBoard,
-    ...suspendedBoards.filter(b => b.projectId !== project.id),
-  ]
+  const allBoards = suspendedBoards.some(b => b.projectId === project.id)
+    ? suspendedBoards.map(board => board.projectId === project.id ? currentBoard : board)
+    : [currentBoard, ...suspendedBoards]
 
   if (!cliStatus?.installed) {
     return (
