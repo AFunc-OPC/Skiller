@@ -4,6 +4,7 @@ import { useFileSkillStore } from './stores/fileSkillStore'
 import { useProjectStore } from './stores/projectStore'
 import { useRepoStore } from './stores/repoStore'
 import { useAppStore } from './stores/appStore'
+import { useOpenSpecStore } from './stores/openspecStore'
 import { useTagTreeStore } from './stores/tagTreeStore'
 import { SkillProvider } from './contexts/SkillContext'
 import { SkillCenter } from './components/SkillCenter'
@@ -340,10 +341,12 @@ function App() {
 
   const handleOpenOpenSpec = useCallback((projectId: string) => {
     const { suspendedBoards, resumeOpenSpecBoard } = useAppStore.getState()
+    const { resumeAutoRefresh } = useOpenSpecStore.getState()
     const suspendedBoard = suspendedBoards.find(board => board.projectId === projectId)
 
     if (suspendedBoard) {
       resumeOpenSpecBoard(projectId)
+      resumeAutoRefresh(projectId)
       setOpenSpecInitialStates((states) => ({
         ...states,
         [projectId]: {

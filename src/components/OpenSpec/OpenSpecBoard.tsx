@@ -90,7 +90,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
       setCurrentProject(project.id)
       await checkOpenSpecDirectory(project.id, project.path)
       if (initialState?.settings) {
-        await loadSettings(project.id)
+        await saveSettings(project.id, initialState.settings)
         await new Promise(resolve => setTimeout(resolve, 0))
         if (initialState.selectedChangeId !== undefined) {
           selectChange(project.id, initialState.selectedChangeId)
@@ -156,7 +156,8 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
   
   const handleSaveSettings = useCallback((newSettings: OpenSpecBoardSettings) => {
     saveSettings(project.id, newSettings)
-  }, [project.id, saveSettings])
+    resumeAutoRefresh(project.id)
+  }, [project.id, saveSettings, resumeAutoRefresh])
 
   const handleInit = useCallback(async (tools: string[]) => {
     await initOpenSpec(project.id, project.path, tools)
