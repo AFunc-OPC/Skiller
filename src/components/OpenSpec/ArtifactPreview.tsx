@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { openspecApi } from '../../api/openspec'
 import { useOpenSpecStore } from '../../stores/openspecStore'
+import { t } from '../../i18n'
 import type { OpenSpecArtifactInfo, OpenSpecChangeInfo } from '../../types'
 
 interface ArtifactPreviewProps {
@@ -39,45 +40,40 @@ interface Heading {
   text: string
 }
 
-const TYPE_CONFIG: Record<string, { 
-  icon: typeof FileText
-  color: string
-  label: { zh: string; en: string }
-}> = {
-  config: { 
-    icon: Settings, 
-    color: '#6b7280',
-    label: { zh: '配置', en: 'Config' }
-  },
-  proposal: { 
-    icon: Sparkles, 
-    color: '#a855f7',
-    label: { zh: '提案', en: 'Proposal' }
-  },
-  design: { 
-    icon: FileCode, 
-    color: '#3b82f6',
-    label: { zh: '设计', en: 'Design' }
-  },
-  tasks: { 
-    icon: ListTodo, 
-    color: '#f59e0b',
-    label: { zh: '任务', en: 'Tasks' }
-  },
-  spec: { 
-    icon: FileCheck, 
-    color: '#10b981',
-    label: { zh: '规格', en: 'Spec' }
-  },
+const TYPE_ICON: Record<string, typeof FileText> = {
+  config: Settings,
+  proposal: Sparkles,
+  design: FileCode,
+  tasks: ListTodo,
+  spec: FileCheck,
 }
 
-const CATEGORY_CONFIG: Record<string, { 
-  label: { zh: string; en: string }
-  order: number
-}> = {
-  config: { label: { zh: '配置文件', en: 'Config' }, order: 0 },
-  root: { label: { zh: '工作流文件', en: 'Workflow' }, order: 1 },
-  specs: { label: { zh: '规格文档', en: 'Specs' }, order: 2 },
+const TYPE_COLOR: Record<string, string> = {
+  config: '#6b7280',
+  proposal: '#a855f7',
+  design: '#3b82f6',
+  tasks: '#f59e0b',
+  spec: '#10b981',
+}
+
+const TYPE_LABEL_KEY: Record<string, string> = {
+  config: 'openspecConfig',
+  proposal: 'openspecProposal',
+  design: 'openspecDesign',
+  tasks: 'openspecTasks',
+  spec: 'openspecSpec',
+}
+
+const CATEGORY_LABEL_KEY: Record<string, string> = {
+  config: 'openspecConfigFiles',
+  root: 'openspecWorkflowFiles',
+  specs: 'openspecSpecDocs',
+}
+
+const CATEGORY_ORDER: Record<string, number> = {
+  config: 0,
+  root: 1,
+  specs: 2,
 }
 
 function isMarkdownFile(filename: string): boolean {
@@ -150,7 +146,7 @@ export function ArtifactPreview({
   }, {} as Record<string, OpenSpecArtifactInfo[]>)
 
   const sortedCategories = Object.keys(groupedArtifacts).sort(
-    (a, b) => (CATEGORY_CONFIG[a]?.order ?? 99) - (CATEGORY_CONFIG[b]?.order ?? 99)
+    (a, b) => (CATEGORY_ORDER[a] ?? 99) - (CATEGORY_ORDER[b] ?? 99)
   )
 
   useEffect(() => {
@@ -344,7 +340,7 @@ export function ArtifactPreview({
       <div className="os-artifact-preview os-artifact-empty">
         <div className="os-empty-main">
           <FolderOpen className="w-8 h-8 mb-2 opacity-50" />
-          <p>{language === 'zh' ? '暂无产物文件' : 'No artifacts yet'}</p>
+          <p>{t('openspecNoArtifactsYet', language)}</p>
         </div>
       </div>
     )
@@ -355,12 +351,11 @@ export function ArtifactPreview({
       <aside className="os-artifact-sidebar">
         <div className="os-sidebar-header">
           <FolderOpen className="os-sidebar-icon" />
-          <span>{language === 'zh' ? '产物目录' : 'Artifacts'}</span>
+          <span>{t('openspecArtifacts', language)}</span>
         </div>
         <nav className="os-file-tree">
           {sortedCategories.map((category) => {
             const categoryArtifacts = groupedArtifacts[category]
-            const catConfig = CATEGORY_CONFIG[category]
             const isExpanded = expandedCategories.has(category)
 
             return (
@@ -371,13 +366,13 @@ export function ArtifactPreview({
                 >
                   <ChevronRight className={`os-group-chevron ${isExpanded ? 'expanded' : ''}`} />
                   <Folder className="os-group-icon" />
-                  <span>{catConfig?.label[language] || category}</span>
+                  <span>{t((CATEGORY_LABEL_KEY[category] || category) as keyof typeof import('../../i18n').zh, language)}</span>
                   <span className="os-group-count">{categoryArtifacts.length}</span>
                 </button>
                 
                 {isExpanded && categoryArtifacts.map((artifact) => {
-                  const config = TYPE_CONFIG[artifact.type] || TYPE_CONFIG.config
-                  const Icon = config.icon
+                  const Icon = TYPE_ICON[artifact.type] || TYPE_ICON.config
+                  const color = TYPE_COLOR[artifact.type] || TYPE_COLOR.config
                   const isActive = activeFile === artifact.name
 
                   return (
@@ -389,7 +384,7 @@ export function ArtifactPreview({
                     >
                       <Icon 
                         className="os-file-icon" 
-                        style={{ color: isActive ? config.color : undefined }}
+                        style={{ color: isActive ? color : undefined }}
                       />
                       <span className="os-file-name">{artifact.displayName}</span>
                     </button>
@@ -412,9 +407,7 @@ export function ArtifactPreview({
               ) : (
                 <Archive className="w-4 h-4" />
               )}
-              <span>
-                {language === 'zh' ? '归档此变更' : 'Archive Change'}
-              </span>
+              <span>{t('openspecArchiveChange', language)}</span>
             </button>
           </div>
         )}
@@ -423,12 +416,8 @@ export function ArtifactPreview({
           <div className="os-dialog-overlay" onClick={() => setShowArchiveDialog(false)}>
             <div className="os-dialog" onClick={(e) => e.stopPropagation()}>
               <div className="os-dialog-header">
-                <h3>{language === 'zh' ? '确认归档' : 'Confirm Archive'}</h3>
-                <p>
-                  {language === 'zh'
-                    ? `确定要归档变更 "${changeId}" 吗？归档后将移至归档目录。`
-                    : `Are you sure you want to archive "${changeId}"? It will be moved to the archive directory.`}
-                </p>
+                <h3>{t('openspecConfirmArchive', language)}</h3>
+                <p>{t('openspecArchiveConfirmMsg', language)}</p>
               </div>
               <div className="os-dialog-footer">
                 <button
@@ -436,7 +425,7 @@ export function ArtifactPreview({
                   onClick={() => setShowArchiveDialog(false)}
                   disabled={archiving}
                 >
-                  {language === 'zh' ? '取消' : 'Cancel'}
+                  {t('cancel', language)}
                 </button>
                 <button
                   className="os-action-btn primary"
@@ -446,12 +435,12 @@ export function ArtifactPreview({
                   {archiving ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>{language === 'zh' ? '归档中...' : 'Archiving...'}</span>
+                      <span>{t('openspecArchiving', language)}</span>
                     </>
                   ) : (
                     <>
                       <Archive className="w-4 h-4" />
-                      <span>{language === 'zh' ? '确认归档' : 'Archive'}</span>
+                      <span>{t('openspecArchive', language)}</span>
                     </>
                   )}
                 </button>
@@ -466,11 +455,11 @@ export function ArtifactPreview({
           <header className="os-content-header">
             <div className="os-content-title">
               {(() => {
-                const config = TYPE_CONFIG[activeArtifact.type] || TYPE_CONFIG.config
-                const Icon = config.icon
+                const Icon = TYPE_ICON[activeArtifact.type] || TYPE_ICON.config
+                const color = TYPE_COLOR[activeArtifact.type] || TYPE_COLOR.config
                 return (
                   <>
-                    <Icon className="os-title-icon" style={{ color: config.color }} />
+                    <Icon className="os-title-icon" style={{ color }} />
                     <span>{activeArtifact.displayName}</span>
                   </>
                 )
@@ -485,14 +474,14 @@ export function ArtifactPreview({
                   <button 
                     className={`os-view-btn ${viewMode === 'preview' ? 'active' : ''}`}
                     onClick={() => setViewMode('preview')}
-                    title={language === 'zh' ? '预览模式' : 'Preview Mode'}
+                    title={t('openspecPreviewMode', language)}
                   >
                     <Eye />
                   </button>
                   <button 
                     className={`os-view-btn ${viewMode === 'source' ? 'active' : ''}`}
                     onClick={() => setViewMode('source')}
-                    title={language === 'zh' ? '源码模式' : 'Source Mode'}
+                    title={t('openspecSourceMode', language)}
                   >
                     <Code2 />
                   </button>
@@ -503,8 +492,8 @@ export function ArtifactPreview({
                   className={`os-icon-action-btn ${showToc ? 'active' : ''}`}
                   onClick={() => setShowToc(!showToc)}
                   title={showToc 
-                    ? (language === 'zh' ? '隐藏目录' : 'Hide TOC')
-                    : (language === 'zh' ? '显示目录' : 'Show TOC')
+                    ? t('openspecHideToc', language)
+                    : t('openspecShowToc', language)
                   }
                 >
                   <List />
@@ -513,21 +502,21 @@ export function ArtifactPreview({
               <button 
                 className={`os-icon-action-btn ${copied ? 'copied' : ''}`}
                 onClick={handleCopyPath}
-                title={language === 'zh' ? '复制路径' : 'Copy Path'}
+                title={t('openspecCopyPath', language)}
               >
                 {copied ? <Check /> : <Copy />}
               </button>
               <button 
                 className="os-icon-action-btn" 
                 onClick={handleOpenFile}
-                title={language === 'zh' ? '打开文件' : 'Open File'}
+                title={t('openspecOpenFile', language)}
               >
                 <ExternalLink />
               </button>
               <button 
                 className="os-icon-action-btn" 
                 onClick={handleOpenInFileManager}
-                title={language === 'zh' ? '在文件夹中显示' : 'Reveal in Folder'}
+                title={t('openspecRevealInFolder', language)}
               >
                 <FolderOpen />
               </button>
@@ -540,7 +529,7 @@ export function ArtifactPreview({
             {loading ? (
               <div className="os-artifact-loading">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>{language === 'zh' ? '加载中...' : 'Loading...'}</span>
+                <span>{t('openspecLoading', language)}</span>
               </div>
             ) : error ? (
               <div className="os-artifact-error">
@@ -560,7 +549,7 @@ export function ArtifactPreview({
           {isMarkdownFile(activeFile || '') && showToc && headings.length > 0 && viewMode === 'preview' && (
             <nav className="os-toc-sidebar" aria-label="Table of contents">
               <div className="os-toc-header">
-                <h3>{language === 'zh' ? '目录' : 'Contents'}</h3>
+                <h3>{t('openspecToc', language)}</h3>
                 <span className="os-toc-count">{headings.length}</span>
               </div>
               <ul className="os-toc-list">

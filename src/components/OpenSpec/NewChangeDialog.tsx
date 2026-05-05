@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Loader2 } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
+import { t } from '../../i18n'
 
 interface NewChangeDialogProps {
   projectId: string
@@ -16,7 +17,7 @@ export function NewChangeDialog({ projectId, projectPath, language, onClose }: N
 
   const handleSubmit = async () => {
     if (!changeName.trim()) {
-      setError(language === 'zh' ? '请输入变更名称' : 'Please enter a change name')
+      setError(t('openspecEnterChangeName', language))
       return
     }
 
@@ -26,7 +27,7 @@ export function NewChangeDialog({ projectId, projectPath, language, onClose }: N
       .replace(/^-|-$/g, '')
 
     if (!kebabName) {
-      setError(language === 'zh' ? '变更名称无效' : 'Invalid change name')
+      setError(t('openspecInvalidChangeName', language))
       return
     }
 
@@ -44,12 +45,8 @@ export function NewChangeDialog({ projectId, projectPath, language, onClose }: N
     <div className="os-dialog-overlay" onClick={onClose}>
       <div className="os-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="os-dialog-header">
-          <h3>{language === 'zh' ? '新建变更' : 'New Change'}</h3>
-          <p>
-            {language === 'zh'
-              ? '创建一个新的 OpenSpec 变更'
-              : 'Create a new OpenSpec change'}
-          </p>
+          <h3>{t('openspecNewProposal', language)}</h3>
+          <p>{t('openspecCreateChangeDesc', language)}</p>
         </div>
         <div className="os-dialog-body">
           <input
@@ -60,14 +57,14 @@ export function NewChangeDialog({ projectId, projectPath, language, onClose }: N
               setChangeName(e.target.value)
               setError(null)
             }}
-            placeholder={language === 'zh' ? '变更名称 (kebab-case)' : 'Change name (kebab-case)'}
+            placeholder={t('openspecChangeNamePlaceholder', language)}
             autoFocus
           />
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
         <div className="os-dialog-footer">
           <button className="os-action-btn secondary" onClick={onClose}>
-            {language === 'zh' ? '取消' : 'Cancel'}
+            {t('cancel', language)}
           </button>
           <button
             className="os-action-btn primary"
@@ -79,7 +76,7 @@ export function NewChangeDialog({ projectId, projectPath, language, onClose }: N
             ) : (
               <Plus className="w-4 h-4" />
             )}
-            <span>{language === 'zh' ? '创建' : 'Create'}</span>
+            <span>{t('openspecCreate', language)}</span>
           </button>
         </div>
       </div>

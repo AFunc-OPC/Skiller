@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Search, Archive, CheckCircle2, Circle, Loader2, ChevronDown, ChevronRight, FolderOpen } from 'lucide-react'
+import { t } from '../../i18n'
 import type { OpenSpecChangeInfo, OpenSpecStage } from '../../types'
 
 interface ChangesListProps {
@@ -35,18 +36,18 @@ function HighlightText({ text, query }: { text: string; query: string }) {
   )
 }
 
-const STAGE_CONFIG: Record<OpenSpecStage, { color: string; label: { zh: string; en: string } }> = {
-  proposal: { color: '#6b7280', label: { zh: '提案', en: 'Proposal' } },
-  apply: { color: '#3b82f6', label: { zh: '实现', en: 'Apply' } },
-  archive: { color: '#10b981', label: { zh: '归档', en: 'Archive' } },
-}
-
 function StageBadge({ stage, language }: { stage: OpenSpecStage; language: 'zh' | 'en' }) {
-  const config = STAGE_CONFIG[stage] || STAGE_CONFIG.proposal
+  const stageKey = stage === 'proposal' ? 'openspecStageProposal' 
+    : stage === 'apply' ? 'openspecStageApply' 
+    : 'openspecStageArchive'
+  const color = stage === 'proposal' ? '#6b7280' 
+    : stage === 'apply' ? '#3b82f6' 
+    : '#10b981'
+  
   return (
-    <span className="os-stage-badge" style={{ '--stage-color': config.color } as React.CSSProperties}>
+    <span className="os-stage-badge" style={{ '--stage-color': color } as React.CSSProperties}>
       <span className="os-stage-dot" />
-      <span className="os-stage-label-text">{config.label[language]}</span>
+      <span className="os-stage-label-text">{t(stageKey, language)}</span>
     </span>
   )
 }
@@ -90,7 +91,7 @@ export function ChangesList({
             type="text"
             className="os-search-input"
             value={searchQuery}
-            placeholder={language === 'zh' ? '搜索...' : 'Search...'}
+            placeholder={t('openspecSearch', language)}
             disabled
           />
         </div>
@@ -117,7 +118,7 @@ export function ChangesList({
             type="text"
             className="os-search-input"
             value={searchQuery}
-            placeholder={language === 'zh' ? '搜索...' : 'Search...'}
+            placeholder={t('openspecSearch', language)}
             disabled
           />
         </div>
@@ -139,7 +140,7 @@ export function ChangesList({
           className="os-search-input"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={language === 'zh' ? '搜索变更...' : 'Search changes...'}
+          placeholder={t('openspecSearchChanges', language)}
         />
         {filteredChanges.length + filteredArchivedChanges.length > 0 && (
           <span className="os-changes-count">{filteredChanges.length + filteredArchivedChanges.length}</span>
@@ -152,8 +153,8 @@ export function ChangesList({
             <Circle className="os-empty-icon" />
             <p>
               {searchQuery
-                ? language === 'zh' ? '无匹配结果' : 'No matches'
-                : language === 'zh' ? '暂无变更' : 'No changes'}
+                ? t('openspecNoMatches', language)
+                : t('openspecNoChanges', language)}
             </p>
           </div>
         ) : (
@@ -171,7 +172,7 @@ export function ChangesList({
                     <ChevronDown className="w-3 h-3" />
                   )}
                   <FolderOpen className="w-3 h-3" />
-                  <span>{language === 'zh' ? '进行中' : 'Active'}</span>
+                  <span>{t('openspecActive', language)}</span>
                   <span className="os-group-count">({filteredChanges.length})</span>
                 </div>
               </div>
@@ -218,7 +219,7 @@ export function ChangesList({
                     <ChevronDown className="w-3 h-3" />
                   )}
                   <Archive className="w-3 h-3" />
-                  <span>{language === 'zh' ? '已归档' : 'Archived'}</span>
+                  <span>{t('openspecArchived', language)}</span>
                   <span className="os-group-count">({filteredArchivedChanges.length})</span>
                 </div>
               </div>

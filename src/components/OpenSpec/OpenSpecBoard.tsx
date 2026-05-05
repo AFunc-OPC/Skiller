@@ -11,6 +11,7 @@ import { OpenSpecInitDialog } from './OpenSpecInitDialog'
 import { OpenSpecSuspendButton } from './OpenSpecSuspendButton'
 import { SuspendedBoardItem } from './OpenSpecSuspendedSidebar'
 import { desktopApi } from '../../api/desktop'
+import { t } from '../../i18n'
 import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings, SuspendedOpenSpecBoard } from '../../types'
 import './OpenSpec.css'
 
@@ -239,13 +240,9 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     return (
       <div className="os-board">
         <div className="os-header">
-          {/* <button className="os-back-btn" onClick={handleBack}>
-            <ArrowLeft className="w-4 h-4" />
-            <span>{language === 'zh' ? '返回' : 'Back'}</span>
-          </button> */}
           <button className="os-exit-btn" onClick={handleExit}>
             <X className="w-4 h-4" />
-            <span>{language === 'zh' ? '退出' : 'Exit'}</span>
+            <span>{t('openspecExit', language)}</span>
           </button>
           <OpenSpecSuspendButton
             project={project}
@@ -255,14 +252,14 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
             isSuspended={isSuspended}
           />
           <div className="os-title">
-            <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
+            <h1>{project.name} - {t('openspecBoard', language)}</h1>
             <div className="os-title-path-row">
               <code className="os-title-path">{project.path}</code>
               <div className="os-title-path-actions">
                 <button
                   onClick={handleCopyPath}
                   className={copied ? 'os-action-copied' : ''}
-                  title={language === 'zh' ? '复制路径' : 'Copy path'}
+                  title={t('openspecCopyPath', language)}
                 >
                   {copied ? (
                     <Check className="w-3.5 h-3.5" />
@@ -272,7 +269,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
                 </button>
                 <button
                   onClick={handleOpenFolder}
-                  title={language === 'zh' ? '打开文件夹' : 'Open folder'}
+                  title={t('openspecOpenFolder', language)}
                 >
                   <FolderOpen className="w-3.5 h-3.5" />
                 </button>
@@ -292,13 +289,9 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
   return (
     <div className="os-board">
       <div className="os-header">
-        {/* <button className="os-back-btn" onClick={handleBack}>
-          <ArrowLeft className="w-4 h-4" />
-          <span>{language === 'zh' ? '返回' : 'Back'}</span>
-        </button> */}
         <button className="os-exit-btn" onClick={handleExit}>
           <X className="w-4 h-4" />
-          <span>{language === 'zh' ? '退出' : 'Exit'}</span>
+          <span>{t('openspecExit', language)}</span>
         </button>
         <OpenSpecSuspendButton
           project={project}
@@ -308,14 +301,14 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
           isSuspended={isSuspended}
         />
         <div className="os-title">
-          <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
+          <h1>{project.name} - {t('openspecBoard', language)}</h1>
           <div className="os-title-path-row">
             <code className="os-title-path">{project.path}</code>
             <div className="os-title-path-actions">
               <button
                 onClick={handleCopyPath}
                 className={copied ? 'os-action-copied' : ''}
-                title={language === 'zh' ? '复制路径' : 'Copy path'}
+                title={t('openspecCopyPath', language)}
               >
                 {copied ? (
                   <Check className="w-3.5 h-3.5" />
@@ -325,7 +318,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
               </button>
               <button
                 onClick={handleOpenFolder}
-                title={language === 'zh' ? '打开文件夹' : 'Open folder'}
+                title={t('openspecOpenFolder', language)}
               >
                 <FolderOpen className="w-3.5 h-3.5" />
               </button>
@@ -341,7 +334,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
             className={`os-refresh-btn ${loading ? 'is-loading' : ''}`}
             onClick={handleRefresh}
             disabled={loading}
-            title={language === 'zh' ? '刷新' : 'Refresh'}
+            title={t('openspecRefresh', language)}
           >
             <RefreshCw className="w-4 h-4" />
             {countdown > 0 && !loading && (
@@ -351,7 +344,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
           <button
             className="os-refresh-btn"
             onClick={() => setSettingsDialogOpen(true)}
-            title={language === 'zh' ? '设置' : 'Settings'}
+            title={t('openspecSettings', language)}
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -363,7 +356,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
           <div className="os-loading-overlay">
             <div className="os-loading-spinner">
               <RefreshCw className="w-6 h-6 animate-spin" />
-              <span>{language === 'zh' ? '加载中...' : 'Loading...'}</span>
+              <span>{t('openspecLoading', language)}</span>
             </div>
           </div>
         )}
@@ -404,11 +397,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
             </>
           ) : (
             <div className="os-empty-main">
-              <p>
-                {language === 'zh'
-                  ? '选择一个变更查看详情'
-                  : 'Select a change to view details'}
-              </p>
+              <p>{t('openspecSelectChange', language)}</p>
             </div>
           )}
         </main>
@@ -417,7 +406,7 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
           <aside className={`os-board-sidebar ${projectSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className="os-board-sidebar-content">
               <div className="os-board-sidebar-header">
-                <span>{language === 'zh' ? '项目' : 'Projects'}</span>
+                <span>{t('openspecProjects', language)}</span>
                 <span className="os-board-sidebar-count">{allBoards.length}</span>
               </div>
               <div className="os-board-sidebar-list">
@@ -435,8 +424,8 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
               className="os-board-sidebar-toggle"
               onClick={() => setProjectSidebarCollapsed(c => !c)}
               title={projectSidebarCollapsed 
-                ? (language === 'zh' ? '展开' : 'Expand')
-                : (language === 'zh' ? '收起' : 'Collapse')
+                ? t('openspecExpand', language)
+                : t('openspecCollapse', language)
               }
             >
               {projectSidebarCollapsed ? (
