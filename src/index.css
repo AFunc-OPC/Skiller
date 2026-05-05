@@ -108,6 +108,14 @@ body {
   flex: 1;
   overflow: hidden;
   padding: 1rem;
+  display: flex;
+  gap: 0;
+}
+
+.workspace-content {
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .workspace-grid {

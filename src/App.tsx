@@ -17,6 +17,7 @@ import { ToolPresetSettings, SettingsTabs } from './components/Settings'
 import { desktopApi } from './api/desktop'
 import { SkillMarkdownPreview } from './components/SkillCenter/SkillMarkdownPreview'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from './data/userGuide'
+import { OpenSpecSuspendedSidebar } from './components/OpenSpec/OpenSpecSuspendedSidebar'
 
 type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'settings'
 type IconName = ModuleKey | 'sun' | 'moon' | 'search' | 'grid' | 'list' | 'plus' | 'x' | 'chevron-left' | 'chevron-right'
@@ -330,6 +331,13 @@ function App() {
     setUserGuideOpen(true)
   }, [])
 
+  const handleResumeSuspendedBoard = useCallback((projectId: string) => {
+    const { resumeOpenSpecBoard, setPendingResumeProjectId } = useAppStore.getState()
+    resumeOpenSpecBoard(projectId)
+    setPendingResumeProjectId(projectId)
+    setActiveModule('projects')
+  }, [])
+
   const renderContent = () => {
     switch (activeModule) {
       case 'skills':
@@ -411,11 +419,14 @@ function App() {
         />
         
         <main className="workspace">
-          <div className="workspace-grid workspace-full no-rail">
-            <section className="stage glass-panel">
-              {renderContent()}
-            </section>
+          <div className="workspace-content">
+            <div className="workspace-grid workspace-full no-rail">
+              <section className="stage glass-panel">
+                {renderContent()}
+              </section>
+            </div>
           </div>
+          <OpenSpecSuspendedSidebar onBoardClick={handleResumeSuspendedBoard} />
         </main>
       </div>
 

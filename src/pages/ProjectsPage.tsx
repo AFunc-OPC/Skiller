@@ -186,7 +186,7 @@ function ProjectListItem({ project, query, onClick }: { project: Project; query:
 }
 
 export function ProjectsPage() {
-  const { language } = useAppStore()
+  const { language, pendingResumeProjectId, setPendingResumeProjectId } = useAppStore()
   const {
     projects,
     createProject,
@@ -273,6 +273,18 @@ export function ProjectsPage() {
   }, [projects, selectedProject])
   
   useEffect(() => {
+    if (pendingResumeProjectId) {
+      const project = projects.find(p => p.id === pendingResumeProjectId)
+      if (project) {
+        setSelectedProject(project)
+        setDrawerOpen(false)
+        setOpenspecBoardOpen(true)
+        setPendingResumeProjectId(null)
+      }
+    }
+  }, [pendingResumeProjectId, projects, setPendingResumeProjectId])
+  
+  useEffect(() => {
     let unlisten: (() => void) | null = null
 
     const setupListener = async () => {
@@ -319,6 +331,20 @@ export function ProjectsPage() {
     fetchToolPresets()
     fetchProjectSkillsByPresets(project.id)
   }, [fetchProjectSkillsByPresets, fetchToolPresets])
+  
+  const handleResumeSuspendedBoard = useCallback((projectId: string) => {
+    const { resumeOpenSpecBoard } = useAppStore.getState()
+    const board = resumeOpenSpecBoard(projectId)
+    
+    if (board) {
+      const project = projects.find(p => p.id === projectId)
+      if (project) {
+        setSelectedProject(project)
+        setDrawerOpen(false)
+        setOpenspecBoardOpen(true)
+      }
+    }
+  }, [projects])
   
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false)
@@ -1042,9 +1068,21 @@ export function ProjectsPage() {
               setOpenspecBoardOpen(false)
               setOpenspecBtnLoading(false)
             }}
+            initialState={(() => {
+              const { suspendedBoards } = useAppStore.getState()
+              const board = suspendedBoards.find(b => b.projectId === selectedProject.id)
+              if (board) {
+                return {
+                  selectedChangeId: board.state.selectedChangeId,
+                  settings: board.state.settings,
+                }
+              }
+              return undefined
+            })()}
           />
         </div>
       )}
+      
     </div>
   )
 }

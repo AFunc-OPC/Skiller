@@ -18,6 +18,7 @@ interface OpenSpecState {
   settings: OpenSpecBoardSettings
   initLoading: boolean
   initError: string | null
+  isPaused: boolean
 
   fetchAllChanges: (projectPath: string) => Promise<void>
   fetchChanges: (projectPath: string) => Promise<void>
@@ -31,6 +32,8 @@ interface OpenSpecState {
   loadSettings: (projectId: string) => Promise<void>
   saveSettings: (projectId: string, settings: OpenSpecBoardSettings) => Promise<void>
   initOpenSpec: (projectPath: string, tools: string[]) => Promise<void>
+  pauseAutoRefresh: () => void
+  resumeAutoRefresh: () => void
 }
 
 function finishLoading(set: (state: Partial<OpenSpecState>) => void) {
@@ -52,6 +55,7 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
   settings: { autoRefreshInterval: 0 },
   initLoading: false,
   initError: null,
+  isPaused: false,
 
   fetchAllChanges: async (projectPath: string) => {
     if (get().initialized) return
@@ -208,5 +212,13 @@ export const useOpenSpecStore = create<OpenSpecState>((set, get) => ({
         initError: String(error),
       })
     }
+  },
+
+  pauseAutoRefresh: () => {
+    set({ isPaused: true })
+  },
+
+  resumeAutoRefresh: () => {
+    set({ isPaused: false })
   },
 }))

@@ -8,6 +8,7 @@ import { ArtifactPreview } from './ArtifactPreview'
 import { CliInstallPrompt } from './CliInstallPrompt'
 import { OpenSpecSettingsDialog } from './OpenSpecSettingsDialog'
 import { OpenSpecInitDialog } from './OpenSpecInitDialog'
+import { OpenSpecSuspendButton } from './OpenSpecSuspendButton'
 import { desktopApi } from '../../api/desktop'
 import type { Project, OpenSpecChangeInfo, OpenSpecBoardSettings } from '../../types'
 import './OpenSpec.css'
@@ -15,10 +16,14 @@ import './OpenSpec.css'
 interface OpenSpecBoardProps {
   project: Project
   onBack: () => void
+  initialState?: {
+    selectedChangeId?: string | null
+    settings?: OpenSpecBoardSettings
+  }
 }
 
-export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
-  const { language } = useAppStore()
+export function OpenSpecBoard({ project, onBack, initialState }: OpenSpecBoardProps) {
+  const { language, removeSuspendedBoard } = useAppStore()
   const {
     changes,
     archivedChanges,
@@ -31,6 +36,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     settings,
     initLoading,
     initError,
+    isPaused,
     fetchAllChanges,
     selectChange,
     checkOpenSpecDirectory,
@@ -39,6 +45,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     reset,
     loadSettings,
     saveSettings,
+    resumeAutoRefresh,
   } = useOpenSpecStore()
   
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false)
@@ -69,7 +76,18 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   useEffect(() => {
     const init = async () => {
       await checkOpenSpecDirectory(project.path)
-      loadSettings(project.id)
+      if (initialState?.settings) {
+        await loadSettings(project.id)
+        await new Promise(resolve => setTimeout(resolve, 0))
+        if (initialState.selectedChangeId !== undefined) {
+          selectChange(initialState.selectedChangeId)
+        }
+      } else {
+        await loadSettings(project.id)
+      }
+      if (initialState?.settings || initialState?.selectedChangeId !== undefined) {
+        resumeAutoRefresh()
+      }
     }
     init()
     
@@ -88,7 +106,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   }, [hasOpenSpecDirectory, initialized, project.path])
   
   useEffect(() => {
-    if (settings.autoRefreshInterval > 0 && !loading && initialized) {
+    if (settings.autoRefreshInterval > 0 && !loading && initialized && !isPaused) {
       timerRef.current = setInterval(() => {
         refresh(project.path)
       }, settings.autoRefreshInterval * 1000)
@@ -107,7 +125,7 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
       if (countdownRef.current) clearInterval(countdownRef.current)
       setCountdown(0)
     }
-  }, [settings.autoRefreshInterval, project.path, loading, initialized])
+  }, [settings.autoRefreshInterval, project.path, loading, initialized, isPaused])
 
   const allChanges = [...changes, ...archivedChanges]
   const selectedChange = allChanges.find((c) => c.name === selectedChangeId)
@@ -134,14 +152,29 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
     reset()
   }, [reset])
 
+  const handleBack = useCallback(() => {
+    removeSuspendedBoard(project.id)
+    onBack()
+  }, [project.id, onBack])
+
+  const handleSuspend = useCallback(() => {
+    onBack()
+  }, [onBack])
+
   if (!cliStatus?.installed) {
     return (
       <div className="os-board">
         <div className="os-header">
-          <button className="os-back-btn" onClick={onBack}>
+          <button className="os-back-btn" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4" />
             <span>{language === 'zh' ? '返回' : 'Back'}</span>
           </button>
+          <OpenSpecSuspendButton
+            project={project}
+            selectedChangeId={selectedChangeId}
+            settings={settings}
+            onSuspend={handleSuspend}
+          />
           <div className="os-title">
             <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
             <div className="os-title-path-row">
@@ -178,10 +211,16 @@ export function OpenSpecBoard({ project, onBack }: OpenSpecBoardProps) {
   return (
     <div className="os-board">
       <div className="os-header">
-        <button className="os-back-btn" onClick={onBack}>
+        <button className="os-back-btn" onClick={handleBack}>
           <ArrowLeft className="w-4 h-4" />
           <span>{language === 'zh' ? '返回' : 'Back'}</span>
         </button>
+        <OpenSpecSuspendButton
+          project={project}
+          selectedChangeId={selectedChangeId}
+          settings={settings}
+          onSuspend={handleSuspend}
+        />
         <div className="os-title">
           <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
           <div className="os-title-path-row">

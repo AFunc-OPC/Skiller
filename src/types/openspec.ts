@@ -64,3 +64,15 @@ export interface InitResult {
   message?: string
   error?: string
 }
+
+export interface SuspendedOpenSpecBoard {
+  projectId: string
+  projectName: string
+  projectPath: string
+  projectIcon: string | null
+  suspendedAt: number
+  state: {
+    selectedChangeId: string | null
+    settings: OpenSpecBoardSettings
+  }
+}
