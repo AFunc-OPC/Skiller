@@ -7,7 +7,6 @@ import { desktopApi } from '../api/desktop'
 import { useSort } from '../hooks/useSort'
 import { SortDropdown } from '../components/shared'
 import { ProjectSkillList, ProjectSkillImportDialog } from '../components/ProjectSkill'
-import { OpenSpecBoard } from '../components/OpenSpec'
 import { useOpenSpecStore } from '../stores/openspecStore'
 import { distributionApi } from '../api/distribution'
 import { configApi } from '../api/config'
@@ -185,8 +184,12 @@ function ProjectListItem({ project, query, onClick }: { project: Project; query:
   )
 }
 
-export function ProjectsPage() {
-  const { language, pendingResumeProjectId, setPendingResumeProjectId } = useAppStore()
+interface ProjectsPageProps {
+  onOpenOpenSpec?: (projectId: string) => void
+}
+
+export function ProjectsPage({ onOpenOpenSpec }: ProjectsPageProps) {
+  const { language } = useAppStore()
   const {
     projects,
     createProject,
@@ -234,7 +237,6 @@ export function ProjectsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [skillActionError, setSkillActionError] = useState<string | null>(null)
-  const [openspecBoardOpen, setOpenspecBoardOpen] = useState(false)
   const [openspecBtnLoading, setOpenspecBtnLoading] = useState(false)
 
   const normalizeSkillActionError = useCallback((error: unknown) => {
@@ -274,18 +276,6 @@ export function ProjectsPage() {
       }
     }
   }, [projects, selectedProject])
-  
-  useEffect(() => {
-    if (pendingResumeProjectId) {
-      const project = projects.find(p => p.id === pendingResumeProjectId)
-      if (project) {
-        setSelectedProject(project)
-        setDrawerOpen(false)
-        setOpenspecBoardOpen(true)
-        setPendingResumeProjectId(null)
-      }
-    }
-  }, [pendingResumeProjectId, projects, setPendingResumeProjectId])
   
   useEffect(() => {
     let unlisten: (() => void) | null = null
@@ -334,20 +324,6 @@ export function ProjectsPage() {
     fetchToolPresets()
     fetchProjectSkillsByPresets(project.id)
   }, [fetchProjectSkillsByPresets, fetchToolPresets])
-  
-  const handleResumeSuspendedBoard = useCallback((projectId: string) => {
-    const { resumeOpenSpecBoard } = useAppStore.getState()
-    const board = resumeOpenSpecBoard(projectId)
-    
-    if (board) {
-      const project = projects.find(p => p.id === projectId)
-      if (project) {
-        setSelectedProject(project)
-        setDrawerOpen(false)
-        setOpenspecBoardOpen(true)
-      }
-    }
-  }, [projects])
   
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false)
@@ -431,7 +407,8 @@ export function ProjectsPage() {
   const handleOpenOpenspecBoard = () => {
     if (!selectedProject) return
     setOpenspecBtnLoading(true)
-    setOpenspecBoardOpen(true)
+    onOpenOpenSpec?.(selectedProject.id)
+    setOpenspecBtnLoading(false)
   }
   
   const handleEditField = (field: string, value: string) => {
@@ -1063,30 +1040,6 @@ export function ProjectsPage() {
         </>
       )}
 
-      {openspecBoardOpen && selectedProject && (
-        <div className="pm-openspec-board-overlay">
-          <OpenSpecBoard
-            project={selectedProject}
-            onBack={() => {
-              setOpenspecBoardOpen(false)
-              setOpenspecBtnLoading(false)
-            }}
-            onSwitchProject={handleResumeSuspendedBoard}
-            initialState={(() => {
-              const { suspendedBoards } = useAppStore.getState()
-              const board = suspendedBoards.find(b => b.projectId === selectedProject.id)
-              if (board) {
-                return {
-                  selectedChangeId: board.state.selectedChangeId,
-                  settings: board.state.settings,
-                }
-              }
-              return undefined
-            })()}
-          />
-        </div>
-      )}
-      
     </div>
   )
 }

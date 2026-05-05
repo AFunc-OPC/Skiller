@@ -18,6 +18,8 @@ import { desktopApi } from './api/desktop'
 import { SkillMarkdownPreview } from './components/SkillCenter/SkillMarkdownPreview'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from './data/userGuide'
 import { OpenSpecSuspendedSidebar } from './components/OpenSpec/OpenSpecSuspendedSidebar'
+import { OpenSpecBoard } from './components/OpenSpec'
+import type { OpenSpecBoardSettings, Project } from './types'
 
 type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'settings'
 type IconName = ModuleKey | 'sun' | 'moon' | 'search' | 'grid' | 'list' | 'plus' | 'x' | 'chevron-left' | 'chevron-right'
@@ -212,7 +214,7 @@ const Sidebar = memo(function Sidebar({
 })
 
 function App() {
-  const { language, theme, setLanguage, setTheme } = useAppStore()
+  const { language, theme, setLanguage, setTheme, suspendedBoards } = useAppStore()
   const { fetchSkills, fetchTags, fetchTagGroups } = useSkillStore()
   const { skills: fileSkills, fetchSkills: fetchFileSkills } = useFileSkillStore()
   const { projects, fetchProjects, createProject } = useProjectStore()
@@ -229,6 +231,11 @@ function App() {
   const [newProjectPath, setNewProjectPath] = useState('')
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
+  const [activeOpenSpecProjectId, setActiveOpenSpecProjectId] = useState<string | null>(null)
+  const [openSpecInitialStates, setOpenSpecInitialStates] = useState<Record<string, {
+    selectedChangeId?: string | null
+    settings?: OpenSpecBoardSettings
+  } | undefined>>({})
 
   const tagCount = useMemo(() => {
     const countAll = (nodes: typeof tree): number => {
@@ -331,12 +338,32 @@ function App() {
     setUserGuideOpen(true)
   }, [])
 
-  const handleResumeSuspendedBoard = useCallback((projectId: string) => {
-    const { resumeOpenSpecBoard, setPendingResumeProjectId } = useAppStore.getState()
-    resumeOpenSpecBoard(projectId)
-    setPendingResumeProjectId(projectId)
-    setActiveModule('projects')
+  const handleOpenOpenSpec = useCallback((projectId: string) => {
+    const { suspendedBoards, resumeOpenSpecBoard } = useAppStore.getState()
+    const suspendedBoard = suspendedBoards.find(board => board.projectId === projectId)
+
+    if (suspendedBoard) {
+      resumeOpenSpecBoard(projectId)
+      setOpenSpecInitialStates((states) => ({
+        ...states,
+        [projectId]: {
+          selectedChangeId: suspendedBoard.state.selectedChangeId,
+          settings: suspendedBoard.state.settings,
+        },
+      }))
+    } else {
+      setOpenSpecInitialStates((states) => ({
+        ...states,
+        [projectId]: undefined,
+      }))
+    }
+
+    setActiveOpenSpecProjectId(projectId)
   }, [])
+
+  const handleResumeSuspendedBoard = useCallback((projectId: string) => {
+    handleOpenOpenSpec(projectId)
+  }, [handleOpenOpenSpec])
 
   const renderContent = () => {
     switch (activeModule) {
@@ -353,7 +380,7 @@ function App() {
       case 'projects':
         return (
           <SkillProvider>
-            <ProjectsPage />
+            <ProjectsPage onOpenOpenSpec={handleOpenOpenSpec} />
           </SkillProvider>
         )
       
@@ -401,6 +428,22 @@ function App() {
         )
     }
   }
+
+  const activeOpenSpecProject = useMemo<Project | null>(
+    () => projects.find(project => project.id === activeOpenSpecProjectId) ?? null,
+    [projects, activeOpenSpecProjectId],
+  )
+
+  const openSpecSessionProjects = useMemo(() => {
+    const sessionProjectIds = Array.from(new Set([
+      ...suspendedBoards.map(board => board.projectId),
+      ...(activeOpenSpecProjectId ? [activeOpenSpecProjectId] : []),
+    ]))
+
+    return sessionProjectIds
+      .map(projectId => projects.find(project => project.id === projectId) ?? null)
+      .filter((project): project is Project => project !== null)
+  }, [activeOpenSpecProjectId, projects, suspendedBoards])
   
   return (
     <div className="app-shell">
@@ -429,6 +472,23 @@ function App() {
           <OpenSpecSuspendedSidebar onBoardClick={handleResumeSuspendedBoard} />
         </main>
       </div>
+
+      {openSpecSessionProjects.map((project) => (
+        <div
+          key={project.id}
+          className="pm-openspec-board-overlay"
+          style={{ display: project.id === activeOpenSpecProject?.id ? 'block' : 'none' }}
+        >
+          <OpenSpecBoard
+            project={project}
+            onBack={() => {
+              setActiveOpenSpecProjectId(null)
+            }}
+            onSwitchProject={handleOpenOpenSpec}
+            initialState={openSpecInitialStates[project.id]}
+          />
+        </div>
+      ))}
 
       {projectCreateOpen && (
         <>
