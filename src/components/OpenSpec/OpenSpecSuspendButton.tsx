@@ -8,13 +8,15 @@ interface OpenSpecSuspendButtonProps {
   selectedChangeId: string | null
   settings: OpenSpecBoardSettings
   onSuspend: () => void
+  isSuspended: boolean
 }
 
 export function OpenSpecSuspendButton({ 
   project, 
   selectedChangeId, 
   settings, 
-  onSuspend 
+  onSuspend,
+  isSuspended
 }: OpenSpecSuspendButtonProps) {
   const suspendOpenSpecBoard = useAppStore(s => s.suspendOpenSpecBoard)
   const pauseAutoRefresh = useOpenSpecStore(s => s.pauseAutoRefresh)
@@ -37,7 +39,7 @@ export function OpenSpecSuspendButton({
   }
 
   return (
-    <button className="os-suspend-btn" onClick={handleClick}>
+    <button className={`os-suspend-btn ${isSuspended ? 'is-active' : 'is-inactive'}`} onClick={handleClick}>
       <Pin className="w-4 h-4" />
       <span>挂起</span>
     </button>

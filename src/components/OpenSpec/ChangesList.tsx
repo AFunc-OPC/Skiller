@@ -89,6 +89,7 @@ export function ChangesList({
           <input
             type="text"
             className="os-search-input"
+            value={searchQuery}
             placeholder={language === 'zh' ? '搜索...' : 'Search...'}
             disabled
           />
@@ -115,6 +116,7 @@ export function ChangesList({
           <input
             type="text"
             className="os-search-input"
+            value={searchQuery}
             placeholder={language === 'zh' ? '搜索...' : 'Search...'}
             disabled
           />

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react'
-import { ArrowLeft, RefreshCw, Settings, FolderOpen, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Settings, FolderOpen, Copy, Check, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useOpenSpecStore } from '../../stores/openspecStore'
 import { useAppStore } from '../../stores/appStore'
 import { ChangesList } from './ChangesList'
@@ -25,7 +25,7 @@ interface OpenSpecBoardProps {
 }
 
 export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }: OpenSpecBoardProps) {
-  const { language, suspendedBoards, suspendOpenSpecBoard } = useAppStore()
+  const { language, suspendedBoards, suspendOpenSpecBoard, removeSuspendedBoard } = useAppStore()
   const {
     getProjectState,
     setCurrentProject,
@@ -184,6 +184,12 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     onBack()
   }, [project.id, project.name, project.path, project.icon, selectedChangeId, settings, suspendOpenSpecBoard, pauseAutoRefresh, onBack])
 
+  const handleExit = useCallback(() => {
+    removeSuspendedBoard(project.id)
+    pauseAutoRefresh(project.id)
+    onBack()
+  }, [project.id, removeSuspendedBoard, pauseAutoRefresh, onBack])
+
   const handleSuspend = useCallback(() => {
     isSwitchingProjectRef.current = true
     onBack()
@@ -226,18 +232,25 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     : [currentBoard, ...suspendedBoards]
 
   if (!cliStatus?.installed) {
+    const isSuspended = suspendedBoards.some(b => b.projectId === project.id)
+    
     return (
       <div className="os-board">
         <div className="os-header">
-          <button className="os-back-btn" onClick={handleBack}>
+          {/* <button className="os-back-btn" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4" />
             <span>{language === 'zh' ? '返回' : 'Back'}</span>
+          </button> */}
+          <button className="os-exit-btn" onClick={handleExit}>
+            <X className="w-4 h-4" />
+            <span>{language === 'zh' ? '退出' : 'Exit'}</span>
           </button>
           <OpenSpecSuspendButton
             project={project}
             selectedChangeId={selectedChangeId}
             settings={settings}
             onSuspend={handleSuspend}
+            isSuspended={isSuspended}
           />
           <div className="os-title">
             <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
@@ -272,18 +285,25 @@ export function OpenSpecBoard({ project, onBack, onSwitchProject, initialState }
     )
   }
 
+  const isSuspended = suspendedBoards.some(b => b.projectId === project.id)
+  
   return (
     <div className="os-board">
       <div className="os-header">
-        <button className="os-back-btn" onClick={handleBack}>
+        {/* <button className="os-back-btn" onClick={handleBack}>
           <ArrowLeft className="w-4 h-4" />
           <span>{language === 'zh' ? '返回' : 'Back'}</span>
+        </button> */}
+        <button className="os-exit-btn" onClick={handleExit}>
+          <X className="w-4 h-4" />
+          <span>{language === 'zh' ? '退出' : 'Exit'}</span>
         </button>
         <OpenSpecSuspendButton
           project={project}
           selectedChangeId={selectedChangeId}
           settings={settings}
           onSuspend={handleSuspend}
+          isSuspended={isSuspended}
         />
         <div className="os-title">
           <h1>{project.name} - {language === 'zh' ? 'OpenSpec 看板' : 'OpenSpec Board'}</h1>
