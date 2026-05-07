@@ -1,10 +1,10 @@
 # Skiller - Cross-Platform Skill Management Tool
 
-**Version**: v0.1.5<br/>
-**Status**: Production Ready<br/>
-**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)<br/>
-**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)<br/>
-📄 **中文版**: [README.md](./README.md)<br/>
+**Version**: v0.1.6`<br/>`
+**Status**: Production Ready`<br/>`
+**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)`<br/>`
+**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)`<br/>`
+📄 **中文版**: [README.md](./README.md)`<br/>`
 
 ## Overview
 
@@ -14,11 +14,11 @@ Skiller is a cross-platform desktop application for unified management of AI too
 
 Download the installer for your platform from [GitHub Releases](https://github.com/AFunc-OPC/Skiller/releases):
 
-| Platform   | Installer Format         | Notes                                                                 |
-|------------|--------------------------|-----------------------------------------------------------------------|
-| **macOS**  | `.dmg`                   | Supports Intel (x64) and Apple Silicon (aarch64), universal recommended<br />Mac users need to remove quarantine attribute<br/>`xattr -cr /Applications/Skiller.app` |
-| **Windows**| `.msi` / `.exe`          | MSI installer or NSIS installer, supports x64                        |
-| **Linux**  | `.deb` / `.rpm`          | DEB for Debian/Ubuntu as common format                               |
+| Platform          | Installer Format    | Notes                                                                                                                                                                  |
+| ----------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **macOS**   | `.dmg`            | Supports Intel (x64) and Apple Silicon (aarch64), universal recommended<br />Mac users need to remove quarantine attribute`xattr -cr /Applications/Skiller.app` |
+| **Windows** | `.msi` / `.exe` | MSI installer or NSIS installer, supports x64                                                                                                                          |
+| **Linux**   | `.deb` / `.rpm` | DEB for Debian/Ubuntu as common format                                                                                                                                 |
 
 Simply install and use after downloading.
 
@@ -46,16 +46,16 @@ Simply install and use after downloading.
 
 ## Tech Stack
 
-| Layer        | Technology      | Version | Notes                        |
-|--------------|-----------------|---------|------------------------------|
-| Backend      | Tauri           | 2.x     | Cross-platform desktop framework |
-| Runtime      | Rust            | 1.75+   | High-performance backend     |
-| Frontend     | React           | 18.x    | Modern UI                    |
-| Build Tool   | Vite            | 5.x     | Fast HMR                     |
-| UI Framework | Tailwind CSS    | 3.x     | Atomic CSS                   |
-| State Mgmt   | Zustand         | 4.x     | Lightweight state management |
-| Database     | SQLite          | 3.x     | WAL mode, local storage      |
-| Icons        | Lucide React    | 0.3.x   | Rich icon library            |
+| Layer        | Technology   | Version | Notes                            |
+| ------------ | ------------ | ------- | -------------------------------- |
+| Backend      | Tauri        | 2.x     | Cross-platform desktop framework |
+| Runtime      | Rust         | 1.75+   | High-performance backend         |
+| Frontend     | React        | 18.x    | Modern UI                        |
+| Build Tool   | Vite         | 5.x     | Fast HMR                         |
+| UI Framework | Tailwind CSS | 3.x     | Atomic CSS                       |
+| State Mgmt   | Zustand      | 4.x     | Lightweight state management     |
+| Database     | SQLite       | 3.x     | WAL mode, local storage          |
+| Icons        | Lucide React | 0.3.x   | Rich icon library                |
 
 ## Features
 
@@ -471,11 +471,11 @@ git push origin v0.1.1
 
 ### Build Artifacts
 
-| Platform  | Artifact Formats       | Architectures                 |
-|-----------|------------------------|-------------------------------|
-| macOS     | `.dmg`, `.app`         | aarch64, x64, universal      |
-| Windows   | `.msi`, `.exe`         | x64                           |
-| Linux     | `.deb`, `.AppImage`    | amd64                         |
+| Platform | Artifact Formats        | Architectures           |
+| -------- | ----------------------- | ----------------------- |
+| macOS    | `.dmg`, `.app`      | aarch64, x64, universal |
+| Windows  | `.msi`, `.exe`      | x64                     |
+| Linux    | `.deb`, `.AppImage` | amd64                   |
 
 ### Workflow Configuration
 
@@ -532,11 +532,11 @@ The application uses SQLite for storage, supporting the following tables:
 
 Database file location:
 
-| Platform  | Path                                                             |
-|-----------|------------------------------------------------------------------|
-| macOS     | `~/Library/Application Support/com.skiller.desktop/skiller.db` |
-| Windows   | `%APPDATA%\com.skiller.desktop\skiller.db`                     |
-| Linux     | `~/.config/com.skiller.desktop/skiller.db`                      |
+| Platform | Path                                                             |
+| -------- | ---------------------------------------------------------------- |
+| macOS    | `~/Library/Application Support/com.skiller.desktop/skiller.db` |
+| Windows  | `%APPDATA%\com.skiller.desktop\skiller.db`                     |
+| Linux    | `~/.config/com.skiller.desktop/skiller.db`                     |
 
 **Notes**:
 
