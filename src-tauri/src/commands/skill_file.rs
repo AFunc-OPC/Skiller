@@ -463,6 +463,29 @@ fn source_metadata_path(skill_dir: &Path) -> PathBuf {
     skill_dir.join(SKILLER_SOURCE_METADATA_FILE)
 }
 
+fn find_skill_md_recursive(base_dir: &Path) -> Option<PathBuf> {
+    if base_dir.join("SKILL.md").exists() {
+        return Some(base_dir.to_path_buf());
+    }
+
+    if let Ok(entries) = fs::read_dir(base_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let dir_name = path.file_name()?.to_string_lossy();
+                if dir_name.starts_with('.') || dir_name == "__MACOSX" {
+                    continue;
+                }
+                if let Some(found) = find_skill_md_recursive(&path) {
+                    return Some(found);
+                }
+            }
+        }
+    }
+
+    None
+}
+
 fn write_source_metadata(skill_dir: &Path, metadata: &FileSkillSourceMetadata) -> Result<(), String> {
     let contents = serde_json::to_string(metadata).map_err(|e| e.to_string())?;
     fs::write(source_metadata_path(skill_dir), contents).map_err(|e| e.to_string())
@@ -908,44 +931,20 @@ pub fn unzip_skill(file_path: String) -> Result<(), String> {
             format!("Failed to extract zip: {}", e)
         })?;
 
-        let entries: Vec<std::fs::DirEntry> = fs::read_dir(&temp_extract_dir)
-            .map_err(|e| {
-                cleanup_temp();
-                format!("Failed to read extracted directory: {}", e)
-            })?
-            .filter_map(|e| e.ok())
-            .collect();
-
-        let (extracted_dir, name) = if entries.len() == 1 {
-            let single_entry = &entries[0];
-            if single_entry.path().is_dir() {
-                let dir_name = single_entry
+        let (extracted_dir, name) = match find_skill_md_recursive(&temp_extract_dir) {
+            Some(skill_dir) => {
+                let skill_name = skill_dir
                     .file_name()
-                    .to_string_lossy()
-                    .to_string();
-                (single_entry.path().clone(), dir_name)
-            } else {
-                let zip_file_stem = source_path
-                    .file_stem()
                     .and_then(|n| n.to_str())
                     .unwrap_or("skill")
                     .to_string();
-                (temp_extract_dir.clone(), zip_file_stem)
+                (skill_dir, skill_name)
             }
-        } else {
-            let zip_file_stem = source_path
-                .file_stem()
-                .and_then(|n| n.to_str())
-                .unwrap_or("skill")
-                .to_string();
-            (temp_extract_dir.clone(), zip_file_stem)
+            None => {
+                cleanup_temp();
+                return Err("导入失败：未找到 SKILL.md 文件。技能包必须包含 SKILL.md 文件，请检查压缩包结构。".to_string());
+            }
         };
-
-        let skill_md_path = extracted_dir.join("SKILL.md");
-        if !skill_md_path.exists() {
-            cleanup_temp();
-            return Err("导入失败：未找到 SKILL.md 文件。技能包必须包含 SKILL.md 文件，请检查压缩包结构。".to_string());
-        }
 
         (extracted_dir, name)
     };

@@ -64,7 +64,7 @@ export function FileImportDialog({ isOpen, onClose, onImport }: FileImportDialog
             return
           }
 
-          applyDroppedPath(droppedPath)
+          applyDroppedPath(droppedPath, importType === 'folder')
         })
       } catch (err) {
         console.error('Failed to attach drag-drop listener:', err)
@@ -77,7 +77,7 @@ export function FileImportDialog({ isOpen, onClose, onImport }: FileImportDialog
       disposed = true
       unlisten?.()
     }
-  }, [isOpen])
+  }, [isOpen, importType])
 
   if (!isOpen) return null
 
@@ -86,10 +86,6 @@ export function FileImportDialog({ isOpen, onClose, onImport }: FileImportDialog
   const isSupportedFile = (path: string) => {
     const extension = getExtension(path)
     return extension === 'zip' || extension === 'skill'
-  }
-
-  const isSkillFolder = (path: string) => {
-    return path.toLowerCase().includes('skill') || path.endsWith('SKILL.md') || path.includes('/.claude/skills/') || path.includes('/.opencode/skills/')
   }
 
   const getDisplayName = (path: string) => path.split('/').pop() || path.split('\\').pop() || path
@@ -176,10 +172,18 @@ export function FileImportDialog({ isOpen, onClose, onImport }: FileImportDialog
 
     const path = droppedFile.path || droppedFile.name
     
-    if (!droppedFile.type && droppedFile.size === 0 && !droppedFile.name.includes('.')) {
+    if (importType === 'folder') {
       applyDroppedPath(path, true)
-    } else {
+      return
+    }
+
+    const extension = getExtension(path)
+    const isArchive = extension === 'zip' || extension === 'skill'
+    
+    if (isArchive) {
       applyDroppedPath(path, false)
+    } else {
+      applyDroppedPath(path, true)
     }
   }
 
