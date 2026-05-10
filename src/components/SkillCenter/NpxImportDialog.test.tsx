@@ -25,7 +25,7 @@ const preparedResponse: PrepareNpxSkillImportResponse = {
   command: 'npx skills add https://github.com/demo/skills --skill demo-skill',
   parsed: {
     repo_url: 'https://github.com/demo/skills',
-    skill_name: 'demo-skill',
+    skill_name: 'demo-skill' as string | null,
     branch: 'main',
     skill_path: 'skills/demo-skill',
   },
