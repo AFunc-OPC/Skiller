@@ -233,20 +233,31 @@ fn prepare_npx_skill_import_impl(
         }
     } else {
         let all_skills = find_all_skill_md_files(&repo_dir, &repo_dir, 0, 10);
-        if all_skills.is_empty() {
+        let mut seen_names: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut unique_skills: Vec<(String, PathBuf)> = Vec::new();
+        
+        for (relative, path) in all_skills {
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                let name = name.to_string();
+                if !seen_names.contains(&name) {
+                    seen_names.insert(name);
+                    unique_skills.push((relative, path));
+                }
+            }
+        }
+        
+        if unique_skills.is_empty() {
             let _ = fs::remove_dir_all(&session_dir);
             return Err("未在仓库中找到包含 SKILL.md 的技能目录。请使用 --skill 指定技能名称".to_string());
-        } else if all_skills.len() == 1 {
-            let (relative, path) = all_skills.into_iter().next().unwrap();
+        } else if unique_skills.len() == 1 {
+            let (relative, path) = unique_skills.into_iter().next().unwrap();
             let name = path.file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("skill")
                 .to_string();
             (relative, path, name)
         } else {
-            let names: Vec<String> = all_skills.iter()
-                .filter_map(|(_, p)| p.file_name().and_then(|n| n.to_str()).map(|s| s.to_string()))
-                .collect();
+            let names: Vec<String> = seen_names.into_iter().collect();
             let _ = fs::remove_dir_all(&session_dir);
             return Err(format!(
                 "仓库中有多个技能 ({:?})，请使用 --skill 指定要导入的技能名称",
@@ -348,13 +359,22 @@ fn find_all_skill_md_files(base: &Path, repo_root: &Path, depth: usize, max_dept
             let path = entry.path();
             
             if path.is_dir() {
+                let dir_name = path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
+                
+                if dir_name.starts_with('.') || dir_name == "node_modules" || dir_name == "__MACOSX" {
+                    continue;
+                }
+                
                 let skill_md = path.join("SKILL.md");
                 if skill_md.exists() {
                     if let Ok(relative) = path.strip_prefix(repo_root) {
                         results.push((relative.to_string_lossy().to_string(), path.clone()));
                     }
+                } else {
+                    results.extend(find_all_skill_md_files(&path, repo_root, depth + 1, max_depth));
                 }
-                results.extend(find_all_skill_md_files(&path, repo_root, depth + 1, max_depth));
             }
         }
     }
