@@ -15,7 +15,7 @@ pub struct NpxImportProgressEvent {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ParsedNpxSkillCommand {
     pub repo_url: String,
-    pub skill_name: String,
+    pub skill_name: Option<String>,
     pub branch: Option<String>,
     pub skill_path: Option<String>,
 }
@@ -75,6 +75,7 @@ pub struct NativeNpxProgressEvent {
 pub struct NativeNpxImportResponse {
     pub success: bool,
     pub skill_name: String,
+    pub skill_names: Vec<String>,
     pub exists_in_skiller: bool,
     pub logs: Vec<String>,
 }

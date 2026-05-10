@@ -74,6 +74,7 @@ describe('NpxImportDialog - Native Mode Error Handling', () => {
     const mockResult: NativeNpxImportResponse = {
       success: true,
       skill_name: 'github-actions-docs',
+      skill_names: ['github-actions-docs'],
       exists_in_skiller: true,
       logs: ['Installation complete'],
     }
@@ -103,6 +104,7 @@ describe('NpxImportDialog - Native Mode Error Handling', () => {
     const mockResult: NativeNpxImportResponse = {
       success: true,
       skill_name: 'github-actions-docs',
+      skill_names: ['github-actions-docs'],
       exists_in_skiller: false,
       logs: [
         'Checking local tool environment...',
@@ -138,6 +140,7 @@ describe('NpxImportDialog - Update Existing Skill', () => {
     const mockResult: NativeNpxImportResponse = {
       success: true,
       skill_name: 'existing-skill',
+      skill_names: ['existing-skill'],
       exists_in_skiller: true,
       logs: ['Installation complete'],
     }

@@ -309,7 +309,7 @@ export function NpxFindDialog({
   const extractSkillName = (command: string): string => {
     const match = command.match(/@([a-zA-Z0-9_-]+)/)
     if (match) return match[1]
-    const skillMatch = command.match(/--skill\s+([a-zA-Z0-9_-]+)/)
+    const skillMatch = command.match(/(?:--skill|-s)\s+([a-zA-Z0-9_-]+)/)
     if (skillMatch) return skillMatch[1]
     return ''
   }
@@ -385,23 +385,37 @@ export function NpxFindDialog({
         }
         
         const skillName = result.skill_name
+        const skillNames = result.skill_names.length > 0 ? result.skill_names : [result.skill_name]
         
-        setLogs((prev) => [
-          ...prev,
-          language === 'zh' 
-            ? `同步到 Skiller: ${skillName}` 
-            : `Syncing to Skiller: ${skillName}`,
-        ])
-        
-        const syncResult = await onSyncToSkiller(skillName, command)
-        
-        successCount++
-        setLogs((prev) => [
-          ...prev,
-          language === 'zh' 
-            ? `✓ 导入成功: ${skillName}${syncResult.is_update ? ' (已更新)' : ''}` 
-            : `✓ Imported: ${skillName}${syncResult.is_update ? ' (updated)' : ''}`,
-        ])
+        for (const name of skillNames) {
+          try {
+            setLogs((prev) => [
+              ...prev,
+              language === 'zh' 
+                ? `同步到 Skiller: ${name}` 
+                : `Syncing to Skiller: ${name}`,
+            ])
+            
+            const syncResult = await onSyncToSkiller(name, command)
+            
+            successCount++
+            setLogs((prev) => [
+              ...prev,
+              language === 'zh' 
+                ? `✓ 导入成功: ${name}${syncResult.is_update ? ' (已更新)' : ''}` 
+                : `✓ Imported: ${name}${syncResult.is_update ? ' (updated)' : ''}`,
+            ])
+          } catch (syncErr) {
+            failCount++
+            const syncErrorMsg = syncErr instanceof Error ? syncErr.message : String(syncErr)
+            setLogs((prev) => [
+              ...prev,
+              language === 'zh' 
+                ? `✗ 同步失败: ${name} - ${syncErrorMsg}` 
+                : `✗ Sync failed: ${name} - ${syncErrorMsg}`,
+            ])
+          }
+        }
       } catch (err) {
         failCount++
         const errorMsg = err instanceof Error ? err.message : String(err)

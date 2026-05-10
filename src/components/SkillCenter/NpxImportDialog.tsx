@@ -193,11 +193,14 @@ export function NpxImportDialog({
       }
 
       setShowNativeConfirm(true)
+      const skillNames = result.skill_names.length > 0
+        ? result.skill_names
+        : [result.skill_name]
       setLogs((prev) => [
         ...prev,
         language === 'zh'
-          ? `npx skills 安装成功：${result.skill_name}`
-          : `npx skills installed successfully: ${result.skill_name}`,
+          ? `npx skills 安装成功：${skillNames.join(', ')}`
+          : `npx skills installed successfully: ${skillNames.join(', ')}`,
         language === 'zh'
           ? '安装完成，请确认是否同步到 Skiller'
           : 'Installation complete. Please confirm to sync to Skiller',
@@ -234,14 +237,47 @@ export function NpxImportDialog({
     setError('')
 
     try {
-      const result = await onSyncToSkiller(nativeResult.skill_name, command.trim())
-      if (result.is_update) {
-        setSuccessMessage(`${language === 'zh' ? '更新成功' : 'Update successful'}：${result.skill_name}`)
-        setLogs((prev) => [...prev, `${language === 'zh' ? '已更新到' : 'Updated to'} ${result.skill_path}`])
-      } else {
-        setSuccessMessage(`${language === 'zh' ? '同步成功' : 'Sync successful'}：${result.skill_name}`)
-        setLogs((prev) => [...prev, `${language === 'zh' ? '已同步到' : 'Synced to'} ${result.skill_path}`])
+      const skillNames = nativeResult.skill_names.length > 0
+        ? nativeResult.skill_names
+        : [nativeResult.skill_name]
+
+      const results: Array<{ skill_name: string; skill_path: string; is_update: boolean }> = []
+      const errors: string[] = []
+
+      for (const name of skillNames) {
+        try {
+          const result = await onSyncToSkiller(name, command.trim())
+          results.push(result)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          let friendlyMsg = msg
+          if (msg.includes('不存在于 ~/.agents/skills/')) {
+            friendlyMsg = language === 'zh'
+              ? `技能 '${name}' 已从 ~/.agents/skills/ 目录中删除或移动。请重新导入该技能。`
+              : `Skill '${name}' has been deleted or moved from ~/.agents/skills/ directory. Please re-import the skill.`
+          }
+          errors.push(friendlyMsg)
+        }
       }
+
+      if (errors.length > 0 && results.length === 0) {
+        setError(errors.join('\n'))
+      } else {
+        const successNames = results.map(r => r.skill_name).join(', ')
+        const hasUpdate = results.some(r => r.is_update)
+        if (hasUpdate) {
+          setSuccessMessage(`${language === 'zh' ? '更新成功' : 'Update successful'}：${successNames}`)
+        } else {
+          setSuccessMessage(`${language === 'zh' ? '同步成功' : 'Sync successful'}：${successNames}`)
+        }
+        if (errors.length > 0) {
+          setLogs((prev) => [...prev, `${language === 'zh' ? '部分技能同步失败' : 'Some skills failed to sync'}:\n${errors.join('\n')}`])
+        }
+        for (const result of results) {
+          setLogs((prev) => [...prev, `${language === 'zh' ? (result.is_update ? '已更新到' : '已同步到') : (result.is_update ? 'Updated to' : 'Synced to')} ${result.skill_path}`])
+        }
+      }
+
       setShowNativeConfirm(false)
       setNativeResult(null)
       setCommand('')
@@ -250,15 +286,7 @@ export function NpxImportDialog({
       }, 1200)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
-
-      let friendlyMsg = errorMsg
-      if (errorMsg.includes('不存在于 ~/.agents/skills/')) {
-        friendlyMsg = language === 'zh'
-          ? `技能 '${nativeResult.skill_name}' 已从 ~/.agents/skills/ 目录中删除或移动。请重新导入该技能。`
-          : `Skill '${nativeResult.skill_name}' has been deleted or moved from ~/.agents/skills/ directory. Please re-import the skill.`
-      }
-
-      setError(friendlyMsg)
+      setError(errorMsg)
     } finally {
       setConfirming(false)
     }
@@ -581,7 +609,9 @@ export function NpxImportDialog({
               <div className="sc-prepared-grid">
                 <div className="sc-prepared-row">
                   <span className="sc-prepared-label">{language === 'zh' ? '技能名' : 'Skill Name'}</span>
-                  <code className="sc-prepared-value">{nativeResult.skill_name}</code>
+                  <code className="sc-prepared-value">{nativeResult.skill_names.length > 1
+                    ? nativeResult.skill_names.join(', ')
+                    : nativeResult.skill_name}</code>
                 </div>
                 <div className="sc-prepared-row">
                   <span className="sc-prepared-label">{language === 'zh' ? '安装状态' : 'Install Status'}</span>

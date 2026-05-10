@@ -255,7 +255,7 @@ export interface NpxImportProgressEvent {
 
 export interface ParsedNpxSkillCommand {
   repo_url: string
-  skill_name: string
+  skill_name: string | null
   branch?: string | null
   skill_path?: string | null
 }
@@ -301,6 +301,7 @@ export type SyncResult =
 export interface NativeNpxImportResponse {
   success: boolean
   skill_name: string
+  skill_names: string[]
   exists_in_skiller: boolean
   logs: string[]
 }

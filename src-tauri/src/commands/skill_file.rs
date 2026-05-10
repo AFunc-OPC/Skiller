@@ -94,7 +94,11 @@ fn prepare_npx_skill_import_impl(
         request_id_ref,
         &mut logs,
         "command",
-        format!("命令校验通过，目标技能：{}", parsed.skill_name),
+        if let Some(ref name) = parsed.skill_name {
+            format!("命令校验通过，目标技能：{}", name)
+        } else {
+            "命令校验通过，将在仓库中自动发现技能".to_string()
+        },
     );
 
     let tool_status = NpxImportToolStatus {
@@ -198,24 +202,56 @@ fn prepare_npx_skill_import_impl(
         "仓库 clone 完成，开始定位技能目录",
     );
 
-    let (relative_skill_path, staged_path) = if let Some(skill_path) = parsed.skill_path.clone().filter(|v| !v.is_empty()) {
+    let (relative_skill_path, staged_path, resolved_skill_name) = if let Some(skill_path) = parsed.skill_path.clone().filter(|v| !v.is_empty()) {
         let staged = repo_dir.join(&skill_path);
         if staged.is_dir() {
-            (skill_path, staged)
+            let name = staged.file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("skill")
+                .to_string();
+            (skill_path, staged, name)
         } else {
             let _ = fs::remove_dir_all(&session_dir);
             return Err(format!("指定路径不存在：{}", skill_path));
         }
-    } else {
-        match find_skill_directory_by_regex(&repo_dir, &parsed.skill_name) {
-            Some(found) => found,
+    } else if let Some(ref skill_name) = parsed.skill_name {
+        match find_skill_directory_by_regex(&repo_dir, skill_name) {
+            Some(found) => {
+                let name = found.1.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or(skill_name)
+                    .to_string();
+                (found.0, found.1, name)
+            }
             None => {
                 let _ = fs::remove_dir_all(&session_dir);
                 return Err(format!(
                     "未找到技能目录：{}。已搜索所有包含 SKILL.md 的目录",
-                    parsed.skill_name
+                    skill_name
                 ));
             }
+        }
+    } else {
+        let all_skills = find_all_skill_md_files(&repo_dir, &repo_dir, 0, 10);
+        if all_skills.is_empty() {
+            let _ = fs::remove_dir_all(&session_dir);
+            return Err("未在仓库中找到包含 SKILL.md 的技能目录。请使用 --skill 指定技能名称".to_string());
+        } else if all_skills.len() == 1 {
+            let (relative, path) = all_skills.into_iter().next().unwrap();
+            let name = path.file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("skill")
+                .to_string();
+            (relative, path, name)
+        } else {
+            let names: Vec<String> = all_skills.iter()
+                .filter_map(|(_, p)| p.file_name().and_then(|n| n.to_str()).map(|s| s.to_string()))
+                .collect();
+            let _ = fs::remove_dir_all(&session_dir);
+            return Err(format!(
+                "仓库中有多个技能 ({:?})，请使用 --skill 指定要导入的技能名称",
+                names
+            ));
         }
     };
 
@@ -260,11 +296,11 @@ fn prepare_npx_skill_import_impl(
     );
 
     let skiller_skills_dir = get_skiller_skills_dir().map_err(|e| e.to_string())?;
-    let exists_in_skiller = skiller_skills_dir.join(&parsed.skill_name).exists();
+    let exists_in_skiller = skiller_skills_dir.join(&resolved_skill_name).exists();
 
     let summary = NpxSkillImportSummary {
-        skill_name: parsed.skill_name.clone(),
-        display_name: parsed.skill_name.clone(),
+        skill_name: resolved_skill_name.clone(),
+        display_name: resolved_skill_name.clone(),
         repo_url: parsed.repo_url.clone(),
         branch: parsed.branch.clone(),
         skill_path: relative_skill_path,
@@ -300,33 +336,33 @@ fn prepare_npx_skill_import_impl(
     })
 }
 
-fn find_skill_directory_by_regex(repo_dir: &Path, skill_name: &str) -> Option<(String, PathBuf)> {
-    fn find_all_skill_md_files(base: &Path, repo_root: &Path, depth: usize, max_depth: usize) -> Vec<(String, PathBuf)> {
-        let mut results = Vec::new();
-        
-        if depth > max_depth {
-            return results;
-        }
-        
-        if let Ok(entries) = fs::read_dir(base) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                
-                if path.is_dir() {
-                    let skill_md = path.join("SKILL.md");
-                    if skill_md.exists() {
-                        if let Ok(relative) = path.strip_prefix(repo_root) {
-                            results.push((relative.to_string_lossy().to_string(), path.clone()));
-                        }
-                    }
-                    results.extend(find_all_skill_md_files(&path, repo_root, depth + 1, max_depth));
-                }
-            }
-        }
-        
-        results
+fn find_all_skill_md_files(base: &Path, repo_root: &Path, depth: usize, max_depth: usize) -> Vec<(String, PathBuf)> {
+    let mut results = Vec::new();
+    
+    if depth > max_depth {
+        return results;
     }
     
+    if let Ok(entries) = fs::read_dir(base) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            
+            if path.is_dir() {
+                let skill_md = path.join("SKILL.md");
+                if skill_md.exists() {
+                    if let Ok(relative) = path.strip_prefix(repo_root) {
+                        results.push((relative.to_string_lossy().to_string(), path.clone()));
+                    }
+                }
+                results.extend(find_all_skill_md_files(&path, repo_root, depth + 1, max_depth));
+            }
+        }
+    }
+    
+    results
+}
+
+fn find_skill_directory_by_regex(repo_dir: &Path, skill_name: &str) -> Option<(String, PathBuf)> {
     fn scan_by_dir_name(base: &Path, repo_root: &Path, skill_name: &str, depth: usize, max_depth: usize) -> Option<(String, PathBuf)> {
         if depth > max_depth {
             return None;
@@ -500,7 +536,7 @@ fn parse_npx_skill_command(command: &str) -> Result<ParsedNpxSkillCommand, Skill
     let parts: Vec<&str> = command.split_whitespace().collect();
     if parts.len() < 4 {
         return Err(SkillerError::InvalidInput(
-            "Expected format: npx skills add <repo-url> --skill <skill-name> OR npx skills add owner/repo@skill-name".to_string(),
+            "Expected format: npx skills add <repo-url> [--skill <name>] OR npx skills add owner/repo@skill-name".to_string(),
         ));
     }
 
@@ -516,7 +552,13 @@ fn parse_npx_skill_command(command: &str) -> Result<ParsedNpxSkillCommand, Skill
         return parse_shorthand_format(third_arg, &parts[4..]);
     }
 
-    let repo_url = third_arg.to_string();
+    let repo_url = if third_arg.starts_with("http://") || third_arg.starts_with("https://") {
+        third_arg.to_string()
+    } else if third_arg.contains('/') && !third_arg.starts_with('.') && !third_arg.starts_with('/') {
+        format!("https://github.com/{}", third_arg)
+    } else {
+        third_arg.to_string()
+    };
     if repo_url.is_empty() {
         return Err(SkillerError::InvalidInput(
             "Repository URL is required".to_string(),
@@ -526,33 +568,67 @@ fn parse_npx_skill_command(command: &str) -> Result<ParsedNpxSkillCommand, Skill
     let mut skill_name: Option<String> = None;
     let mut branch: Option<String> = None;
     let mut skill_path: Option<String> = None;
+    let mut install_all = false;
     let mut index = 4;
 
     while index < parts.len() {
         match parts[index] {
-            "--skill" => {
+            "--skill" | "-s" => {
                 index += 1;
                 let value = parts.get(index).ok_or_else(|| {
                     SkillerError::InvalidInput("`--skill` requires a value".to_string())
                 })?;
-                skill_name = Some(value.trim().to_string());
+                let trimmed = value.trim();
+                let unquoted = trimmed.trim_matches(|c| c == '\'' || c == '"');
+                if unquoted == "*" {
+                    install_all = true;
+                } else {
+                    skill_name = Some(unquoted.to_string());
+                }
             }
-            "--branch" => {
+            "--branch" | "-b" => {
                 index += 1;
                 let value = parts.get(index).ok_or_else(|| {
                     SkillerError::InvalidInput("`--branch` requires a value".to_string())
                 })?;
                 branch = Some(value.trim().to_string());
             }
-            "--path" => {
+            "--path" | "-p" => {
                 index += 1;
                 let value = parts.get(index).ok_or_else(|| {
                     SkillerError::InvalidInput("`--path` requires a value".to_string())
                 })?;
                 skill_path = Some(normalize_relative_path(value));
             }
-            "-g" | "-y" | "--global" | "--yes" => {
-                // Skip these flags (global and yes are not applicable in Skiller context)
+            "--all" => {
+                install_all = true;
+            }
+            "-g" | "-y" | "--global" | "--yes" | "--copy" | "--full-depth" |
+            "-l" | "--list" => {
+                // Skip these flags (not applicable in Skiller managed mode)
+            }
+            "--agent" => {
+                // --agent <agents> - skip flag and its value
+                index += 1;
+            }
+            "-a" => {
+                // -a <agents> - skip flag and its value
+                index += 1;
+            }
+            flag if flag.starts_with("--agent=") => {
+                // --agent=value format, value is part of the flag
+            }
+            flag if flag.starts_with("-b=") => {
+                branch = Some(flag[3..].to_string());
+            }
+            flag if flag.starts_with("--branch=") => {
+                branch = Some(flag[9..].to_string());
+            }
+            flag if flag.starts_with("-p=") => {
+                skill_path = Some(normalize_relative_path(&flag[3..]));
+            }
+            flag if flag.starts_with("--path=") => {
+                skill_path = Some(normalize_relative_path(&flag[7..]));
             }
             flag => {
                 return Err(SkillerError::InvalidInput(format!(
@@ -565,9 +641,10 @@ fn parse_npx_skill_command(command: &str) -> Result<ParsedNpxSkillCommand, Skill
         index += 1;
     }
 
-    let skill_name = skill_name
-        .filter(|value| !value.trim().is_empty())
-        .ok_or_else(|| SkillerError::InvalidInput("`--skill` is required".to_string()))?;
+    if install_all {
+        // --all means install all skills from the repo
+        // skill_name remains None, indicating all skills should be imported
+    }
 
     Ok(ParsedNpxSkillCommand {
         repo_url,
@@ -639,8 +716,18 @@ fn parse_shorthand_format(
             value if value.starts_with("-p=") => {
                 skill_path = Some(normalize_relative_path(value.split('=').nth(1).unwrap_or("")));
             }
-            "-g" | "-y" | "--global" | "--yes" => {
+            "-g" | "-y" | "--global" | "--yes" | "--copy" | "--full-depth" |
+            "-l" | "--list" | "--all" => {
                 // Skip these flags
+            }
+            "--agent" => {
+                index += 1;
+            }
+            "-a" => {
+                index += 1;
+            }
+            value if value.starts_with("--agent=") => {
+                // value is part of the flag
             }
             _ => {}
         }
@@ -649,7 +736,7 @@ fn parse_shorthand_format(
 
     Ok(ParsedNpxSkillCommand {
         repo_url,
-        skill_name,
+        skill_name: Some(skill_name),
         branch: branch.filter(|value| !value.trim().is_empty()),
         skill_path: skill_path.filter(|value| !value.is_empty()),
     })
@@ -1319,7 +1406,7 @@ pub async fn execute_npx_skills_add_native(
     }
 
     let parsed = parse_npx_skill_command(command_trimmed).map_err(|e| e.to_string())?;
-    let skill_name = parsed.skill_name.clone();
+    let specified_skill_name = parsed.skill_name.clone();
 
     fn ensure_flags(cmd: &str) -> String {
         let has_global = cmd.contains(" -g") || cmd.contains(" --global");
@@ -1335,6 +1422,17 @@ pub async fn execute_npx_skills_add_native(
     }
 
     let command_with_flags = ensure_flags(command_trimmed);
+
+    let agents_skills_dir = get_agents_skills_dir().map_err(|e| e.to_string())?;
+    let before_skills: Vec<String> = std::fs::read_dir(&agents_skills_dir)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().is_dir())
+                .map(|e| e.file_name().to_string_lossy().to_string())
+                .collect()
+        })
+        .unwrap_or_default();
 
     let app = Arc::new(app);
     let request_id_clone = request_id.clone();
@@ -1431,33 +1529,50 @@ pub async fn execute_npx_skills_add_native(
         return Err(format!("npx skills add 失败: {}", error_msg));
     }
 
-    let agents_skills_dir = get_agents_skills_dir().map_err(|e| e.to_string())?;
-    let installed_path = agents_skills_dir.join(&skill_name);
-    
-    if !installed_path.exists() {
-        let installed_skills: Vec<String> = std::fs::read_dir(&agents_skills_dir)
-            .map(|entries| {
-                entries
-                    .filter_map(|e| e.ok())
-                    .filter(|e| e.path().is_dir())
-                    .map(|e| e.file_name().to_string_lossy().to_string())
-                    .collect()
-            })
-            .unwrap_or_default();
+    let after_skills: Vec<String> = std::fs::read_dir(&agents_skills_dir)
+        .map(|entries| {
+            entries
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().is_dir())
+                .map(|e| e.file_name().to_string_lossy().to_string())
+                .collect()
+        })
+        .unwrap_or_default();
 
+    let new_skills: Vec<String> = after_skills
+        .iter()
+        .filter(|s| !before_skills.contains(s))
+        .cloned()
+        .collect();
+
+    let (skill_name, skill_names) = if let Some(ref name) = specified_skill_name {
+        let installed_path = agents_skills_dir.join(name);
+        if !installed_path.exists() && !new_skills.contains(name) {
+            let installed_skills: Vec<String> = after_skills.clone();
+            return Err(format!(
+                "技能 '{}' 安装失败。可能原因：\n1. 技能名称不存在于指定的仓库中\n2. 网络连接失败\n3. 权限不足\n\n已安装的技能: {:?}",
+                name, installed_skills
+            ));
+        }
+        (name.clone(), if new_skills.is_empty() { vec![name.clone()] } else { new_skills.clone() })
+    } else if !new_skills.is_empty() {
+        (new_skills[0].clone(), new_skills.clone())
+    } else {
+        let installed_skills: Vec<String> = after_skills.clone();
         return Err(format!(
-            "技能 '{}' 安装失败。可能原因：\n1. 技能名称不存在于指定的仓库中\n2. 网络连接失败\n3. 权限不足\n\n已安装的技能: {:?}",
-            skill_name, installed_skills
+            "未检测到新安装的技能。可能原因：\n1. 仓库中未找到匹配的技能\n2. 网络连接失败\n3. 权限不足\n\n已安装的技能: {:?}",
+            installed_skills
         ));
-    }
+    };
 
     let skiller_skills_dir = get_skiller_skills_dir().map_err(|e| e.to_string())?;
-    let target_path = skiller_skills_dir.join(&skill_name);
-    let exists_in_skiller = target_path.exists();
+    let first_skill_path = skiller_skills_dir.join(&skill_name);
+    let exists_in_skiller = first_skill_path.exists();
 
     Ok(NativeNpxImportResponse {
         success: true,
         skill_name,
+        skill_names,
         exists_in_skiller,
         logs: logs_final,
     })
@@ -2069,7 +2184,53 @@ mod tests {
         .expect("command should parse");
 
         assert_eq!(parsed.repo_url, "https://github.com/demo/skills");
-        assert_eq!(parsed.skill_name, "my-skill");
+        assert_eq!(parsed.skill_name, Some("my-skill".to_string()));
+        assert_eq!(parsed.branch.as_deref(), Some("main"));
+        assert_eq!(parsed.skill_path.as_deref(), Some("packages/my-skill"));
+    }
+
+    #[test]
+    fn parses_npx_skills_command_without_skill_flag() {
+        let parsed = parse_npx_skill_command(
+            "npx skills add pbakaus/impeccable -g -y",
+        )
+        .expect("command without --skill should parse");
+
+        assert_eq!(parsed.repo_url, "https://github.com/pbakaus/impeccable");
+        assert_eq!(parsed.skill_name, None);
+    }
+
+    #[test]
+    fn parses_npx_skills_command_with_all_flag() {
+        let parsed = parse_npx_skill_command(
+            "npx skills add https://github.com/demo/skills --all -g",
+        )
+        .expect("command with --all should parse");
+
+        assert_eq!(parsed.repo_url, "https://github.com/demo/skills");
+        assert_eq!(parsed.skill_name, None);
+    }
+
+    #[test]
+    fn parses_npx_skills_command_with_skill_star() {
+        let parsed = parse_npx_skill_command(
+            "npx skills add https://github.com/demo/skills --skill '*' -g",
+        )
+        .expect("command with --skill '*' should parse");
+
+        assert_eq!(parsed.repo_url, "https://github.com/demo/skills");
+        assert_eq!(parsed.skill_name, None);
+    }
+
+    #[test]
+    fn parses_npx_skills_command_with_short_flags() {
+        let parsed = parse_npx_skill_command(
+            "npx skills add https://github.com/demo/skills -s my-skill -b main -p packages/my-skill -g -y",
+        )
+        .expect("command with short flags should parse");
+
+        assert_eq!(parsed.repo_url, "https://github.com/demo/skills");
+        assert_eq!(parsed.skill_name, Some("my-skill".to_string()));
         assert_eq!(parsed.branch.as_deref(), Some("main"));
         assert_eq!(parsed.skill_path.as_deref(), Some("packages/my-skill"));
     }
@@ -2082,7 +2243,7 @@ mod tests {
         .expect("shorthand command should parse");
 
         assert_eq!(parsed.repo_url, "https://github.com/xixu-me/skills");
-        assert_eq!(parsed.skill_name, "github-actions-docs");
+        assert_eq!(parsed.skill_name, Some("github-actions-docs".to_string()));
         assert_eq!(parsed.branch, None);
         assert_eq!(parsed.skill_path, None);
     }
@@ -2095,7 +2256,7 @@ mod tests {
         .expect("shorthand with branch should parse");
 
         assert_eq!(parsed.repo_url, "https://github.com/owner/repo");
-        assert_eq!(parsed.skill_name, "my-skill");
+        assert_eq!(parsed.skill_name, Some("my-skill".to_string()));
         assert_eq!(parsed.branch.as_deref(), Some("develop"));
     }
 
@@ -2107,7 +2268,7 @@ mod tests {
         .expect("shorthand with path should parse");
 
         assert_eq!(parsed.repo_url, "https://github.com/owner/repo");
-        assert_eq!(parsed.skill_name, "my-skill");
+        assert_eq!(parsed.skill_name, Some("my-skill".to_string()));
         assert_eq!(parsed.skill_path.as_deref(), Some("skills/my-skill"));
     }
 
@@ -2154,7 +2315,7 @@ mod tests {
         .expect("standard command with -g -y should parse");
 
         assert_eq!(parsed.repo_url, "https://github.com/demo/skills");
-        assert_eq!(parsed.skill_name, "my-skill");
+        assert_eq!(parsed.skill_name, Some("my-skill".to_string()));
     }
 
     #[test]

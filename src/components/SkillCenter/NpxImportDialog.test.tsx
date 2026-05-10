@@ -69,6 +69,7 @@ describe('NpxImportDialog', () => {
     mocks.onExecuteNative.mockResolvedValue({
       success: true,
       skill_name: 'demo-skill',
+      skill_names: ['demo-skill'],
       exists_in_skiller: false,
       logs: ['Installing...', 'Done'],
     })
