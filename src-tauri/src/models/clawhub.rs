@@ -38,6 +38,13 @@ pub struct UpdateClawhubSourceRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubExploreResponse {
+    pub skills: Vec<ClawhubSkill>,
+    #[serde(default)]
+    pub total: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClawhubSkill {
     pub slug: String,
     pub name: String,
