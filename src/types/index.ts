@@ -341,4 +341,81 @@ export interface ProxyConfig {
   custom?: CustomProxyConfig
 }
 
+export interface ClawhubSource {
+  id: string
+  name: string
+  registry_url: string
+  token: string
+  connection_type: 'api' | 'cli'
+  cli_path: string | null
+  is_enabled: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateClawhubSourceRequest {
+  name: string
+  registry_url: string
+  token: string
+  connection_type: 'api' | 'cli'
+  cli_path?: string
+  is_enabled?: boolean
+  sort_order?: number
+}
+
+export interface UpdateClawhubSourceRequest {
+  id: string
+  name?: string
+  registry_url?: string
+  token?: string
+  cli_path?: string
+  is_enabled?: boolean
+  sort_order?: number
+}
+
+export interface ClawhubSkill {
+  slug: string
+  name: string
+  description: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface ClawhubSkillDetail {
+  slug: string
+  name: string
+  description: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+  skill_md_content: string | null
+}
+
+export interface ConnectionTestResult {
+  success: boolean
+  message: string
+  username: string | null
+}
+
+export interface ImportSkillResult {
+  slug: string
+  success: boolean
+  error: string | null
+  skill_id: string | null
+  already_exists: boolean
+}
+
+export interface DuplicateCheckResult {
+  slug: string
+  exists: boolean
+  existing_skill_id: string | null
+  existing_skill_name: string | null
+}
+
 export * from './sort'

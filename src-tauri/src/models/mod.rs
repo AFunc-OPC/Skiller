@@ -1,3 +1,4 @@
+pub mod clawhub;
 pub mod config;
 pub mod distribution;
 pub mod log;

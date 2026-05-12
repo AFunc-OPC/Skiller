@@ -86,6 +86,19 @@ pub fn create_tables(conn: &Connection) -> Result<(), crate::error::SkillerError
         CREATE INDEX IF NOT EXISTS idx_skills_repo ON skills(repo_id);
         CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
         CREATE INDEX IF NOT EXISTS idx_projects_path ON projects(path);
+
+        CREATE TABLE IF NOT EXISTS clawhub_sources (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            registry_url TEXT NOT NULL,
+            token TEXT NOT NULL,
+            connection_type TEXT NOT NULL DEFAULT 'api',
+            cli_path TEXT,
+            is_enabled INTEGER NOT NULL DEFAULT 1,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
         "#,
     )?;
 

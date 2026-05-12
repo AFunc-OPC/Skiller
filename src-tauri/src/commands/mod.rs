@@ -1,3 +1,4 @@
+pub mod clawhub;
 pub mod skill;
 pub mod skill_file;
 pub mod tag;

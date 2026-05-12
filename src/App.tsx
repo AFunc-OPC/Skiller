@@ -12,13 +12,14 @@ import { TagGovernancePage } from './pages/TagGovernancePage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { RepositoryManagementPage, RepositoryAddDialog } from './components/RepositoryManagement'
+import { ClawHubPage } from './components/ClawHub'
 import { isTauriEnvironment } from './api/tauri'
 import { ToolPresetSettings, SettingsTabs } from './components/Settings'
 import { desktopApi } from './api/desktop'
 import { SkillMarkdownPreview } from './components/SkillCenter/SkillMarkdownPreview'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from './data/userGuide'
 
-type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'settings'
+type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'clawhub' | 'settings'
 type IconName = ModuleKey | 'sun' | 'moon' | 'search' | 'grid' | 'list' | 'plus' | 'x' | 'chevron-left' | 'chevron-right'
 
 const modules: Array<{ key: ModuleKey; titleZh: string; titleEn: string; noteZh: string; noteEn: string }> = [
@@ -26,6 +27,7 @@ const modules: Array<{ key: ModuleKey; titleZh: string; titleEn: string; noteZh:
   { key: 'skills', titleZh: '技能中心', titleEn: 'Skill Center', noteZh: '技能集中管理与分发', noteEn: 'Centralized management and distribution of skills' },
   { key: 'projects', titleZh: '项目管理', titleEn: 'Projects', noteZh: '项目、技能分配', noteEn: 'Project and skill allocation' },
   { key: 'repos', titleZh: '仓库管理', titleEn: 'Repos', noteZh: '远程/本地技能仓库管理\n注意:当前仅做技能仓库管理', noteEn: 'Remote/local skill repository management\nNote: At present, only skill warehouse management is done.' },
+  { key: 'clawhub', titleZh: 'ClawHub', titleEn: 'ClawHub', noteZh: '发现与导入线上技能', noteEn: 'Discover and import skills online' },
   { key: 'tags', titleZh: '标签治理', titleEn: 'Tag Governance', noteZh: '分组与标签\n推荐:可为您的技能赋于标签，更便于管理', noteEn: 'Groups and links\nRecommended: You can assign tags to your skills for better management' },
   { key: 'settings', titleZh: '设置', titleEn: 'Settings', noteZh: '语言、主题、路径预设', noteEn: 'Locale, theme, path presets' },
 ]
@@ -40,6 +42,8 @@ const Icon = memo(function Icon({ name }: { name: IconName }) {
       return <svg viewBox="0 0 24 24"><path d="M4 7.5h7l2 2H20v8.5H4z" /></svg>
     case 'repos':
       return <svg viewBox="0 0 24 24"><path d="M6 6.5h12v11H6z" /><path d="M9 9.5h6M9 13h6" /></svg>
+    case 'clawhub':
+      return <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 015 9 15 15 0 01-5 9 15 15 0 01-5-9A15 15 0 0112 3z" /></svg>
     case 'tags':
       return <svg viewBox="0 0 24 24"><path d="M5 8V4h4l10 10-5 5z" /><circle cx="8.5" cy="7.5" r="1" /></svg>
     case 'settings':
@@ -223,6 +227,7 @@ function App() {
   const [userGuideOpen, setUserGuideOpen] = useState(false)
   const [openAddRepoDialog, setOpenAddRepoDialog] = useState(false)
   const [pendingRepositoryDetailId, setPendingRepositoryDetailId] = useState<string | null>(null)
+  const [pendingSettingsTab, setPendingSettingsTab] = useState<string | null>(null)
   
   const [projectCreateOpen, setProjectCreateOpen] = useState(false)
   const [newProjectPath, setNewProjectPath] = useState('')
@@ -330,6 +335,18 @@ function App() {
     setUserGuideOpen(true)
   }, [])
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.tab) {
+        setActiveModule('settings')
+        setPendingSettingsTab(detail.tab)
+      }
+    }
+    window.addEventListener('navigate-to-settings', handler)
+    return () => window.removeEventListener('navigate-to-settings', handler)
+  }, [])
+
   const renderContent = () => {
     switch (activeModule) {
       case 'skills':
@@ -364,6 +381,9 @@ function App() {
           </SkillProvider>
         )
       
+      case 'clawhub':
+        return <ClawHubPage />
+      
       case 'tags':
         return (
           <div className="content-grid single-grid" style={{ height: '100%' }}>
@@ -375,7 +395,7 @@ function App() {
         return (
           <div className="content-grid single-grid">
             <section className="panel settings-panel">
-              <SettingsTabs language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} />
+              <SettingsTabs language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} defaultTab={pendingSettingsTab || undefined} />
             </section>
           </div>
         )

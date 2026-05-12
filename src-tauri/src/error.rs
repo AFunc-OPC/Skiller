@@ -35,6 +35,21 @@ pub enum SkillerError {
 
     #[error("Invalid input: {0}")]
     InvalidInput(String),
+
+    #[error("ClawHub source not found: {0}")]
+    ClawhubSourceNotFound(String),
+
+    #[error("ClawHub connection failed: {0}")]
+    ClawhubConnectionFailed(String),
+
+    #[error("ClawHub API error: {0}")]
+    ClawhubApiError(String),
+
+    #[error("ClawHub CLI error: {0}")]
+    ClawhubCliError(String),
+
+    #[error("Encryption error: {0}")]
+    EncryptionError(String),
 }
 
 impl Serialize for SkillerError {
@@ -64,6 +79,11 @@ impl SkillerError {
             SkillerError::JsonError(_) => "JSON_ERROR",
             SkillerError::GitError(_) => "GIT_ERROR",
             SkillerError::InvalidInput(_) => "INVALID_INPUT",
+            SkillerError::ClawhubSourceNotFound(_) => "CLAWHUB_SOURCE_NOT_FOUND",
+            SkillerError::ClawhubConnectionFailed(_) => "CLAWHUB_CONNECTION_FAILED",
+            SkillerError::ClawhubApiError(_) => "CLAWHUB_API_ERROR",
+            SkillerError::ClawhubCliError(_) => "CLAWHUB_CLI_ERROR",
+            SkillerError::EncryptionError(_) => "ENCRYPTION_ERROR",
         }
     }
 }

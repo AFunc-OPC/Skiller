@@ -1,3 +1,4 @@
+pub mod clawhub_service;
 pub mod config_service;
 pub mod distribution_service;
 pub mod log_service;

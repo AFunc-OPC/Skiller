@@ -104,6 +104,16 @@ fn main() {
             skiller::commands::log::export_logs,
             skiller::commands::log::clear_logs,
             skiller::commands::log::get_log_stats,
+            skiller::commands::clawhub::clawhub_list_sources,
+            skiller::commands::clawhub::clawhub_add_source,
+            skiller::commands::clawhub::clawhub_update_source,
+            skiller::commands::clawhub::clawhub_delete_source,
+            skiller::commands::clawhub::clawhub_test_connection,
+            skiller::commands::clawhub::clawhub_explore,
+            skiller::commands::clawhub::clawhub_search,
+            skiller::commands::clawhub::clawhub_inspect,
+            skiller::commands::clawhub::clawhub_import_skills,
+            skiller::commands::clawhub::clawhub_check_duplicates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
