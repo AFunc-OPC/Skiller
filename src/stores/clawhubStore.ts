@@ -30,7 +30,7 @@ interface ClawhubState {
 
   fetchSources: () => Promise<void>
   addSource: (name: string, registryUrl: string, token: string, connectionType: 'api' | 'cli', cliPath?: string) => Promise<void>
-  updateSource: (id: string, updates: { name?: string; registry_url?: string; token?: string; cli_path?: string; is_enabled?: boolean; sort_order?: number }) => Promise<void>
+  updateSource: (id: string, updates: { name?: string; registry_url?: string; token?: string; connection_type?: 'api' | 'cli'; cli_path?: string; is_enabled?: boolean; sort_order?: number }) => Promise<void>
   deleteSource: (id: string) => Promise<void>
   selectSource: (id: string | null) => void
   testConnection: (sourceId: string) => Promise<ConnectionTestResult>

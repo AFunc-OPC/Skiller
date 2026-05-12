@@ -94,7 +94,7 @@ pub fn update_source(conn: &Connection, request: UpdateClawhubSourceRequest) -> 
     let name = request.name.unwrap_or(existing.name);
     let registry_url = request.registry_url.unwrap_or(existing.registry_url);
     let token = match &request.token {
-        Some(t) => {
+        Some(t) if !t.is_empty() => {
             let encrypted = encrypt_token(t)?;
             conn.execute(
                 "UPDATE clawhub_sources SET token = ?1 WHERE id = ?2",
@@ -102,15 +102,16 @@ pub fn update_source(conn: &Connection, request: UpdateClawhubSourceRequest) -> 
             )?;
             t.clone()
         }
-        None => existing.token,
+        _ => existing.token,
     };
+    let connection_type = request.connection_type.unwrap_or(existing.connection_type);
     let cli_path = request.cli_path.or(existing.cli_path);
     let is_enabled = request.is_enabled.unwrap_or(existing.is_enabled);
     let sort_order = request.sort_order.unwrap_or(existing.sort_order);
 
     conn.execute(
-        "UPDATE clawhub_sources SET name = ?1, registry_url = ?2, cli_path = ?3, is_enabled = ?4, sort_order = ?5, updated_at = ?6 WHERE id = ?7",
-        rusqlite::params![name, registry_url, cli_path, is_enabled as i32, sort_order, now, request.id],
+        "UPDATE clawhub_sources SET name = ?1, registry_url = ?2, connection_type = ?3, cli_path = ?4, is_enabled = ?5, sort_order = ?6, updated_at = ?7 WHERE id = ?8",
+        rusqlite::params![name, registry_url, connection_type, cli_path, is_enabled as i32, sort_order, now, request.id],
     )?;
 
     Ok(ClawhubSource {
@@ -118,7 +119,7 @@ pub fn update_source(conn: &Connection, request: UpdateClawhubSourceRequest) -> 
         name,
         registry_url,
         token,
-        connection_type: existing.connection_type,
+        connection_type,
         cli_path,
         is_enabled,
         sort_order,
@@ -224,7 +225,7 @@ fn test_api_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
 fn test_cli_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
     let mut cmd = Command::new(cli_path);
-    cmd.arg("whoami").arg("--json");
+    cmd.arg("whoami");
     if !source.registry_url.is_empty() {
         cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
     }
@@ -242,8 +243,12 @@ fn test_cli_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
 
     if output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        let body: serde_json::Value = serde_json::from_str(&stdout).unwrap_or(serde_json::json!({}));
-        let username = body.get("username").and_then(|v| v.as_str()).map(String::from);
+        let trimmed = stdout.trim();
+        let username = if !trimmed.is_empty() {
+            Some(trimmed.to_string())
+        } else {
+            None
+        };
         Ok(ConnectionTestResult {
             success: true,
             message: "Connection successful".to_string(),

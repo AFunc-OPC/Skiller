@@ -127,6 +127,7 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
 
       {editingSource && (
         <SourceDialog
+          key={editingSource.id}
           language={language}
           source={editingSource}
           onClose={() => setEditingSource(null)}
@@ -179,15 +180,19 @@ interface SourceDialogProps {
 }
 
 function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) {
+  const isEditing = !!source
+  const existingToken = source?.token || ''
+  
   const [name, setName] = useState(source?.name || '')
   const [registryUrl, setRegistryUrl] = useState(source?.registry_url || '')
-  const [token, setToken] = useState(source?.token || '')
+  const [token, setToken] = useState(existingToken)
+  const [showToken, setShowToken] = useState(false)
   const [connectionType, setConnectionType] = useState<'api' | 'cli'>(source?.connection_type || 'api')
   const [cliPath, setCliPath] = useState(source?.cli_path || '')
   const [saving, setSaving] = useState(false)
 
-  const isEditing = !!source
   const canSave = name.trim() && registryUrl.trim()
+  const tokenChanged = token !== existingToken
 
   const handleSubmit = async () => {
     if (!canSave) return
@@ -196,7 +201,7 @@ function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) 
       await onSave({
         name: name.trim(),
         registry_url: registryUrl.trim(),
-        token: token.trim(),
+        token: tokenChanged ? token.trim() : '',
         connection_type: connectionType,
         cli_path: connectionType === 'cli' && cliPath.trim() ? cliPath.trim() : undefined,
       })
@@ -239,13 +244,43 @@ function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) 
 
           <div className="pm-field">
             <label htmlFor="source-token">{t('clawhubToken', language)}</label>
-            <input
-              id="source-token"
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder={t('clawhubAuthTokenMasked', language)}
-            />
+            <div className="settings-token-input-wrapper">
+              <input
+                id="source-token"
+                type={showToken ? 'text' : 'password'}
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder={language === 'zh' ? '输入 Token' : 'Enter token'}
+              />
+              <button
+                type="button"
+                className="settings-token-toggle"
+                onClick={() => setShowToken(!showToken)}
+                title={showToken ? (language === 'zh' ? '隐藏' : 'Hide') : (language === 'zh' ? '显示' : 'Show')}
+              >
+                {showToken ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {isEditing && existingToken && !tokenChanged && (
+              <p className="settings-field-hint">
+                {language === 'zh' ? 'Token 已设置，修改后将更新' : 'Token set, modify to update'}
+              </p>
+            )}
+            {isEditing && !existingToken && (
+              <p className="settings-field-hint" style={{ color: '#e74c3c' }}>
+                {language === 'zh' ? 'Token 未设置，请输入' : 'Token not set, please enter'}
+              </p>
+            )}
           </div>
 
           <div className="pm-field">
@@ -253,7 +288,6 @@ function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) 
             <div className="settings-option-group">
               <button
                 className={`settings-option ${connectionType === 'api' ? 'selected' : ''}`}
-                disabled={isEditing}
                 onClick={() => setConnectionType('api')}
               >
                 <span className="settings-option-text">{t('clawhubConnectionApi', language)}</span>
@@ -265,7 +299,6 @@ function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) 
               </button>
               <button
                 className={`settings-option ${connectionType === 'cli' ? 'selected' : ''}`}
-                disabled={isEditing}
                 onClick={() => setConnectionType('cli')}
               >
                 <span className="settings-option-text">{t('clawhubConnectionCli', language)}</span>
@@ -276,9 +309,6 @@ function SourceDialog({ language, source, onClose, onSave }: SourceDialogProps) 
                 )}
               </button>
             </div>
-            {isEditing && (
-              <p className="settings-field-hint">{t('clawhubConnectionTypeReadOnly', language)}</p>
-            )}
           </div>
 
           {connectionType === 'cli' && (

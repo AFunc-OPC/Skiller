@@ -8316,6 +8316,41 @@ align-items: center;
   margin-top: 0.25rem;
 }
 
+.settings-token-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settings-token-input-wrapper input {
+  flex: 1;
+  padding-right: 2.5rem;
+}
+
+.settings-token-toggle {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.settings-token-toggle:hover {
+  color: var(--text-primary);
+}
+
+.settings-token-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .settings-empty-state {
   padding: 2rem;
   text-align: center;

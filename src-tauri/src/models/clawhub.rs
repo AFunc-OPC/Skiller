@@ -31,6 +31,7 @@ pub struct UpdateClawhubSourceRequest {
     pub name: Option<String>,
     pub registry_url: Option<String>,
     pub token: Option<String>,
+    pub connection_type: Option<String>,
     pub cli_path: Option<String>,
     pub is_enabled: Option<bool>,
     pub sort_order: Option<i32>,

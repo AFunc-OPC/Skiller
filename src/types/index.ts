@@ -369,6 +369,7 @@ export interface UpdateClawhubSourceRequest {
   name?: string
   registry_url?: string
   token?: string
+  connection_type?: 'api' | 'cli'
   cli_path?: string
   is_enabled?: boolean
   sort_order?: number

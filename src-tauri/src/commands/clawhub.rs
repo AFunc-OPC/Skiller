@@ -36,27 +36,71 @@ pub fn clawhub_delete_source(db: State<'_, DbConnection>, id: String) -> Result<
 }
 
 #[tauri::command]
-pub fn clawhub_test_connection(db: State<'_, DbConnection>, source_id: String) -> Result<ConnectionTestResult, String> {
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
-    clawhub_service::test_connection(&conn, &source_id).map_err(|e| e.to_string())
+pub async fn clawhub_test_connection(app: AppHandle, source_id: String) -> Result<ConnectionTestResult, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::test_connection(&conn, &source_id).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn clawhub_explore(db: State<'_, DbConnection>, source_id: String, sort: String, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, String> {
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
-    clawhub_service::explore(&conn, &source_id, &sort, limit).map_err(|e| e.to_string())
+pub async fn clawhub_explore(app: AppHandle, source_id: String, sort: String, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::explore(&conn, &source_id, &sort, limit).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn clawhub_search(db: State<'_, DbConnection>, source_id: String, query: String) -> Result<Vec<ClawhubSkill>, String> {
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
-    clawhub_service::search(&conn, &source_id, &query).map_err(|e| e.to_string())
+pub async fn clawhub_search(app: AppHandle, source_id: String, query: String) -> Result<Vec<ClawhubSkill>, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::search(&conn, &source_id, &query).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn clawhub_inspect(db: State<'_, DbConnection>, source_id: String, slug: String) -> Result<ClawhubSkillDetail, String> {
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
-    clawhub_service::inspect(&conn, &source_id, &slug).map_err(|e| e.to_string())
+pub async fn clawhub_inspect(app: AppHandle, source_id: String, slug: String) -> Result<ClawhubSkillDetail, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::inspect(&conn, &source_id, &slug).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
