@@ -47,3 +47,6 @@ coverage/
 .claude/
 .opencode/
 openspec/
+
+# Graphify
+graphify-out/
