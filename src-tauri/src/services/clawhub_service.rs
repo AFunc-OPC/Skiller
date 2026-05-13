@@ -2,6 +2,7 @@ use rusqlite::Connection;
 use std::process::Command;
 use uuid::Uuid;
 use chrono::Utc;
+use std::io::Write;
 
 use crate::error::SkillerError;
 use crate::models::clawhub::*;
@@ -137,6 +138,41 @@ fn get_source_by_id_with_token(conn: &Connection, id: &str) -> Result<ClawhubSou
     get_source_by_id(conn, id)
 }
 
+struct TempClawhubConfig {
+    path: String,
+    registry_url: String,
+}
+
+impl TempClawhubConfig {
+    fn create(registry_url: &str, token: &str) -> Result<Self, SkillerError> {
+        let id = Uuid::new_v4().to_string();
+        let temp_dir = std::env::temp_dir().join("skiller_clawhub");
+        std::fs::create_dir_all(&temp_dir).map_err(|e| SkillerError::IoError(e))?;
+        let config_path = temp_dir.join(format!("config-{}.json", id));
+        let config = serde_json::json!({
+            "registry": registry_url,
+            "token": token
+        });
+        let mut file = std::fs::File::create(&config_path).map_err(|e| SkillerError::IoError(e))?;
+        file.write_all(config.to_string().as_bytes()).map_err(|e| SkillerError::IoError(e))?;
+        Ok(Self {
+            path: config_path.to_string_lossy().to_string(),
+            registry_url: registry_url.to_string(),
+        })
+    }
+
+    fn apply_to_command(&self, cmd: &mut Command) {
+        cmd.env("CLAWHUB_CONFIG_PATH", &self.path);
+        cmd.env("CLAWHUB_REGISTRY", &self.registry_url);
+    }
+}
+
+impl Drop for TempClawhubConfig {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
+
 pub fn test_connection(conn: &Connection, source_id: &str) -> Result<ConnectionTestResult, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
 
@@ -159,16 +195,27 @@ fn test_api_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
         let response = request.send().await.map_err(|e| SkillerError::ClawhubApiError(format!("Network error: {}", e)))?;
         if response.status().is_success() {
             let body: serde_json::Value = response.json().await.unwrap_or(serde_json::json!({}));
-            let username = body.get("username").and_then(|v| v.as_str()).map(String::from);
+            let username = body
+                .get("user").and_then(|u| u.get("handle"))
+                .and_then(|v| v.as_str())
+                .map(String::from)
+                .or_else(|| body.get("username").and_then(|v| v.as_str()).map(String::from));
             Ok(ConnectionTestResult {
                 success: true,
                 message: "Connection successful".to_string(),
                 username,
             })
         } else {
+            let status = response.status();
+            let error_body: serde_json::Value = response.json().await.unwrap_or(serde_json::json!({}));
+            let msg = error_body.get("msg").and_then(|v| v.as_str()).unwrap_or("");
             Ok(ConnectionTestResult {
                 success: false,
-                message: format!("Authentication failed: HTTP {}", response.status()),
+                message: if !msg.is_empty() {
+                    format!("Authentication failed: {} (HTTP {})", msg, status)
+                } else {
+                    format!("Authentication failed: HTTP {}", status)
+                },
                 username: None,
             })
         }
@@ -177,14 +224,10 @@ fn test_api_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
 
 fn test_cli_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("whoami");
-    if !source.registry_url.is_empty() {
-        cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut cmd);
 
     let output = cmd.output().map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
@@ -195,12 +238,12 @@ fn test_cli_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
     })?;
 
     if output.status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        let trimmed = stdout.trim();
-        let username = if !trimmed.is_empty() {
-            Some(trimmed.to_string())
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let username = if !stdout.is_empty() {
+            Some(stdout)
         } else {
-            None
+            extract_username_from_spinner(&stderr)
         };
         Ok(ConnectionTestResult {
             success: true,
@@ -215,6 +258,25 @@ fn test_cli_connection(source: &ClawhubSource) -> Result<ConnectionTestResult, S
             username: None,
         })
     }
+}
+
+fn extract_username_from_spinner(stderr: &str) -> Option<String> {
+    for line in stderr.lines() {
+        let stripped = strip_ansi(line);
+        let trimmed = stripped.trim();
+        if trimmed.starts_with('✔') || trimmed.starts_with('✓') {
+            let handle: String = trimmed.chars().skip(1).collect::<String>().trim().to_string();
+            if !handle.is_empty() {
+                return Some(handle);
+            }
+        }
+    }
+    None
+}
+
+fn strip_ansi(s: &str) -> String {
+    let re = regex::Regex::new(r"\x1b\[[0-9;]*m").unwrap();
+    re.replace_all(s, "").to_string()
 }
 
 pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
@@ -256,14 +318,10 @@ fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
 fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
     let limit_val = limit.unwrap_or(25);
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("explore").arg("--json").arg("--limit").arg(limit_val.to_string()).arg("--sort").arg(sort);
-    if !source.registry_url.is_empty() {
-        cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut cmd);
     let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -318,14 +376,10 @@ fn search_api(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
 
 fn search_cli(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("search").arg(query).arg("--json");
-    if !source.registry_url.is_empty() {
-        cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut cmd);
     let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -391,14 +445,10 @@ fn inspect_api(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail,
 
 fn inspect_cli(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("inspect").arg(slug).arg("--json");
-    if !source.registry_url.is_empty() {
-        cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut cmd);
     let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -409,12 +459,7 @@ fn inspect_cli(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail,
 
     let mut md_cmd = Command::new(cli_path);
     md_cmd.arg("inspect").arg(slug).arg("--file").arg("SKILL.md");
-    if !source.registry_url.is_empty() {
-        md_cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        md_cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut md_cmd);
     if let Ok(md_output) = md_cmd.output() {
         if md_output.status.success() {
             let md_content = String::from_utf8_lossy(&md_output.stdout).to_string();
@@ -630,14 +675,10 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
     std::fs::create_dir_all(target_dir)?;
 
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("install").arg(slug).arg("--dir").arg(target_dir.to_string_lossy().as_ref());
-    if !source.registry_url.is_empty() {
-        cmd.env("CLAWHUB_REGISTRY", &source.registry_url);
-    }
-    if !source.token.is_empty() {
-        cmd.env("CLAWHUB_TOKEN", &source.token);
-    }
+    config.apply_to_command(&mut cmd);
 
     let output = cmd.output().map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
