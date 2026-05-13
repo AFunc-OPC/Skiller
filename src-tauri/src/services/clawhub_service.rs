@@ -240,8 +240,16 @@ fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
         if !response.status().is_success() {
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
-        let resp: ClawhubExploreResponse = response.json().await.map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
-        Ok(resp.skills)
+        let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        let skills = match serde_json::from_str::<ClawhubExploreResponse>(&body) {
+            Ok(resp) => resp.skills,
+            Err(_) => {
+                let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&body)
+                    .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+                cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
+            }
+        };
+        Ok(skills)
     })
 }
 
@@ -295,8 +303,16 @@ fn search_api(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
         if !response.status().is_success() {
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
-        let resp: ClawhubExploreResponse = response.json().await.map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
-        Ok(resp.skills)
+        let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        let skills = match serde_json::from_str::<ClawhubExploreResponse>(&body) {
+            Ok(resp) => resp.skills,
+            Err(_) => {
+                let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&body)
+                    .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+                cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
+            }
+        };
+        Ok(skills)
     })
 }
 
