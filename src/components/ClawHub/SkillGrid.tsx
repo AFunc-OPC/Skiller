@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { ArrowUpDown, CheckSquare, ListChecks, Square } from 'lucide-react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
@@ -38,9 +39,11 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const [localSearch, setLocalSearch] = useState('')
   const [batchMode, setBatchMode] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set())
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
   const debouncedSearch = useDebounce(localSearch, 300)
   const lastExploreRequestKeyRef = useRef<string | null>(null)
   const previousSearchRef = useRef(searchQuery)
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!sourceId || debouncedSearch.trim()) {
@@ -84,12 +87,40 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     previousSearchRef.current = debouncedSearch
   }, [debouncedSearch, exploreSkills, searchQuery, searchSkills, sourceId])
 
+  useEffect(() => {
+    if (!sortMenuOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setSortMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [sortMenuOpen])
+
   const handleInspect = (slug: string) => {
     inspectSkill(sourceId, slug)
   }
 
   const handleSortChange = (newSort: SortOption) => {
     setSortOption(newSort)
+    setSortMenuOpen(false)
+  }
+
+  const handleToggleBatchMode = () => {
+    setBatchMode(prev => !prev)
+    setSelectedSlugs(new Set())
+  }
+
+  const handleToggleSelectAll = () => {
+    if (selectedSlugs.size === skills.length) {
+      setSelectedSlugs(new Set())
+      return
+    }
+
+    setSelectedSlugs(new Set(skills.map(skill => skill.slug)))
   }
 
   const toggleBatchSelection = (slug: string) => {
@@ -110,6 +141,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     { value: 'downloads', label: t('clawhubSortDownloads', language) },
     { value: 'rating', label: t('clawhubSortRating', language) },
   ]
+  const allSkillsSelected = skills.length > 0 && selectedSlugs.size === skills.length
 
   const renderMeta = (skill: typeof skills[number]) => {
     const formattedUpdatedAt = formatClawhubDate(skill.updated_at)
@@ -160,24 +192,79 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
           </div>
         </div>
 
-        <div className="clawhub-toolbar-actions">
-          <label className="clawhub-sort-field">
-            <span className="clawhub-toolbar-label">{language === 'zh' ? '排序' : 'Sort'}</span>
-            <select
-              value={sortOption}
-              onChange={(e) => handleSortChange(e.target.value as SortOption)}
-              className="clawhub-sort-select"
-              aria-label={language === 'zh' ? '排序' : 'Sort'}
-            >
-              {sortOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </label>
+        <div className="skill-actions clawhub-toolbar-actions">
+          <div className="skill-multi-mode-wrap">
+            <div className={`skill-multi-mode-cluster ${batchMode ? 'active' : ''}`}>
+              <button
+                className={`skill-multi-mode-trigger ${batchMode ? 'active' : ''}`}
+                onClick={handleToggleBatchMode}
+                title={language === 'zh' ? '批量选择' : 'Batch select'}
+                aria-label={language === 'zh' ? '批量选择' : 'Batch select'}
+                type="button"
+              >
+                <ListChecks className="w-4 h-4" />
+                {batchMode && (
+                  <span>{language === 'zh' ? '批量选择' : 'Batch select'}</span>
+                )}
+                {batchMode && (
+                  <span className="skill-multi-selected-count">{selectedSlugs.size}</span>
+                )}
+              </button>
 
-          <div className="clawhub-view-toggle" role="group" aria-label={language === 'zh' ? '浏览模式' : 'Browse mode'}>
+              {batchMode && (
+                <div className="skill-multi-inline-actions">
+                  <button
+                    className={`skill-multi-action-btn ${allSkillsSelected ? 'selected' : 'neutral'}`}
+                    onClick={handleToggleSelectAll}
+                    disabled={skills.length === 0}
+                    title={allSkillsSelected
+                      ? (language === 'zh' ? '取消全选' : 'Deselect all')
+                      : (language === 'zh' ? '全选' : 'Select all')}
+                    aria-label={allSkillsSelected
+                      ? (language === 'zh' ? '取消全选' : 'Deselect all')
+                      : (language === 'zh' ? '全选' : 'Select all')}
+                    type="button"
+                  >
+                    {allSkillsSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="sort-dropdown" ref={sortDropdownRef}>
             <button
-              className={`clawhub-view-btn ${viewMode === 'card' ? 'active' : ''}`}
+              className="sort-dropdown-trigger"
+              onClick={() => setSortMenuOpen(prev => !prev)}
+              title={language === 'zh' ? '排序' : 'Sort'}
+              aria-label={language === 'zh' ? '排序' : 'Sort'}
+              type="button"
+            >
+              <ArrowUpDown className="w-4 h-4" />
+            </button>
+
+            {sortMenuOpen && (
+              <div className="sort-dropdown-menu">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={`sort-dropdown-item ${sortOption === option.value ? 'active' : ''}`}
+                    onClick={() => handleSortChange(option.value)}
+                    type="button"
+                  >
+                    <span className="sort-dropdown-check">
+                      {sortOption === option.value && <span className="sort-dropdown-dot" />}
+                    </span>
+                    <span className="sort-dropdown-label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="skill-view-toggle" role="group" aria-label={language === 'zh' ? '浏览模式' : 'Browse mode'}>
+            <button
+              className={`skill-toggle-btn ${viewMode === 'card' ? 'active' : ''}`}
               onClick={() => setViewMode('card')}
               title={t('cardView', language)}
               aria-label={t('cardView', language)}
@@ -191,7 +278,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               </svg>
             </button>
             <button
-              className={`clawhub-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              className={`skill-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
               title={t('listView', language)}
               aria-label={t('listView', language)}
@@ -202,16 +289,6 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               </svg>
             </button>
           </div>
-
-          <button
-            className={`clawhub-batch-btn ${batchMode ? 'active' : ''}`}
-            onClick={() => {
-              setBatchMode(!batchMode)
-              setSelectedSlugs(new Set())
-            }}
-          >
-            {batchMode ? (language === 'zh' ? '取消选择' : 'Cancel') : (language === 'zh' ? '批量选择' : 'Batch')}
-          </button>
         </div>
       </div>
 

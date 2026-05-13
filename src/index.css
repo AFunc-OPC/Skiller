@@ -7772,10 +7772,9 @@ align-items: center;
 }
 
 .clawhub-toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  position: relative;
+  z-index: 31;
+  overflow: visible;
 }
 
 .clawhub-search-bar {
@@ -7826,84 +7825,6 @@ align-items: center;
 .clawhub-search-clear svg {
   width: 14px;
   height: 14px;
-}
-
-.clawhub-sort-field {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.clawhub-toolbar-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.clawhub-sort-select {
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.75rem;
-  background: var(--bg-base);
-  font-size: 0.8125rem;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.clawhub-view-toggle {
-  display: flex;
-  gap: 2px;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.75rem;
-  background: var(--bg-base);
-  padding: 2px;
-}
-
-.clawhub-view-btn {
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.55rem;
-}
-
-.clawhub-view-btn:hover {
-  color: var(--text-primary);
-}
-
-.clawhub-view-btn.active {
-  background: var(--bg-elevated);
-  color: var(--accent-mint);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.clawhub-view-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.clawhub-batch-btn {
-  padding: 0.55rem 0.9rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.75rem;
-  background: none;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-}
-
-.clawhub-batch-btn.active {
-  background: linear-gradient(135deg, var(--accent-mint), #059669);
-  color: white;
-  border-color: transparent;
 }
 
 .clawhub-grid {
@@ -8405,14 +8326,8 @@ align-items: center;
   }
 
   .clawhub-grid-toolbar-main,
-  .clawhub-search-bar,
-  .clawhub-toolbar-actions,
-  .clawhub-sort-field {
+  .clawhub-search-bar {
     width: 100%;
-  }
-
-  .clawhub-toolbar-actions {
-    justify-content: space-between;
   }
 }
 
