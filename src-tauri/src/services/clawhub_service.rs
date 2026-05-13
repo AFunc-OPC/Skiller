@@ -279,6 +279,21 @@ fn strip_ansi(s: &str) -> String {
     re.replace_all(s, "").to_string()
 }
 
+fn parse_skill_list_response(body: &str, mode: &str) -> Result<Vec<ClawhubSkill>, SkillerError> {
+    match serde_json::from_str::<ClawhubExploreResponse>(body) {
+        Ok(resp) => Ok(resp.skills),
+        Err(_) => {
+            let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(body).map_err(|e| {
+                match mode {
+                    "api" => SkillerError::ClawhubApiError(format!("Parse error: {}", e)),
+                    _ => SkillerError::ClawhubCliError(format!("Parse error: {}", e)),
+                }
+            })?;
+            Ok(cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect())
+        }
+    }
+}
+
 pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
     match source.connection_type.as_str() {
@@ -303,14 +318,7 @@ fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
         let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
-        let skills = match serde_json::from_str::<ClawhubExploreResponse>(&body) {
-            Ok(resp) => resp.skills,
-            Err(_) => {
-                let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&body)
-                    .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
-                cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
-            }
-        };
+        let skills = parse_skill_list_response(&body, "api")?;
         Ok(skills)
     })
 }
@@ -328,14 +336,7 @@ fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
         return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let skills = match serde_json::from_str::<ClawhubExploreResponse>(&stdout) {
-        Ok(resp) => resp.skills,
-        Err(_) => {
-            let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&stdout)
-                .map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
-            cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
-        }
-    };
+    let skills = parse_skill_list_response(&stdout, "cli")?;
     Ok(skills)
 }
 
@@ -362,14 +363,7 @@ fn search_api(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
         let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
-        let skills = match serde_json::from_str::<ClawhubExploreResponse>(&body) {
-            Ok(resp) => resp.skills,
-            Err(_) => {
-                let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&body)
-                    .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
-                cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
-            }
-        };
+        let skills = parse_skill_list_response(&body, "api")?;
         Ok(skills)
     })
 }
@@ -392,14 +386,7 @@ fn search_cli(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
     if stdout.trim().is_empty() {
         return Err(SkillerError::ClawhubCliError("CLI search does not support --json. Use API connection type for search.".to_string()));
     }
-    let skills = match serde_json::from_str::<ClawhubExploreResponse>(&stdout) {
-        Ok(resp) => resp.skills,
-        Err(_) => {
-            let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&stdout)
-                .map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
-            cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
-        }
-    };
+    let skills = parse_skill_list_response(&stdout, "cli")?;
     Ok(skills)
 }
 
@@ -694,4 +681,64 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
     }
 
     Ok(slug.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_skill_list_response;
+
+    #[test]
+    fn parses_api_skill_wrapper_with_metadata() {
+        let body = r#"{
+            "skills": [
+                {
+                    "slug": "api-skill",
+                    "name": "API Skill",
+                    "description": "demo",
+                    "version": "1.0.0",
+                    "downloads": 101,
+                    "rating": 4.8,
+                    "created_at": "2026-05-10T00:00:00Z",
+                    "updated_at": "2026-05-13T00:00:00Z"
+                }
+            ]
+        }"#;
+
+        let skills = parse_skill_list_response(body, "api").expect("should parse api response");
+
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].downloads, Some(101));
+        assert_eq!(skills[0].rating, Some(4.8));
+        assert_eq!(skills[0].updated_at.as_deref(), Some("2026-05-13T00:00:00Z"));
+    }
+
+    #[test]
+    fn parses_cli_item_wrapper_with_metadata() {
+        let body = r#"{
+            "items": [
+                {
+                    "slug": "cli-skill",
+                    "displayName": "CLI Skill",
+                    "summary": "demo",
+                    "stats": {
+                        "installsAllTime": 202,
+                        "stars": 4.9
+                    },
+                    "latestVersion": {
+                        "version": "2.0.0"
+                    },
+                    "createdAt": 1747094400,
+                    "updatedAt": 1747353600
+                }
+            ]
+        }"#;
+
+        let skills = parse_skill_list_response(body, "cli").expect("should parse cli response");
+
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].downloads, Some(202));
+        assert_eq!(skills[0].rating, Some(4.9));
+        assert_eq!(skills[0].version.as_deref(), Some("2.0.0"));
+        assert_eq!(skills[0].updated_at.as_deref(), Some("1747353600"));
+    }
 }

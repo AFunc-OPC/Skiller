@@ -6,6 +6,7 @@ import { SkillDetailDrawer } from './SkillDetailDrawer'
 import { ImportButton } from './ImportButton'
 import { EmptyState } from './EmptyState'
 import { useDebounce } from '../../hooks/useDebounce'
+import { formatClawhubDate } from './formatClawhubDate'
 
 type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
 
@@ -168,6 +169,9 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
       {!skillsLoading && skills.length > 0 && (
         <div className={`clawhub-grid ${viewMode === 'list' ? 'list-view' : 'card-view'}`}>
           {skills.map((skill) => (
+            (() => {
+              const formattedUpdatedAt = formatClawhubDate(skill.updated_at)
+              return (
             <div
               key={skill.slug}
               className={`clawhub-skill-card ${selectedSkillSlug === skill.slug ? 'selected' : ''} ${viewMode}`}
@@ -192,12 +196,20 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                       {skill.downloads}
                     </span>
                   )}
+                  {skill.rating !== null && skill.rating !== undefined && (
+                    <span className="clawhub-card-rating">{skill.rating.toFixed(1)}</span>
+                  )}
+                  {formattedUpdatedAt && (
+                    <span className="clawhub-card-updated-at">{formattedUpdatedAt}</span>
+                  )}
                 </div>
               </div>
               <div className="clawhub-card-actions" onClick={(e) => e.stopPropagation()}>
                 <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
               </div>
             </div>
+              )
+            })()
           ))}
         </div>
       )}

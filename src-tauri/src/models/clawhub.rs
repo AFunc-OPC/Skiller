@@ -151,3 +151,38 @@ pub struct DuplicateCheckResult {
     pub existing_skill_id: Option<String>,
     pub existing_skill_name: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ClawhubCliItem;
+
+    #[test]
+    fn converts_cli_item_stats_and_timestamps_into_skill_metadata() {
+        let item = ClawhubCliItem {
+            slug: "demo-skill".to_string(),
+            display_name: "Demo Skill".to_string(),
+            summary: Some("Summary".to_string()),
+            tags: None,
+            stats: Some(serde_json::json!({
+                "installsAllTime": 42,
+                "stars": 4.5
+            })),
+            created_at: Some(1_747_139_696),
+            updated_at: Some(1_747_139_696),
+            latest_version: Some(serde_json::json!({
+                "version": "1.2.3"
+            })),
+        };
+
+        let skill = item.into_clawhub_skill();
+
+        assert_eq!(skill.slug, "demo-skill");
+        assert_eq!(skill.name, "Demo Skill");
+        assert_eq!(skill.description.as_deref(), Some("Summary"));
+        assert_eq!(skill.version.as_deref(), Some("1.2.3"));
+        assert_eq!(skill.downloads, Some(42));
+        assert_eq!(skill.rating, Some(4.5));
+        assert_eq!(skill.created_at.as_deref(), Some("1747139696"));
+        assert_eq!(skill.updated_at.as_deref(), Some("1747139696"));
+    }
+}

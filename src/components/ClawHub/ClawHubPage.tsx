@@ -11,10 +11,6 @@ export function ClawHubPage() {
     sources,
     selectedSourceId,
     selectSource,
-    exploreSkills,
-    searchSkills,
-    searchQuery,
-    skillsLoading,
     error,
     clearError,
   } = useClawhubStore()
@@ -24,15 +20,6 @@ export function ClawHubPage() {
 
   const handleSelectSource = (id: string | null) => {
     selectSource(id)
-    if (id) {
-      exploreSkills(id)
-    }
-  }
-
-  const handleSearch = (query: string) => {
-    if (selectedSourceId) {
-      searchSkills(selectedSourceId, query)
-    }
   }
 
   return (
