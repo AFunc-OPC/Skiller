@@ -262,8 +262,15 @@ fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
         return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let resp: ClawhubExploreResponse = serde_json::from_str(&stdout).map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
-    Ok(resp.skills)
+    let skills = match serde_json::from_str::<ClawhubExploreResponse>(&stdout) {
+        Ok(resp) => resp.skills,
+        Err(_) => {
+            let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&stdout)
+                .map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
+            cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
+        }
+    };
+    Ok(skills)
 }
 
 pub fn search(conn: &Connection, source_id: &str, query: &str) -> Result<Vec<ClawhubSkill>, SkillerError> {
@@ -306,11 +313,24 @@ fn search_cli(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
     let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
+        if stderr.contains("unknown option '--json'") {
+            return Err(SkillerError::ClawhubCliError("CLI search does not support --json. Use API connection type for search.".to_string()));
+        }
         return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let resp: ClawhubExploreResponse = serde_json::from_str(&stdout).map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
-    Ok(resp.skills)
+    if stdout.trim().is_empty() {
+        return Err(SkillerError::ClawhubCliError("CLI search does not support --json. Use API connection type for search.".to_string()));
+    }
+    let skills = match serde_json::from_str::<ClawhubExploreResponse>(&stdout) {
+        Ok(resp) => resp.skills,
+        Err(_) => {
+            let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&stdout)
+                .map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
+            cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect()
+        }
+    };
+    Ok(skills)
 }
 
 pub fn inspect(conn: &Connection, source_id: &str, slug: &str) -> Result<ClawhubSkillDetail, SkillerError> {
