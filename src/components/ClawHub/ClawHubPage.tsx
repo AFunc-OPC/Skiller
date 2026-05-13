@@ -49,11 +49,24 @@ export function ClawHubPage() {
             <p>{t('clawhubNoSources', language)}</p>
           </div>
         ) : (
-          <SkillGrid
-            language={language}
-            sourceId={selectedSourceId!}
-            sourceName={selectedSource.name}
-          />
+          <div className="clawhub-main-panel">
+            <div className="clawhub-context-band">
+              <div className="clawhub-context-copy">
+                <span className="clawhub-context-label">ClawHub</span>
+                <h2 className="clawhub-context-title">{selectedSource.name}</h2>
+                <p className="clawhub-context-description">
+                  {language === 'zh'
+                    ? '在应用内浏览、筛选并导入线上技能。'
+                    : 'Browse, filter, and import hosted skills without leaving the workspace.'}
+                </p>
+              </div>
+            </div>
+            <SkillGrid
+              language={language}
+              sourceId={selectedSourceId!}
+              sourceName={selectedSource.name}
+            />
+          </div>
         )}
       </div>
     </div>

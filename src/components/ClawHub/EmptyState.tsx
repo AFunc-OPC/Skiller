@@ -31,15 +31,17 @@ export function EmptyState({ language, type }: EmptyStateProps) {
   const msg = messages[type]
 
   return (
-    <div className="clawhub-empty-state">
+    <div className="clawhub-empty-state clawhub-result-empty-state">
       <div className="clawhub-empty-icon">
         <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="24" cy="24" r="18" />
           <path d="M24 16v16M16 24h16" />
         </svg>
       </div>
-      <h3>{msg.title}</h3>
-      <p>{msg.description}</p>
+      <div className="clawhub-empty-copy">
+        <h3>{msg.title}</h3>
+        <p>{msg.description}</p>
+      </div>
     </div>
   )
 }

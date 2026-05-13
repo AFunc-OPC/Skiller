@@ -19,7 +19,8 @@ export function SourceSidebar({ language, sources, selectedSourceId, onSelectSou
   return (
     <aside className="clawhub-sidebar glass-panel">
       <div className="clawhub-sidebar-header">
-        <h3>{language === 'zh' ? '数据源' : 'Sources'}</h3>
+        <span className="clawhub-sidebar-label">{language === 'zh' ? '数据源' : 'Sources'}</span>
+        <h3>{language === 'zh' ? '已连接目录' : 'Connected Catalogs'}</h3>
       </div>
       
       <div className="clawhub-sidebar-list">

@@ -19,9 +19,12 @@ export function SkillDetailDrawer({ language, sourceId, skill, loading, onClose 
     <div className="clawhub-drawer-overlay" onClick={onClose}>
       <div className="clawhub-drawer" onClick={(e) => e.stopPropagation()}>
         <div className="clawhub-drawer-header">
-          <div className="clawhub-drawer-title">
-            <h2>{skill.name}</h2>
-            <span className="clawhub-drawer-slug">{skill.slug}</span>
+          <div className="clawhub-drawer-title-block">
+            <span className="clawhub-drawer-eyebrow">ClawHub</span>
+            <div className="clawhub-drawer-title">
+              <h2>{skill.name}</h2>
+              <span className="clawhub-drawer-slug">{skill.slug}</span>
+            </div>
           </div>
           <button className="clawhub-drawer-close" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

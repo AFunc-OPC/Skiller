@@ -102,6 +102,22 @@ describe('ClawHubPage', () => {
     expect(useClawhubStore.getState().exploreSkills).toHaveBeenCalledWith('source-b')
   })
 
+  it('renders the ClawHub context band and browse controls for the selected source', async () => {
+    useClawhubStore.setState({
+      skills: [createSkill()],
+    })
+
+    render(<ClawHubPage />)
+
+    expect(await screen.findByText('ClawHub')).toBeInTheDocument()
+    expect(screen.getByText('在应用内浏览、筛选并导入线上技能。')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Source A' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: '搜索技能...' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '卡片' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '列表' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '排序' })).toBeInTheDocument()
+  })
+
   it('renders rating and updated date in card and list views when metadata is present', async () => {
     const user = userEvent.setup()
 
@@ -116,10 +132,25 @@ describe('ClawHubPage', () => {
     expect(screen.getByText('4.7')).toBeInTheDocument()
     expect(screen.getByText('2026-05-13')).toBeInTheDocument()
 
-    await user.click(screen.getByTitle('列表'))
+    await user.click(screen.getByRole('button', { name: '列表' }))
 
     expect(screen.getByText('4.7')).toBeInTheDocument()
     expect(screen.getByText('2026-05-13')).toBeInTheDocument()
+  })
+
+  it('shows list mode as record rows and keeps import affordances visible', async () => {
+    const user = userEvent.setup()
+
+    useClawhubStore.setState({
+      skills: [createSkill()],
+    })
+
+    render(<ClawHubPage />)
+
+    await user.click(await screen.findByRole('button', { name: '列表' }))
+
+    expect(screen.getByText('Demo Skill')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: '导入到技能中心' }).length).toBeGreaterThan(0)
   })
 
   it('hides updated date when the metadata is invalid', async () => {

@@ -83,11 +83,34 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     { value: 'rating', label: t('clawhubSortRating', language) },
   ]
 
+  const renderMeta = (skill: typeof skills[number]) => {
+    const formattedUpdatedAt = formatClawhubDate(skill.updated_at)
+
+    return (
+      <>
+        {skill.version && <span className="clawhub-card-version">v{skill.version}</span>}
+        {skill.downloads !== null && skill.downloads !== undefined && (
+          <span className="clawhub-card-downloads">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
+              <path d="M8 2v8M4 7l4 4 4-4" />
+            </svg>
+            {skill.downloads}
+          </span>
+        )}
+        {skill.rating !== null && skill.rating !== undefined && (
+          <span className="clawhub-card-rating">{skill.rating.toFixed(1)}</span>
+        )}
+        {formattedUpdatedAt && (
+          <span className="clawhub-card-updated-at">{formattedUpdatedAt}</span>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="clawhub-skill-grid">
-      <div className="clawhub-grid-header">
-        <h3 className="clawhub-grid-title">{sourceName}</h3>
-        <div className="clawhub-grid-controls">
+      <div className="clawhub-grid-toolbar">
+        <div className="clawhub-grid-toolbar-main">
           <div className="clawhub-search-bar">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className="clawhub-search-icon">
               <circle cx="8.5" cy="8.5" r="4.5" />
@@ -99,6 +122,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               onChange={(e) => setLocalSearch(e.target.value)}
               placeholder={t('clawhubSearch', language)}
               className="clawhub-search-input"
+              aria-label={t('clawhubSearch', language)}
             />
             {localSearch && (
               <button className="clawhub-search-clear" onClick={() => { setLocalSearch('') }}>
@@ -106,24 +130,30 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               </button>
             )}
           </div>
+        </div>
 
-          <div className="clawhub-sort">
+        <div className="clawhub-toolbar-actions">
+          <label className="clawhub-sort-field">
+            <span className="clawhub-toolbar-label">{language === 'zh' ? '排序' : 'Sort'}</span>
             <select
               value={sortOption}
               onChange={(e) => handleSortChange(e.target.value as SortOption)}
               className="clawhub-sort-select"
+              aria-label={language === 'zh' ? '排序' : 'Sort'}
             >
               {sortOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-          </div>
+          </label>
 
-          <div className="clawhub-view-toggle">
+          <div className="clawhub-view-toggle" role="group" aria-label={language === 'zh' ? '浏览模式' : 'Browse mode'}>
             <button
               className={`clawhub-view-btn ${viewMode === 'card' ? 'active' : ''}`}
               onClick={() => setViewMode('card')}
               title={t('cardView', language)}
+              aria-label={t('cardView', language)}
+              type="button"
             >
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25">
                 <rect x="3" y="3" width="6" height="6" rx="1" />
@@ -136,6 +166,8 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               className={`clawhub-view-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
               title={t('listView', language)}
+              aria-label={t('listView', language)}
+              type="button"
             >
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25">
                 <path d="M7 5h10M7 10h10M7 15h10M3 5h.01M3 10h.01M3 15h.01" />
@@ -166,15 +198,12 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
         <EmptyState language={language} type={searchQuery ? 'noResults' : 'noSkills'} />
       )}
 
-      {!skillsLoading && skills.length > 0 && (
-        <div className={`clawhub-grid ${viewMode === 'list' ? 'list-view' : 'card-view'}`}>
+      {!skillsLoading && skills.length > 0 && viewMode === 'card' && (
+        <div className="clawhub-grid card-view">
           {skills.map((skill) => (
-            (() => {
-              const formattedUpdatedAt = formatClawhubDate(skill.updated_at)
-              return (
-            <div
+            <article
               key={skill.slug}
-              className={`clawhub-skill-card ${selectedSkillSlug === skill.slug ? 'selected' : ''} ${viewMode}`}
+              className={`clawhub-skill-card card-view ${selectedSkillSlug === skill.slug ? 'selected' : ''}`}
               onClick={() => handleInspect(skill.slug)}
             >
               {batchMode && (
@@ -183,33 +212,52 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                 </div>
               )}
               <div className="clawhub-card-content">
-                <h4 className="clawhub-card-name">{skill.name}</h4>
-                <span className="clawhub-card-slug">{skill.slug}</span>
+                <div className="clawhub-card-header">
+                  <div>
+                    <h4 className="clawhub-card-name">{skill.name}</h4>
+                    <span className="clawhub-card-slug">{skill.slug}</span>
+                  </div>
+                </div>
                 {skill.description && <p className="clawhub-card-desc">{skill.description}</p>}
                 <div className="clawhub-card-meta">
-                  {skill.version && <span className="clawhub-card-version">v{skill.version}</span>}
-                  {skill.downloads !== null && skill.downloads !== undefined && (
-                    <span className="clawhub-card-downloads">
-                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="12" height="12">
-                        <path d="M8 2v8M4 7l4 4 4-4" />
-                      </svg>
-                      {skill.downloads}
-                    </span>
-                  )}
-                  {skill.rating !== null && skill.rating !== undefined && (
-                    <span className="clawhub-card-rating">{skill.rating.toFixed(1)}</span>
-                  )}
-                  {formattedUpdatedAt && (
-                    <span className="clawhub-card-updated-at">{formattedUpdatedAt}</span>
-                  )}
+                  {renderMeta(skill)}
                 </div>
               </div>
               <div className="clawhub-card-actions" onClick={(e) => e.stopPropagation()}>
                 <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
               </div>
-            </div>
-              )
-            })()
+            </article>
+          ))}
+        </div>
+      )}
+
+      {!skillsLoading && skills.length > 0 && viewMode === 'list' && (
+        <div className="clawhub-record-list">
+          {skills.map((skill) => (
+            <article
+              key={skill.slug}
+              className={`clawhub-skill-record ${selectedSkillSlug === skill.slug ? 'selected' : ''}`}
+              onClick={() => handleInspect(skill.slug)}
+            >
+              {batchMode && (
+                <div className="clawhub-card-checkbox clawhub-record-checkbox" onClick={(e) => { e.stopPropagation(); toggleBatchSelection(skill.slug) }}>
+                  <input type="checkbox" checked={selectedSlugs.has(skill.slug)} readOnly />
+                </div>
+              )}
+              <div className="clawhub-record-main">
+                <div className="clawhub-record-name-row">
+                  <h4 className="clawhub-card-name">{skill.name}</h4>
+                  <span className="clawhub-card-slug">{skill.slug}</span>
+                </div>
+                {skill.description && <p className="clawhub-record-desc">{skill.description}</p>}
+              </div>
+              <div className="clawhub-record-meta">
+                {renderMeta(skill)}
+              </div>
+              <div className="clawhub-card-actions clawhub-record-actions" onClick={(e) => e.stopPropagation()}>
+                <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
+              </div>
+            </article>
           ))}
         </div>
       )}
