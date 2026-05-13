@@ -354,7 +354,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                   <h4 className="clawhub-card-name">{skill.name}</h4>
                   <span className="clawhub-card-slug">{skill.slug}</span>
                 </div>
-                {skill.description && <p className="clawhub-record-desc">{skill.description}</p>}
+                {skill.description && <p className="clawhub-record-desc" title={skill.description}>{skill.description}</p>}
               </div>
               <div className="clawhub-record-meta">
                 {renderMeta(skill)}

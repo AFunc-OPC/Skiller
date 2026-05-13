@@ -1,9 +1,38 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
 import { SourceSidebar } from './SourceSidebar'
 import { SkillGrid } from './SkillGrid'
+
+function CopyButton({ text, language }: { text: string; language: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      console.error('Failed to copy')
+    }
+  }
+
+  return (
+    <button className="clawhub-copy-btn" onClick={handleCopy} title={copied ? (language === 'zh' ? '已复制' : 'Copied') : (language === 'zh' ? '复制' : 'Copy')}>
+      {copied ? (
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M13.5 4.5L6 12l-3-3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="5" y="5" width="8" height="9" rx="1" />
+          <path d="M3 11V3a1 1 0 011-1h6" strokeLinecap="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
 
 export function ClawHubPage() {
   const { language } = useAppStore()
@@ -74,14 +103,15 @@ export function ClawHubPage() {
         ) : (
           <div className="clawhub-main-panel">
             <div className="clawhub-context-band">
-              <div className="clawhub-context-copy">
+              <div className="clawhub-context-info">
                 <span className="clawhub-context-label">ClawHub</span>
                 <h2 className="clawhub-context-title">{selectedSource.name}</h2>
-                <p className="clawhub-context-description">
-                  {language === 'zh'
-                    ? '在应用内浏览、筛选并导入线上技能。'
-                    : 'Browse, filter, and import hosted skills without leaving the workspace.'}
-                </p>
+              </div>
+              <div className="clawhub-context-url">
+                <span className="clawhub-context-url-text" title={selectedSource.registry_url}>
+                  {selectedSource.registry_url}
+                </span>
+                <CopyButton text={selectedSource.registry_url} language={language} />
               </div>
             </div>
             <SkillGrid
