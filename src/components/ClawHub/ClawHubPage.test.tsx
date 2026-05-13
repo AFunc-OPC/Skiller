@@ -1,3 +1,4 @@
+import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -100,6 +101,36 @@ describe('ClawHubPage', () => {
     })
 
     expect(useClawhubStore.getState().exploreSkills).toHaveBeenCalledWith('source-b')
+  })
+
+  it('fetches configured sources when the ClawHub page mounts', async () => {
+    render(<ClawHubPage />)
+
+    await waitFor(() => {
+      expect(useClawhubStore.getState().fetchSources).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('auto-selects the first enabled source and requests skills once on initial load', async () => {
+    useClawhubStore.setState({
+      selectedSourceId: null,
+    })
+
+    render(
+      <React.StrictMode>
+        <ClawHubPage />
+      </React.StrictMode>,
+    )
+
+    await waitFor(() => {
+      expect(useClawhubStore.getState().selectedSourceId).toBe('source-a')
+    })
+
+    await waitFor(() => {
+      expect(useClawhubStore.getState().exploreSkills).toHaveBeenCalledTimes(1)
+    })
+
+    expect(useClawhubStore.getState().exploreSkills).toHaveBeenCalledWith('source-a')
   })
 
   it('renders the ClawHub context band and browse controls for the selected source', async () => {

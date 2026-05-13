@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { useEffect } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
@@ -10,6 +10,7 @@ export function ClawHubPage() {
   const {
     sources,
     selectedSourceId,
+    fetchSources,
     selectSource,
     error,
     clearError,
@@ -17,6 +18,28 @@ export function ClawHubPage() {
 
   const enabledSources = sources.filter(s => s.is_enabled)
   const selectedSource = sources.find(s => s.id === selectedSourceId)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchSources()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [fetchSources])
+
+  useEffect(() => {
+    if (selectedSource?.is_enabled) {
+      return
+    }
+
+    const firstEnabledSource = enabledSources[0]
+
+    if (firstEnabledSource) {
+      selectSource(firstEnabledSource.id)
+    }
+  }, [enabledSources, selectedSource, selectSource])
 
   const handleSelectSource = (id: string | null) => {
     selectSource(id)

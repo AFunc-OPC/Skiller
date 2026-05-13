@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
@@ -39,22 +39,50 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const [batchMode, setBatchMode] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set())
   const debouncedSearch = useDebounce(localSearch, 300)
+  const lastExploreRequestKeyRef = useRef<string | null>(null)
+  const previousSearchRef = useRef(searchQuery)
 
   useEffect(() => {
-    if (sourceId) {
-      exploreSkills(sourceId)
+    if (!sourceId || debouncedSearch.trim()) {
+      return
     }
-  }, [sourceId, sortOption])
+
+    const requestKey = `${sourceId}:${sortOption}`
+
+    if (lastExploreRequestKeyRef.current === requestKey) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      lastExploreRequestKeyRef.current = requestKey
+      void exploreSkills(sourceId)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [debouncedSearch, exploreSkills, sourceId, sortOption])
 
   useEffect(() => {
-    if (debouncedSearch !== searchQuery && sourceId) {
-      if (debouncedSearch.trim()) {
-        searchSkills(sourceId, debouncedSearch)
-      } else {
-        exploreSkills(sourceId)
-      }
+    if (!sourceId || debouncedSearch === searchQuery) {
+      previousSearchRef.current = searchQuery
+      return
     }
-  }, [debouncedSearch])
+
+    if (debouncedSearch.trim()) {
+      lastExploreRequestKeyRef.current = null
+      void searchSkills(sourceId, debouncedSearch)
+      previousSearchRef.current = debouncedSearch
+      return
+    }
+
+    if (previousSearchRef.current.trim()) {
+      lastExploreRequestKeyRef.current = null
+      void exploreSkills(sourceId)
+    }
+
+    previousSearchRef.current = debouncedSearch
+  }, [debouncedSearch, exploreSkills, searchQuery, searchSkills, sourceId])
 
   const handleInspect = (slug: string) => {
     inspectSkill(sourceId, slug)
