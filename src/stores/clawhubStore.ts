@@ -3,6 +3,10 @@ import type {
   ClawhubSource,
   ClawhubSkill,
   ClawhubSkillDetail,
+  ClawhubSkillOverview,
+  ClawhubSkillVersionItem,
+  ClawhubSkillFileEntry,
+  ClawhubSkillFileContent,
   ConnectionTestResult,
   DuplicateCheckResult,
   ImportSkillResult,
@@ -10,6 +14,7 @@ import type {
 import { clawhubApi } from '../api/clawhub'
 
 type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
+type ClawhubDetailTab = 'overview' | 'versions' | 'files'
 
 interface ClawhubState {
   sources: ClawhubSource[]
@@ -17,6 +22,16 @@ interface ClawhubState {
   skills: ClawhubSkill[]
   selectedSkillSlug: string | null
   skillDetail: ClawhubSkillDetail | null
+  skillOverview: ClawhubSkillOverview | null
+  activeDetailTab: ClawhubDetailTab
+  skillVersions: ClawhubSkillVersionItem[] | null
+  versionsLoading: boolean
+  skillFiles: ClawhubSkillFileEntry[] | null
+  filesLoading: boolean
+  fileContent: ClawhubSkillFileContent | null
+  fileContentLoading: boolean
+  selectedVersion: string | null
+  selectedFilePath: string | null
   searchQuery: string
   sortOption: SortOption
   loading: boolean
@@ -37,7 +52,12 @@ interface ClawhubState {
   exploreSkills: (sourceId: string) => Promise<void>
   searchSkills: (sourceId: string, query: string) => Promise<void>
   inspectSkill: (sourceId: string, slug: string) => Promise<void>
+  loadSkillVersions: (sourceId: string, slug: string) => Promise<void>
+  loadSkillFiles: (sourceId: string, slug: string, version?: string) => Promise<void>
+  readSkillFile: (sourceId: string, slug: string, path: string, version?: string) => Promise<void>
   clearSkillDetail: () => void
+  setActiveDetailTab: (tab: ClawhubDetailTab) => void
+  selectDetailVersion: (version: string | null) => void
   setSortOption: (option: SortOption) => void
   setSearchQuery: (query: string) => void
   importSkills: (sourceId: string, slugs: string[], overwrite?: boolean) => Promise<ImportSkillResult[]>
@@ -52,6 +72,16 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   skills: [],
   selectedSkillSlug: null,
   skillDetail: null,
+  skillOverview: null,
+  activeDetailTab: 'overview',
+  skillVersions: null,
+  versionsLoading: false,
+  skillFiles: null,
+  filesLoading: false,
+  fileContent: null,
+  fileContentLoading: false,
+  selectedVersion: null,
+  selectedFilePath: null,
   searchQuery: '',
   sortOption: 'newest',
   loading: false,
@@ -119,7 +149,20 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   },
 
   selectSource: (id) => {
-    set({ selectedSourceId: id, skills: [], searchQuery: '', skillDetail: null })
+    set({
+      selectedSourceId: id,
+      skills: [],
+      searchQuery: '',
+      skillDetail: null,
+      skillOverview: null,
+      selectedSkillSlug: null,
+      activeDetailTab: 'overview',
+      skillVersions: null,
+      skillFiles: null,
+      fileContent: null,
+      selectedVersion: null,
+      selectedFilePath: null,
+    })
   },
 
   testConnection: async (sourceId) => {
@@ -159,17 +202,100 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   },
 
   inspectSkill: async (sourceId, slug) => {
-    set({ detailLoading: true, selectedSkillSlug: slug, error: null })
+    set({
+      detailLoading: true,
+      selectedSkillSlug: slug,
+      error: null,
+      activeDetailTab: 'overview',
+      skillVersions: null,
+      versionsLoading: false,
+      skillFiles: null,
+      filesLoading: false,
+      fileContent: null,
+      fileContentLoading: false,
+      selectedVersion: null,
+      selectedFilePath: null,
+    })
     try {
       const detail = await clawhubApi.inspect(sourceId, slug)
-      set({ skillDetail: detail, detailLoading: false })
+      set({
+        skillDetail: detail,
+        skillOverview: {
+          slug: detail.slug,
+          name: detail.name,
+          description: detail.description,
+          summary: detail.description,
+          version: detail.version,
+          downloads: detail.downloads,
+          rating: detail.rating,
+          created_at: detail.created_at,
+          updated_at: detail.updated_at,
+          owner_handle: null,
+          owner_name: null,
+          metadata_os: null,
+          metadata_systems: null,
+        },
+        detailLoading: false,
+      })
     } catch (error) {
       set({ error: String(error), detailLoading: false })
     }
   },
 
+  loadSkillVersions: async (sourceId, slug) => {
+    set({ versionsLoading: true, error: null })
+    try {
+      const skillVersions = await clawhubApi.listVersions(sourceId, slug)
+      set({ skillVersions, versionsLoading: false })
+    } catch (error) {
+      set({ error: String(error), versionsLoading: false })
+    }
+  },
+
+  loadSkillFiles: async (sourceId, slug, version) => {
+    set({ filesLoading: true, error: null, selectedVersion: version ?? null, selectedFilePath: null, fileContent: null })
+    try {
+      const skillFiles = await clawhubApi.listFiles(sourceId, slug, version)
+      set({ skillFiles, filesLoading: false })
+    } catch (error) {
+      set({ error: String(error), filesLoading: false })
+    }
+  },
+
+  readSkillFile: async (sourceId, slug, path, version) => {
+    set({ fileContentLoading: true, error: null, selectedFilePath: path })
+    try {
+      const fileContent = await clawhubApi.readFile(sourceId, slug, path, version)
+      set({ fileContent, fileContentLoading: false })
+    } catch (error) {
+      set({ error: String(error), fileContentLoading: false })
+    }
+  },
+
   clearSkillDetail: () => {
-    set({ skillDetail: null, selectedSkillSlug: null })
+    set({
+      skillDetail: null,
+      skillOverview: null,
+      selectedSkillSlug: null,
+      activeDetailTab: 'overview',
+      skillVersions: null,
+      versionsLoading: false,
+      skillFiles: null,
+      filesLoading: false,
+      fileContent: null,
+      fileContentLoading: false,
+      selectedVersion: null,
+      selectedFilePath: null,
+      detailLoading: false,
+    })
+  },
+
+  setActiveDetailTab: (tab) => {
+    set({ activeDetailTab: tab })
+  },
+
+  selectDetailVersion: (version) => {
+    set({ selectedVersion: version, selectedFilePath: null, fileContent: null })
   },
 
   setSortOption: (option) => {

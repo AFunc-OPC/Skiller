@@ -122,6 +122,112 @@ pub struct ClawhubSkillDetail {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubSkillOverview {
+    pub slug: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub summary: Option<String>,
+    pub version: Option<String>,
+    pub downloads: Option<i64>,
+    pub rating: Option<f64>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub owner_handle: Option<String>,
+    pub owner_name: Option<String>,
+    pub metadata_os: Option<Vec<String>>,
+    pub metadata_systems: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubSkillVersionItem {
+    pub version: String,
+    pub created_at: Option<String>,
+    pub changelog: Option<String>,
+    pub is_latest: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubSkillFileEntry {
+    pub path: String,
+    pub size: Option<i64>,
+    pub content_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubSkillFileContent {
+    pub path: String,
+    pub content: Option<String>,
+    pub is_markdown: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClawhubApiVersionSummary {
+    pub version: String,
+    #[serde(default)]
+    pub created_at: Option<i64>,
+    #[serde(default)]
+    pub changelog: Option<String>,
+    #[serde(default)]
+    pub tags: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubApiSkillMetadata {
+    #[serde(default)]
+    pub os: Option<Vec<String>>,
+    #[serde(default)]
+    pub systems: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClawhubApiOwner {
+    pub handle: String,
+    #[serde(default)]
+    pub display_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClawhubApiSkillDetailResponse {
+    pub skill: ClawhubCliItem,
+    #[serde(default)]
+    pub latest_version: Option<ClawhubApiVersionSummary>,
+    #[serde(default)]
+    pub metadata: Option<ClawhubApiSkillMetadata>,
+    #[serde(default)]
+    pub owner: Option<ClawhubApiOwner>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubApiVersionsResponse {
+    pub versions: Vec<ClawhubApiVersionSummary>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClawhubApiFileEntry {
+    pub path: String,
+    #[serde(default)]
+    pub size: Option<i64>,
+    #[serde(default)]
+    pub content_type: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubApiVersionDetail {
+    pub version: String,
+    #[serde(default)]
+    pub files: Vec<ClawhubApiFileEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubApiVersionDetailResponse {
+    pub version: ClawhubApiVersionDetail,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionTestResult {
     pub success: bool,
     pub message: String,

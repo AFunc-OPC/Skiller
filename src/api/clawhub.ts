@@ -5,6 +5,10 @@ import type {
   UpdateClawhubSourceRequest,
   ClawhubSkill,
   ClawhubSkillDetail,
+  ClawhubSkillOverview,
+  ClawhubSkillVersionItem,
+  ClawhubSkillFileEntry,
+  ClawhubSkillFileContent,
   ConnectionTestResult,
   ImportSkillResult,
   DuplicateCheckResult,
@@ -41,6 +45,18 @@ export const clawhubApi = {
 
   inspect: async (sourceId: string, slug: string): Promise<ClawhubSkillDetail> => {
     return await invoke('clawhub_inspect', { sourceId, slug })
+  },
+
+  listVersions: async (sourceId: string, slug: string): Promise<ClawhubSkillVersionItem[]> => {
+    return await invoke('clawhub_list_versions', { sourceId, slug })
+  },
+
+  listFiles: async (sourceId: string, slug: string, version?: string): Promise<ClawhubSkillFileEntry[]> => {
+    return await invoke('clawhub_list_files', { sourceId, slug, version })
+  },
+
+  readFile: async (sourceId: string, slug: string, path: string, version?: string): Promise<ClawhubSkillFileContent> => {
+    return await invoke('clawhub_read_file', { sourceId, slug, path, version })
   },
 
   importSkills: async (sourceId: string, slugs: string[], overwrite: boolean = false): Promise<ImportSkillResult[]> => {

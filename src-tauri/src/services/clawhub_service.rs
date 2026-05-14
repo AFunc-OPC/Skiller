@@ -294,6 +294,59 @@ fn parse_skill_list_response(body: &str, mode: &str) -> Result<Vec<ClawhubSkill>
     }
 }
 
+fn parse_skill_overview_response(body: &str) -> Result<ClawhubSkillOverview, SkillerError> {
+    let response: ClawhubApiSkillDetailResponse = serde_json::from_str(body)
+        .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+
+    let skill = response.skill;
+    let version = response.latest_version.as_ref().map(|item| item.version.clone());
+    let downloads = skill.stats.as_ref()
+        .and_then(|s| s.get("installsAllTime"))
+        .and_then(|v| v.as_i64());
+    let rating = skill.stats.as_ref()
+        .and_then(|s| s.get("stars"))
+        .and_then(|v| v.as_f64());
+
+    Ok(ClawhubSkillOverview {
+        slug: skill.slug,
+        name: skill.display_name,
+        description: skill.summary.clone(),
+        summary: skill.summary,
+        version,
+        downloads,
+        rating,
+        created_at: skill.created_at.map(|value| value.to_string()),
+        updated_at: skill.updated_at.map(|value| value.to_string()),
+        owner_handle: response.owner.as_ref().map(|owner| owner.handle.clone()),
+        owner_name: response.owner.and_then(|owner| owner.display_name),
+        metadata_os: response.metadata.as_ref().and_then(|metadata| metadata.os.clone()),
+        metadata_systems: response.metadata.and_then(|metadata| metadata.systems),
+    })
+}
+
+fn parse_skill_versions_response(body: &str) -> Result<Vec<ClawhubSkillVersionItem>, SkillerError> {
+    let response: ClawhubApiVersionsResponse = serde_json::from_str(body)
+        .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+
+    Ok(response.versions.into_iter().map(|version| ClawhubSkillVersionItem {
+        version: version.version,
+        created_at: version.created_at.map(|value| value.to_string()),
+        changelog: version.changelog,
+        is_latest: version.tags.unwrap_or_default().iter().any(|tag| tag == "latest"),
+    }).collect())
+}
+
+fn parse_skill_files_response(body: &str) -> Result<Vec<ClawhubSkillFileEntry>, SkillerError> {
+    let response: ClawhubApiVersionDetailResponse = serde_json::from_str(body)
+        .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+
+    Ok(response.version.files.into_iter().map(|file| ClawhubSkillFileEntry {
+        path: file.path,
+        size: file.size,
+        content_type: file.content_type,
+    }).collect())
+}
+
 pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
     match source.connection_type.as_str() {
@@ -412,21 +465,20 @@ fn inspect_api(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail,
         if !response.status().is_success() {
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
-        let mut detail: ClawhubSkillDetail = response.json().await.map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+        let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        let overview = parse_skill_overview_response(&body)?;
 
-        let md_url = format!("{}/api/v1/skills/{}/files/SKILL.md", source.registry_url.trim_end_matches('/'), slug);
-        let mut md_request = client.get(&md_url);
-        if !source.token.is_empty() {
-            md_request = md_request.bearer_auth(&source.token);
-        }
-        if let Ok(md_response) = md_request.send().await {
-            if md_response.status().is_success() {
-                if let Ok(content) = md_response.text().await {
-                    detail.skill_md_content = Some(content);
-                }
-            }
-        }
-        Ok(detail)
+        Ok(ClawhubSkillDetail {
+            slug: overview.slug,
+            name: overview.name,
+            description: overview.summary.or(overview.description),
+            version: overview.version,
+            downloads: overview.downloads,
+            rating: overview.rating,
+            created_at: overview.created_at,
+            updated_at: overview.updated_at,
+            skill_md_content: None,
+        })
     })
 }
 
@@ -457,6 +509,156 @@ fn inspect_cli(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail,
     }
 
     Ok(detail)
+}
+
+pub fn list_versions(conn: &Connection, source_id: &str, slug: &str) -> Result<Vec<ClawhubSkillVersionItem>, SkillerError> {
+    let source = get_source_by_id_with_token(conn, source_id)?;
+    match source.connection_type.as_str() {
+        "api" => list_versions_api(&source, slug),
+        "cli" => list_versions_cli(&source, slug),
+        _ => Err(SkillerError::ValidationError(format!("Unknown connection type: {}", source.connection_type))),
+    }
+}
+
+fn list_versions_api(source: &ClawhubSource, slug: &str) -> Result<Vec<ClawhubSkillVersionItem>, SkillerError> {
+    let runtime = tokio::runtime::Runtime::new().map_err(|e| SkillerError::ClawhubApiError(e.to_string()))?;
+    runtime.block_on(async {
+        let client = reqwest::Client::new();
+        let url = format!("{}/api/v1/skills/{}/versions", source.registry_url.trim_end_matches('/'), slug);
+        let mut request = client.get(&url);
+        if !source.token.is_empty() {
+            request = request.bearer_auth(&source.token);
+        }
+        let response = request.send().await.map_err(|e| SkillerError::ClawhubApiError(format!("Network error: {}", e)))?;
+        if !response.status().is_success() {
+            return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
+        }
+        let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        parse_skill_versions_response(&body)
+    })
+}
+
+fn list_versions_cli(source: &ClawhubSource, slug: &str) -> Result<Vec<ClawhubSkillVersionItem>, SkillerError> {
+    let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
+    let mut cmd = Command::new(cli_path);
+    cmd.arg("inspect").arg(slug).arg("--versions").arg("--json");
+    config.apply_to_command(&mut cmd);
+    let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    parse_skill_versions_response(&stdout)
+}
+
+pub fn list_files(conn: &Connection, source_id: &str, slug: &str, version: Option<&str>) -> Result<Vec<ClawhubSkillFileEntry>, SkillerError> {
+    let source = get_source_by_id_with_token(conn, source_id)?;
+    match source.connection_type.as_str() {
+        "api" => list_files_api(&source, slug, version),
+        "cli" => list_files_cli(&source, slug, version),
+        _ => Err(SkillerError::ValidationError(format!("Unknown connection type: {}", source.connection_type))),
+    }
+}
+
+fn list_files_api(source: &ClawhubSource, slug: &str, version: Option<&str>) -> Result<Vec<ClawhubSkillFileEntry>, SkillerError> {
+    let runtime = tokio::runtime::Runtime::new().map_err(|e| SkillerError::ClawhubApiError(e.to_string()))?;
+    runtime.block_on(async {
+        let client = reqwest::Client::new();
+        let version_value = version.unwrap_or("latest");
+        let url = format!("{}/api/v1/skills/{}/versions/{}", source.registry_url.trim_end_matches('/'), slug, version_value);
+        let mut request = client.get(&url);
+        if !source.token.is_empty() {
+            request = request.bearer_auth(&source.token);
+        }
+        let response = request.send().await.map_err(|e| SkillerError::ClawhubApiError(format!("Network error: {}", e)))?;
+        if !response.status().is_success() {
+            return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
+        }
+        let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        parse_skill_files_response(&body)
+    })
+}
+
+fn list_files_cli(source: &ClawhubSource, slug: &str, version: Option<&str>) -> Result<Vec<ClawhubSkillFileEntry>, SkillerError> {
+    let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
+    let mut cmd = Command::new(cli_path);
+    cmd.arg("inspect").arg(slug);
+    if let Some(version_value) = version {
+        cmd.arg("--version").arg(version_value);
+    }
+    cmd.arg("--files").arg("--json");
+    config.apply_to_command(&mut cmd);
+    let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    parse_skill_files_response(&stdout)
+}
+
+pub fn read_file(conn: &Connection, source_id: &str, slug: &str, path: &str, version: Option<&str>) -> Result<ClawhubSkillFileContent, SkillerError> {
+    let source = get_source_by_id_with_token(conn, source_id)?;
+    match source.connection_type.as_str() {
+        "api" => read_file_api(&source, slug, path, version),
+        "cli" => read_file_cli(&source, slug, path, version),
+        _ => Err(SkillerError::ValidationError(format!("Unknown connection type: {}", source.connection_type))),
+    }
+}
+
+fn read_file_api(source: &ClawhubSource, slug: &str, path: &str, version: Option<&str>) -> Result<ClawhubSkillFileContent, SkillerError> {
+    let runtime = tokio::runtime::Runtime::new().map_err(|e| SkillerError::ClawhubApiError(e.to_string()))?;
+    runtime.block_on(async {
+        let client = reqwest::Client::new();
+        let mut url = reqwest::Url::parse(&format!("{}/api/v1/skills/{}/file", source.registry_url.trim_end_matches('/'), slug))
+            .map_err(|e| SkillerError::ClawhubApiError(format!("Invalid URL: {}", e)))?;
+        {
+            let mut pairs = url.query_pairs_mut();
+            pairs.append_pair("path", path);
+            if let Some(version_value) = version {
+                pairs.append_pair("version", version_value);
+            }
+        }
+        let mut request = client.get(url);
+        if !source.token.is_empty() {
+            request = request.bearer_auth(&source.token);
+        }
+        let response = request.send().await.map_err(|e| SkillerError::ClawhubApiError(format!("Network error: {}", e)))?;
+        if !response.status().is_success() {
+            return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
+        }
+        let content = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
+        Ok(ClawhubSkillFileContent {
+            path: path.to_string(),
+            content: Some(content),
+            is_markdown: path.ends_with(".md"),
+        })
+    })
+}
+
+fn read_file_cli(source: &ClawhubSource, slug: &str, path: &str, version: Option<&str>) -> Result<ClawhubSkillFileContent, SkillerError> {
+    let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
+    let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
+    let mut cmd = Command::new(cli_path);
+    cmd.arg("inspect").arg(slug);
+    if let Some(version_value) = version {
+        cmd.arg("--version").arg(version_value);
+    }
+    cmd.arg("--file").arg(path);
+    config.apply_to_command(&mut cmd);
+    let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
+    }
+    Ok(ClawhubSkillFileContent {
+        path: path.to_string(),
+        content: Some(String::from_utf8_lossy(&output.stdout).to_string()),
+        is_markdown: path.ends_with(".md"),
+    })
 }
 
 pub fn check_duplicates(conn: &Connection, slugs: &[String]) -> Result<Vec<DuplicateCheckResult>, SkillerError> {
@@ -685,7 +887,7 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
 
 #[cfg(test)]
 mod tests {
-    use super::parse_skill_list_response;
+    use super::{parse_skill_list_response, parse_skill_overview_response, parse_skill_versions_response, parse_skill_files_response};
 
     #[test]
     fn parses_api_skill_wrapper_with_metadata() {
@@ -740,5 +942,99 @@ mod tests {
         assert_eq!(skills[0].rating, Some(4.9));
         assert_eq!(skills[0].version.as_deref(), Some("2.0.0"));
         assert_eq!(skills[0].updated_at.as_deref(), Some("1747353600"));
+    }
+
+    #[test]
+    fn parses_documented_skill_detail_wrapper_into_overview() {
+        let body = r#"{
+            "skill": {
+                "slug": "demo-skill",
+                "displayName": "Demo Skill",
+                "summary": "Skill description",
+                "stats": {
+                    "installsAllTime": 42,
+                    "stars": 4.7
+                },
+                "createdAt": 1746871200,
+                "updatedAt": 1747139696
+            },
+            "latestVersion": {
+                "version": "1.2.3",
+                "createdAt": 1747139696,
+                "changelog": "Latest"
+            },
+            "metadata": {
+                "os": ["macos"],
+                "systems": ["aarch64-darwin"]
+            },
+            "owner": {
+                "handle": "openclaw",
+                "displayName": "OpenClaw",
+                "image": null
+            }
+        }"#;
+
+        let overview = parse_skill_overview_response(body).expect("should parse documented overview response");
+
+        assert_eq!(overview.slug, "demo-skill");
+        assert_eq!(overview.name, "Demo Skill");
+        assert_eq!(overview.version.as_deref(), Some("1.2.3"));
+        assert_eq!(overview.downloads, Some(42));
+        assert_eq!(overview.rating, Some(4.7));
+        assert_eq!(overview.owner_handle.as_deref(), Some("openclaw"));
+    }
+
+    #[test]
+    fn parses_versions_response_into_version_items() {
+        let body = r#"{
+            "versions": [
+                {
+                    "version": "1.2.3",
+                    "createdAt": 1747139696,
+                    "changelog": "Latest",
+                    "tags": ["latest"]
+                },
+                {
+                    "version": "1.2.2",
+                    "createdAt": 1746871200,
+                    "changelog": "Previous",
+                    "tags": []
+                }
+            ]
+        }"#;
+
+        let versions = parse_skill_versions_response(body).expect("should parse versions response");
+
+        assert_eq!(versions.len(), 2);
+        assert_eq!(versions[0].version, "1.2.3");
+        assert!(versions[0].is_latest);
+        assert!(!versions[1].is_latest);
+    }
+
+    #[test]
+    fn parses_version_detail_files_into_file_entries() {
+        let body = r#"{
+            "version": {
+                "version": "1.2.3",
+                "files": [
+                    {
+                        "path": "SKILL.md",
+                        "size": 1200,
+                        "contentType": "text/markdown"
+                    },
+                    {
+                        "path": "notes.txt",
+                        "size": 50,
+                        "contentType": "text/plain"
+                    }
+                ]
+            }
+        }"#;
+
+        let files = parse_skill_files_response(body).expect("should parse files response");
+
+        assert_eq!(files.len(), 2);
+        assert_eq!(files[0].path, "SKILL.md");
+        assert_eq!(files[1].content_type.as_deref(), Some("text/plain"));
     }
 }

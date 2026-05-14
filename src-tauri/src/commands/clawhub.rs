@@ -104,6 +104,57 @@ pub async fn clawhub_inspect(app: AppHandle, source_id: String, slug: String) ->
 }
 
 #[tauri::command]
+pub async fn clawhub_list_versions(app: AppHandle, source_id: String, slug: String) -> Result<Vec<ClawhubSkillVersionItem>, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::list_versions(&conn, &source_id, &slug).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn clawhub_list_files(app: AppHandle, source_id: String, slug: String, version: Option<String>) -> Result<Vec<ClawhubSkillFileEntry>, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::list_files(&conn, &source_id, &slug, version.as_deref()).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn clawhub_read_file(app: AppHandle, source_id: String, slug: String, path: String, version: Option<String>) -> Result<ClawhubSkillFileContent, String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        clawhub_service::read_file(&conn, &source_id, &slug, &path, version.as_deref()).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 pub async fn clawhub_import_skills(app: AppHandle, source_id: String, slugs: Vec<String>, overwrite: bool) -> Result<Vec<ImportSkillResult>, String> {
     let slugs_count = slugs.len();
     let source_id_for_log = source_id.clone();

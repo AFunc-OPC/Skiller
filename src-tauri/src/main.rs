@@ -112,6 +112,9 @@ fn main() {
             skiller::commands::clawhub::clawhub_explore,
             skiller::commands::clawhub::clawhub_search,
             skiller::commands::clawhub::clawhub_inspect,
+            skiller::commands::clawhub::clawhub_list_versions,
+            skiller::commands::clawhub::clawhub_list_files,
+            skiller::commands::clawhub::clawhub_read_file,
             skiller::commands::clawhub::clawhub_import_skills,
             skiller::commands::clawhub::clawhub_check_duplicates,
         ])

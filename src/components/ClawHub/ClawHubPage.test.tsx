@@ -5,7 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ClawHubPage } from './ClawHubPage'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
-import type { ClawhubSkill, ClawhubSource } from '../../types'
+import type {
+  ClawhubSkill,
+  ClawhubSource,
+  ClawhubSkillOverview,
+  ClawhubSkillVersionItem,
+  ClawhubSkillFileEntry,
+} from '../../types'
 
 function createSource(overrides: Partial<ClawhubSource> = {}): ClawhubSource {
   return {
@@ -37,6 +43,44 @@ function createSkill(overrides: Partial<ClawhubSkill> = {}): ClawhubSkill {
   }
 }
 
+function createOverview(overrides: Partial<ClawhubSkillOverview> = {}): ClawhubSkillOverview {
+  return {
+    slug: 'demo-skill',
+    name: 'Demo Skill',
+    description: 'Skill description',
+    summary: 'Skill description',
+    version: '1.2.3',
+    downloads: 42,
+    rating: 4.7,
+    created_at: '2026-05-10T10:00:00Z',
+    updated_at: '2026-05-13T12:34:56Z',
+    owner_handle: 'openclaw',
+    owner_name: 'OpenClaw',
+    metadata_os: ['macos'],
+    metadata_systems: ['aarch64-darwin'],
+    ...overrides,
+  }
+}
+
+function createVersionItem(overrides: Partial<ClawhubSkillVersionItem> = {}): ClawhubSkillVersionItem {
+  return {
+    version: '1.2.3',
+    created_at: '2026-05-13T12:34:56Z',
+    changelog: 'Latest',
+    is_latest: true,
+    ...overrides,
+  }
+}
+
+function createFileEntry(overrides: Partial<ClawhubSkillFileEntry> = {}): ClawhubSkillFileEntry {
+  return {
+    path: 'SKILL.md',
+    size: 1200,
+    content_type: 'text/markdown',
+    ...overrides,
+  }
+}
+
 describe('ClawHubPage', () => {
   beforeEach(() => {
     useAppStore.setState({ language: 'zh', theme: 'light' })
@@ -53,6 +97,16 @@ describe('ClawHubPage', () => {
       skills: [],
       selectedSkillSlug: null,
       skillDetail: null,
+      skillOverview: null,
+      activeDetailTab: 'overview',
+      skillVersions: null,
+      versionsLoading: false,
+      skillFiles: null,
+      filesLoading: false,
+      fileContent: null,
+      fileContentLoading: false,
+      selectedVersion: null,
+      selectedFilePath: null,
       searchQuery: '',
       sortOption: 'newest',
       loading: false,
@@ -74,7 +128,12 @@ describe('ClawHubPage', () => {
       exploreSkills,
       searchSkills,
       inspectSkill: vi.fn(async () => {}),
+      loadSkillVersions: vi.fn(async () => {}),
+      loadSkillFiles: vi.fn(async () => {}),
+      readSkillFile: vi.fn(async () => {}),
       clearSkillDetail: vi.fn(),
+      setActiveDetailTab: vi.fn(),
+      selectDetailVersion: vi.fn(),
       setSortOption: vi.fn(),
       setSearchQuery: vi.fn(),
       importSkills: vi.fn(async () => []),
@@ -196,5 +255,118 @@ describe('ClawHubPage', () => {
 
     expect(await screen.findByText('Invalid Date Skill')).toBeInTheDocument()
     expect(screen.queryByText('not-a-date')).not.toBeInTheDocument()
+  })
+
+  it('opens the shared drawer on overview and lazily loads versions and files', async () => {
+    const user = userEvent.setup()
+    const loadSkillVersions = vi.fn(async () => {})
+    const loadSkillFiles = vi.fn(async () => {})
+
+    useClawhubStore.setState({
+      skills: [createSkill()],
+      selectedSkillSlug: 'demo-skill',
+      skillOverview: createOverview(),
+      detailLoading: false,
+      activeDetailTab: 'overview',
+      skillVersions: null,
+      versionsLoading: false,
+      skillFiles: null,
+      filesLoading: false,
+      selectedVersion: null,
+      selectedFilePath: null,
+      fileContent: null,
+      fileContentLoading: false,
+      loadSkillVersions,
+      loadSkillFiles,
+    })
+
+    render(<ClawHubPage />)
+
+    expect(await screen.findByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+
+    await user.click(screen.getByRole('tab', { name: 'Versions' }))
+
+    expect(loadSkillVersions).toHaveBeenCalledWith('source-a', 'demo-skill')
+
+    await user.click(screen.getByRole('tab', { name: 'Files' }))
+
+    expect(loadSkillFiles).toHaveBeenCalledWith('source-a', 'demo-skill', undefined)
+  })
+
+  it('loads file content on click and resets file selection when the version changes', async () => {
+    const user = userEvent.setup()
+    const readSkillFile = vi.fn(async () => {})
+    const loadSkillFiles = vi.fn(async () => {})
+    const setActiveDetailTab = vi.fn((tab: 'overview' | 'versions' | 'files') => {
+      useClawhubStore.setState({ activeDetailTab: tab })
+    })
+    const selectDetailVersion = vi.fn((version: string | null) => {
+      useClawhubStore.setState({ selectedVersion: version, selectedFilePath: null })
+    })
+
+    useClawhubStore.setState({
+      skills: [createSkill()],
+      selectedSkillSlug: 'demo-skill',
+      skillOverview: createOverview(),
+      activeDetailTab: 'files',
+      selectedVersion: '1.2.3',
+      skillFiles: [
+        createFileEntry(),
+        createFileEntry({ path: 'notes.txt', size: 50, content_type: 'text/plain' }),
+      ],
+      filesLoading: false,
+      fileContent: null,
+      fileContentLoading: false,
+      selectedFilePath: null,
+      readSkillFile,
+      loadSkillFiles,
+      setActiveDetailTab,
+      skillVersions: [
+        createVersionItem(),
+        createVersionItem({ version: '1.2.2', created_at: '2026-05-10T10:00:00Z', changelog: 'Previous', is_latest: false }),
+      ],
+      selectDetailVersion,
+    })
+
+    render(<ClawHubPage />)
+
+    await user.click(screen.getByRole('button', { name: 'SKILL.md' }))
+
+    expect(readSkillFile).toHaveBeenCalledWith('source-a', 'demo-skill', 'SKILL.md', '1.2.3')
+
+    await user.click(screen.getByRole('tab', { name: 'Versions' }))
+    await user.click(screen.getByRole('button', { name: /1.2.2/ }))
+
+    expect(loadSkillFiles).toHaveBeenCalledWith('source-a', 'demo-skill', '1.2.2')
+    expect(useClawhubStore.getState().selectedFilePath).toBeNull()
+  })
+
+  it('resets active tab and selected file when the drawer closes', async () => {
+    const user = userEvent.setup()
+    const clearSkillDetail = vi.fn(() => {
+      useClawhubStore.setState({
+        selectedSkillSlug: null,
+        activeDetailTab: 'overview',
+        selectedFilePath: null,
+      })
+    })
+
+    useClawhubStore.setState({
+      skills: [createSkill()],
+      selectedSkillSlug: 'demo-skill',
+      skillOverview: createOverview(),
+      activeDetailTab: 'files',
+      selectedFilePath: 'SKILL.md',
+      skillFiles: [createFileEntry()],
+      clearSkillDetail,
+    })
+
+    render(<ClawHubPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(useClawhubStore.getState().selectedSkillSlug).toBeNull()
+    expect(useClawhubStore.getState().activeDetailTab).toBe('overview')
+    expect(useClawhubStore.getState().selectedFilePath).toBeNull()
   })
 })

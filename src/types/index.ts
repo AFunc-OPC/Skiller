@@ -398,6 +398,41 @@ export interface ClawhubSkillDetail {
   skill_md_content: string | null
 }
 
+export interface ClawhubSkillOverview {
+  slug: string
+  name: string
+  description: string | null
+  summary: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+  owner_handle: string | null
+  owner_name: string | null
+  metadata_os: string[] | null
+  metadata_systems: string[] | null
+}
+
+export interface ClawhubSkillVersionItem {
+  version: string
+  created_at: string | null
+  changelog: string | null
+  is_latest: boolean
+}
+
+export interface ClawhubSkillFileEntry {
+  path: string
+  size: number | null
+  content_type: string | null
+}
+
+export interface ClawhubSkillFileContent {
+  path: string
+  content: string | null
+  is_markdown: boolean
+}
+
 export interface ConnectionTestResult {
   success: boolean
   message: string

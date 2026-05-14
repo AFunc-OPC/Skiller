@@ -24,7 +24,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     searchQuery,
     sortOption,
     selectedSkillSlug,
-    skillDetail,
+    skillOverview,
     detailLoading,
     exploreSkills,
     searchSkills,
@@ -381,11 +381,11 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
         </div>
       )}
 
-      {selectedSkillSlug && skillDetail && (
+      {selectedSkillSlug && skillOverview && (
         <SkillDetailDrawer
           language={language}
           sourceId={sourceId}
-          skill={skillDetail}
+          skill={skillOverview}
           loading={detailLoading}
           onClose={clearSkillDetail}
         />
