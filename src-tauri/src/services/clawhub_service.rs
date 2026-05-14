@@ -347,6 +347,32 @@ fn parse_skill_files_response(body: &str) -> Result<Vec<ClawhubSkillFileEntry>, 
     }).collect())
 }
 
+fn parse_cli_skill_detail_response(body: &str) -> Result<ClawhubSkillDetail, SkillerError> {
+    let response: ClawhubApiSkillDetailResponse = serde_json::from_str(body)
+        .map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
+
+    let skill = response.skill;
+    let version = response.latest_version.as_ref().map(|item| item.version.clone());
+    let downloads = skill.stats.as_ref()
+        .and_then(|stats| stats.get("installsAllTime"))
+        .and_then(|value| value.as_i64());
+    let rating = skill.stats.as_ref()
+        .and_then(|stats| stats.get("stars"))
+        .and_then(|value| value.as_f64());
+
+    Ok(ClawhubSkillDetail {
+        slug: skill.slug,
+        name: skill.display_name,
+        description: skill.summary,
+        version,
+        downloads,
+        rating,
+        created_at: skill.created_at.map(|value| value.to_string()),
+        updated_at: skill.updated_at.map(|value| value.to_string()),
+        skill_md_content: None,
+    })
+}
+
 pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
     match source.connection_type.as_str() {
@@ -494,7 +520,7 @@ fn inspect_cli(source: &ClawhubSource, slug: &str) -> Result<ClawhubSkillDetail,
         return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut detail: ClawhubSkillDetail = serde_json::from_str(&stdout).map_err(|e| SkillerError::ClawhubCliError(format!("Parse error: {}", e)))?;
+    let mut detail = parse_cli_skill_detail_response(&stdout)?;
 
     let mut md_cmd = Command::new(cli_path);
     md_cmd.arg("inspect").arg(slug).arg("--file").arg("SKILL.md");
@@ -887,7 +913,7 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_skill_list_response, parse_skill_overview_response, parse_skill_versions_response, parse_skill_files_response};
+    use super::{parse_cli_skill_detail_response, parse_skill_list_response, parse_skill_overview_response, parse_skill_versions_response, parse_skill_files_response};
 
     #[test]
     fn parses_api_skill_wrapper_with_metadata() {
@@ -982,6 +1008,38 @@ mod tests {
         assert_eq!(overview.downloads, Some(42));
         assert_eq!(overview.rating, Some(4.7));
         assert_eq!(overview.owner_handle.as_deref(), Some("openclaw"));
+    }
+
+    #[test]
+    fn parses_cli_inspect_wrapper_into_skill_detail() {
+        let body = r#"{
+            "skill": {
+                "slug": "demo-skill",
+                "displayName": "Demo Skill",
+                "summary": "Skill description",
+                "stats": {
+                    "installsAllTime": 42,
+                    "stars": 4.7
+                },
+                "createdAt": 1746871200,
+                "updatedAt": 1747139696
+            },
+            "latestVersion": {
+                "version": "1.2.3"
+            }
+        }"#;
+
+        let detail = parse_cli_skill_detail_response(body).expect("wrapper payload should parse into detail");
+
+        assert_eq!(detail.slug, "demo-skill");
+        assert_eq!(detail.name, "Demo Skill");
+        assert_eq!(detail.description.as_deref(), Some("Skill description"));
+        assert_eq!(detail.version.as_deref(), Some("1.2.3"));
+        assert_eq!(detail.downloads, Some(42));
+        assert_eq!(detail.rating, Some(4.7));
+        assert_eq!(detail.created_at.as_deref(), Some("1746871200"));
+        assert_eq!(detail.updated_at.as_deref(), Some("1747139696"));
+        assert!(detail.skill_md_content.is_none());
     }
 
     #[test]
