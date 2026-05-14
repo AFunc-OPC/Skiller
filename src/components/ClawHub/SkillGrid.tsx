@@ -323,7 +323,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                     <span className="clawhub-card-slug">{skill.slug}</span>
                   </div>
                 </div>
-                {skill.description && <p className="clawhub-card-desc">{skill.description}</p>}
+                {skill.description && <p className="clawhub-card-desc" title={skill.description}>{skill.description}</p>}
                 <div className="clawhub-card-meta">
                   {renderMeta(skill)}
                 </div>
@@ -349,15 +349,17 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                   <input type="checkbox" checked={selectedSlugs.has(skill.slug)} readOnly />
                 </div>
               )}
-              <div className="clawhub-record-main">
-                <div className="clawhub-record-name-row">
-                  <h4 className="clawhub-card-name">{skill.name}</h4>
-                  <span className="clawhub-card-slug">{skill.slug}</span>
+              <div className="clawhub-record-content">
+                <div className="clawhub-record-main">
+                  <div className="clawhub-record-name-row">
+                    <h4 className="clawhub-card-name">{skill.name}</h4>
+                    <span className="clawhub-card-slug">{skill.slug}</span>
+                  </div>
+                  {skill.description && <p className="clawhub-record-desc" title={skill.description}>{skill.description}</p>}
                 </div>
-                {skill.description && <p className="clawhub-record-desc" title={skill.description}>{skill.description}</p>}
-              </div>
-              <div className="clawhub-record-meta">
-                {renderMeta(skill)}
+                <div className="clawhub-record-meta">
+                  {renderMeta(skill)}
+                </div>
               </div>
               <div className="clawhub-card-actions clawhub-record-actions" onClick={(e) => e.stopPropagation()}>
                 <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />

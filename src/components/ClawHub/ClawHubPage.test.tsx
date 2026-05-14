@@ -141,12 +141,12 @@ describe('ClawHubPage', () => {
     render(<ClawHubPage />)
 
     expect(await screen.findByText('ClawHub')).toBeInTheDocument()
-    expect(screen.getByText('在应用内浏览、筛选并导入线上技能。')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Source A' })).toBeInTheDocument()
+    expect(screen.getByText('https://example.com')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: '搜索技能...' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '卡片' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '列表' })).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: '排序' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '排序' })).toBeInTheDocument()
   })
 
   it('renders rating and updated date in card and list views when metadata is present', async () => {
@@ -169,16 +169,19 @@ describe('ClawHubPage', () => {
     expect(screen.getByText('2026-05-13')).toBeInTheDocument()
   })
 
-  it('shows list mode as record rows and keeps import affordances visible', async () => {
+  it('shows card description tooltips and keeps import affordances visible in list mode', async () => {
     const user = userEvent.setup()
 
     useClawhubStore.setState({
-      skills: [createSkill()],
+      skills: [createSkill({ description: 'A long card description for tooltip coverage' })],
     })
 
     render(<ClawHubPage />)
 
-    await user.click(await screen.findByRole('button', { name: '列表' }))
+    const cardDescription = await screen.findByText('A long card description for tooltip coverage')
+    expect(cardDescription).toHaveAttribute('title', 'A long card description for tooltip coverage')
+
+    await user.click(screen.getByRole('button', { name: '列表' }))
 
     expect(screen.getByText('Demo Skill')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: '导入到技能中心' }).length).toBeGreaterThan(0)
