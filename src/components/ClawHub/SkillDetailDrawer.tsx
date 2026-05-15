@@ -77,7 +77,7 @@ export function SkillDetailDrawer({ language, sourceId, skill, loading, onClose 
           </button>
         </div>
 
-        <div className="clawhub-drawer-tabs" role="tablist" aria-label="ClawHub detail tabs">
+        {/* <div className="clawhub-drawer-tabs" role="tablist" aria-label="ClawHub detail tabs">
           {(['overview', 'versions', 'files'] as DetailTab[]).map((tab) => (
             <button
               key={tab}
@@ -90,7 +90,7 @@ export function SkillDetailDrawer({ language, sourceId, skill, loading, onClose 
               {formatTabLabel(tab)}
             </button>
           ))}
-        </div>
+        </div> */}
 
         <div className="clawhub-drawer-content">
           {loading ? (
@@ -99,86 +99,29 @@ export function SkillDetailDrawer({ language, sourceId, skill, loading, onClose 
             </div>
           ) : (
             <>
-              {activeDetailTab === 'overview' && (
-                <>
-                  <div className="clawhub-drawer-meta">
-                    {(skill.summary || skill.description) && (
-                      <p className="clawhub-drawer-desc">{skill.summary || skill.description}</p>
-                    )}
-                    <div className="clawhub-drawer-badges">
-                      {skill.version && (
-                        <span className="clawhub-badge">Version: v{skill.version}</span>
-                      )}
-                      {skill.downloads !== null && skill.downloads !== undefined && (
-                        <span className="clawhub-badge">Downloads: {skill.downloads}</span>
-                      )}
-                      {skill.rating !== null && skill.rating !== undefined && (
-                        <span className="clawhub-badge">Rating: {skill.rating.toFixed(1)}</span>
-                      )}
-                      {skill.owner_name && (
-                        <span className="clawhub-badge">Owner: {skill.owner_name}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="clawhub-drawer-actions">
-                    <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
-                  </div>
-                </>
-              )}
-
-              {activeDetailTab === 'versions' && (
-                <div className="clawhub-drawer-section">
-                  {versionsLoading && <div className="clawhub-loading"><div className="clawhub-spinner" /></div>}
-                  {!versionsLoading && skillVersions && (
-                    <div className="clawhub-drawer-list">
-                      {skillVersions.map((versionItem) => (
-                        <button
-                          key={versionItem.version}
-                          type="button"
-                          className={`clawhub-drawer-list-item ${selectedVersion === versionItem.version ? 'active' : ''}`}
-                          onClick={() => handleVersionSelect(versionItem.version)}
-                        >
-                          <span>{versionItem.version}</span>
-                          {versionItem.is_latest && <span>latest</span>}
-                        </button>
-                      ))}
-                    </div>
+              <div className="clawhub-drawer-meta">
+                {(skill.summary || skill.description) && (
+                  <p className="clawhub-drawer-desc">{skill.summary || skill.description}</p>
+                )}
+                <div className="clawhub-drawer-badges">
+                  {skill.version && (
+                    <span className="clawhub-badge">Version: v{skill.version}</span>
+                  )}
+                  {skill.downloads !== null && skill.downloads !== undefined && (
+                    <span className="clawhub-badge">Downloads: {skill.downloads}</span>
+                  )}
+                  {skill.rating !== null && skill.rating !== undefined && (
+                    <span className="clawhub-badge">Rating: {skill.rating.toFixed(1)}</span>
+                  )}
+                  {skill.owner_name && (
+                    <span className="clawhub-badge">Owner: {skill.owner_name}</span>
                   )}
                 </div>
-              )}
+              </div>
 
-              {activeDetailTab === 'files' && (
-                <div className="clawhub-drawer-files">
-                  <div className="clawhub-drawer-file-list">
-                    {filesLoading && <div className="clawhub-loading"><div className="clawhub-spinner" /></div>}
-                    {!filesLoading && skillFiles && skillFiles.map((file) => (
-                      <button
-                        key={file.path}
-                        type="button"
-                        className={`clawhub-drawer-file-item ${selectedFilePath === file.path ? 'active' : ''}`}
-                        onClick={() => handleFileSelect(file.path)}
-                      >
-                        {file.path}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="clawhub-drawer-file-content">
-                    {fileContentLoading && <div className="clawhub-loading"><div className="clawhub-spinner" /></div>}
-                    {!fileContentLoading && fileContent?.content && fileContent.is_markdown && (
-                      <div className="clawhub-drawer-markdown">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {fileContent.content}
-                        </ReactMarkdown>
-                      </div>
-                    )}
-                    {!fileContentLoading && fileContent?.content && !fileContent.is_markdown && (
-                      <pre className="clawhub-drawer-plaintext">{fileContent.content}</pre>
-                    )}
-                  </div>
-                </div>
-              )}
+              <div className="clawhub-drawer-actions">
+                <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
+              </div>
             </>
           )}
         </div>
