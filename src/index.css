@@ -10293,3 +10293,71 @@ body {
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+
+.sk-batch-distribution-modal {
+  width: 480px;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+.sk-batch-distribution-body {
+  padding: 0;
+}
+
+.sk-batch-distribution-body .sk-distribution-wrapper {
+  margin-top: 0;
+}
+
+.sk-distribution-preview-count {
+  font-size: 0.5625rem;
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+  font-weight: 400;
+}
+
+.sk-distribution-skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.sk-distribution-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--accent-mint) 10%, transparent);
+  color: var(--accent-mint);
+  border: 1px solid color-mix(in srgb, var(--accent-mint) 20%, transparent);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sk-distribution-skill-chip-more {
+  background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sk-distribution-skill-chip-more:hover {
+  background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
+}
+
+.sk-distribution-skill-chip-collapse {
+  background: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sk-distribution-skill-chip-collapse:hover {
+  background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
+}

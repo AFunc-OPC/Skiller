@@ -1870,6 +1870,21 @@ code.sc-prepared-value {
   color: #60a5fa;
 }
 
+.skill-multi-action-btn.distribution {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  border-color: rgba(139, 92, 246, 0.24);
+}
+
+.skill-multi-action-btn.distribution:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.16);
+  border-color: rgba(139, 92, 246, 0.38);
+}
+
+[data-theme="dark"] .skill-multi-action-btn.distribution {
+  color: #a78bfa;
+}
+
 .skill-multi-action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

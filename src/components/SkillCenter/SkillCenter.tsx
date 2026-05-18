@@ -11,7 +11,7 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core'
-import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle, Square, CheckSquare, Download } from 'lucide-react'
+import { Tag, Tags, X, Check, Trash2, ListChecks, AlertTriangle, Square, CheckSquare, Download, SendHorizonal } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { TreeNode } from '../../types'
 import { useSkillContext } from '../../contexts/SkillContext'
@@ -26,6 +26,7 @@ import { DroppableSkillCard } from './DroppableSkill'
 import { DroppableSkillListItem } from './DroppableSkillListItem'
 import { DroppableSkillArea } from './DroppableSkillArea'
 import { SkillDetailDrawer } from './SkillDetailDrawer'
+import { BatchDistributionModal } from './BatchDistributionModal'
 import { EmptyState } from './EmptyState'
 import { FileImportDialog } from './FileImportDialog'
 import { NpxImportDialog } from './NpxImportDialog'
@@ -107,6 +108,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
   const [batchDeleting, setBatchDeleting] = useState(false)
   const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false)
   const [batchExporting, setBatchExporting] = useState(false)
+  const [batchDistributionOpen, setBatchDistributionOpen] = useState(false)
   const multiSelectPanelRef = useRef<HTMLDivElement>(null)
   const tagActionButtonRef = useRef<HTMLButtonElement>(null)
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
@@ -619,6 +621,16 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
                     >
                       {batchExporting ? <span className="skill-batch-spinner" /> : <Download className="w-3.5 h-3.5" />}
                     </button>
+
+                    <button
+                      className="skill-multi-action-btn distribution"
+                      onClick={() => setBatchDistributionOpen(true)}
+                      disabled={selectedSkillIds.size === 0}
+                      title={language === 'zh' ? '分发' : 'Distribute'}
+                      aria-label={language === 'zh' ? '分发' : 'Distribute'}
+                    >
+                      <SendHorizonal className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1020,6 +1032,13 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
           </div>,
           document.body
         )}
+
+        <BatchDistributionModal
+          skillIds={Array.from(selectedSkillIds)}
+          skillNames={Array.from(selectedSkillIds).map(id => skills.find(s => s.id === id)?.name || id).filter(Boolean)}
+          isOpen={batchDistributionOpen}
+          onClose={() => setBatchDistributionOpen(false)}
+        />
 
         <DragOverlay>
           {activeTag && (
