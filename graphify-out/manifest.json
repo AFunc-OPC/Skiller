@@ -1,0 +1,1154 @@
+{
+  "/Users/akio/Akio/AFunc-OPC/Skiller/tailwind.config.js": {
+    "mtime": 1775319870.3551185,
+    "hash": "7a9540b30f97b03367c08d2afbbd8a7d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/vite.config.d.ts": {
+    "mtime": 1775324081.2980723,
+    "hash": "9fcf75521f4c43fd8b75300e0f63b867"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/vite.config.js": {
+    "mtime": 1775324081.280865,
+    "hash": "6c8bd3d309aed69b2548b1b644cbdcbd"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/vite.config.ts": {
+    "mtime": 1775319862.869952,
+    "hash": "65f7e4cf33e96dcdbe78ce581ea0866f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/vitest.config.ts": {
+    "mtime": 1775495280.1829643,
+    "hash": "2bebe542caaeb512cb253b3e3642c03b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/postcss.config.js": {
+    "mtime": 1775319871.2873757,
+    "hash": "ef3ba2a81ba19f8ea5ddf625521e96f0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/build.rs": {
+    "mtime": 1775319859.6210272,
+    "hash": "1be34a5c61c2c35365de3dab14298f0b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/tests/git_sync_test.rs": {
+    "mtime": 1775646257.3093078,
+    "hash": "7b7936cd5c90fa85b3de3dc3efcd2978"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/examples/tag_tree_test.rs": {
+    "mtime": 1775362648.4581604,
+    "hash": "b125fb8d6937cbe22a4b670251680669"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/error.rs": {
+    "mtime": 1778598361.4183154,
+    "hash": "d38dfaf9bf012a18d97cc7c96dfb1dd8"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/lib.rs": {
+    "mtime": 1775609360.2622182,
+    "hash": "659cfefd182475d38e70ac5b4e26b772"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/test_utils.rs": {
+    "mtime": 1775582044.7377625,
+    "hash": "f41a35aa0d0afc3e6198dee23aa6a3de"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/main.rs": {
+    "mtime": 1778598361.4185033,
+    "hash": "9f559950bbae579f86b0661668a5a91d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/shell.rs": {
+    "mtime": 1777029529.2284586,
+    "hash": "b9bb5d32706051719fd8170a04b5ca60"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/symlink.rs": {
+    "mtime": 1775494923.5870578,
+    "hash": "df58f5a0a63b04576d3fe43431feb932"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/git.rs": {
+    "mtime": 1776525237.0492895,
+    "hash": "4a32faab528fb965a9ef6f6310eb6330"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/mod.rs": {
+    "mtime": 1778598361.4195077,
+    "hash": "d61cfae7fffbe0eb23859e7001be7c03"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/fs.rs": {
+    "mtime": 1775320201.6550508,
+    "hash": "76ea223e18e94ce4c622118e3a947466"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/markdown.rs": {
+    "mtime": 1775580816.601936,
+    "hash": "29d7d35f2804c98fcc0a5050413a83a5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/utils/crypto.rs": {
+    "mtime": 1778598361.4192858,
+    "hash": "a60ea0ea92e9fd155868248c7179bda9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/distribution.rs": {
+    "mtime": 1775494886.1048403,
+    "hash": "38f0949beb75cdc18761c57c73261c71"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/npx_import.rs": {
+    "mtime": 1778403779.9395618,
+    "hash": "a7da94096e4b3e5e25ef6921ed1f17ea"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/config.rs": {
+    "mtime": 1776871485.8970156,
+    "hash": "830bb9942d28ab3033f914937fb72dd5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/log.rs": {
+    "mtime": 1775658804.9120424,
+    "hash": "952fc2cd4524ca4d76008dafc0836f32"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/skill.rs": {
+    "mtime": 1777474678.4423895,
+    "hash": "e28a9b66b59108a617e8eef2c01656fd"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/mod.rs": {
+    "mtime": 1778598361.4187498,
+    "hash": "c36483a2f64a7dabbbbdcc1fcf1e851e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/project.rs": {
+    "mtime": 1776179841.1077564,
+    "hash": "c808c4045aee20995db7b1ad680789c6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/tag.rs": {
+    "mtime": 1776095851.466831,
+    "hash": "37f6462f92c547fed5e5577af7174742"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/repo.rs": {
+    "mtime": 1776260467.230884,
+    "hash": "7c4b43a2952e23d58905414db4261335"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/models/clawhub.rs": {
+    "mtime": 1778598361.4186156,
+    "hash": "b64d54b8a6c497a327b363a5859b19a7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/mod.rs": {
+    "mtime": 1775320060.0588765,
+    "hash": "a5807203898a40bd19bb5ef97496ec5f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/schema.rs": {
+    "mtime": 1778598361.4180179,
+    "hash": "94278ee71970e7cd03448f7c1a1e42da"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/connection.rs": {
+    "mtime": 1775582050.06788,
+    "hash": "7de54ec7f04d909bd1e5756d4c224515"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/rollback_v2.rs": {
+    "mtime": 1775361546.2758453,
+    "hash": "56b0119995ee00757a4acd975f698a10"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v5.rs": {
+    "mtime": 1776099638.129222,
+    "hash": "824c9243471f481f17397cd1bd66ce07"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v11.rs": {
+    "mtime": 1776095338.2230668,
+    "hash": "c5386596c39b3738b9f95ff7eaeaab11"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v1.rs": {
+    "mtime": 1776099613.7301953,
+    "hash": "a962766af5a5d9e5db7f4f6e0f4db8f9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v14.rs": {
+    "mtime": 1778598361.4178402,
+    "hash": "0befbc8728525941b50d9ba05a4cc05a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v4.rs": {
+    "mtime": 1775397303.0402377,
+    "hash": "270a62e83c5d25d0ad8a305ca3526957"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v10.rs": {
+    "mtime": 1776095388.3516102,
+    "hash": "f72fe351a4484348a953f661c5674698"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v3.rs": {
+    "mtime": 1776093152.228683,
+    "hash": "b34ee87eb1b7d6f98fff78d07b5ef96d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/mod.rs": {
+    "mtime": 1778598361.4177113,
+    "hash": "c1aa2fe5e8bc303efbc3f5188bc4891f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v7.rs": {
+    "mtime": 1775577189.4888337,
+    "hash": "80122f59734a254c44116881756cb980"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v13.rs": {
+    "mtime": 1776179834.573424,
+    "hash": "c3a2fddcd04204670be2a143b0e455f4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v6.rs": {
+    "mtime": 1775574934.8356738,
+    "hash": "c3bd57fbd82f8dca643fdbc495cfd33d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v12.rs": {
+    "mtime": 1776099684.509117,
+    "hash": "980ff9f711f55e6e806e2e6b9bd807df"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v2.rs": {
+    "mtime": 1775362549.2006605,
+    "hash": "900dd4464ef0faa34ccb1b901720ae3f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v9.rs": {
+    "mtime": 1775915541.5659094,
+    "hash": "ec96c7216cdecd7b10791c9cc1d0a7d8"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/db/migrations/v8.rs": {
+    "mtime": 1775754962.5415633,
+    "hash": "d7d14d183da65060d147a6c5371fcb28"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/skill_file.rs": {
+    "mtime": 1778424698.9270642,
+    "hash": "828c334c30dbc749f76b89b932543a27"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/config.rs": {
+    "mtime": 1776871485.896246,
+    "hash": "90b4240d3f3d87c75a240149875631d8"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/log.rs": {
+    "mtime": 1775659058.6325316,
+    "hash": "5dc728df8dcf0b73758a44d58632122e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/skill.rs": {
+    "mtime": 1777659235.9690475,
+    "hash": "6e3a50e2b19d51db0a988671c2d2e917"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/mod.rs": {
+    "mtime": 1778598361.4175465,
+    "hash": "229dcee31efe1a87a28d5d4431b82842"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/desktop.rs": {
+    "mtime": 1778393584.8283663,
+    "hash": "112e543ea37c109d65f661711c67e70a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/project.rs": {
+    "mtime": 1775395781.052375,
+    "hash": "463511170a2f0f9cf0e3cc78be28b824"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/tag.rs": {
+    "mtime": 1776095645.58633,
+    "hash": "261bcf5cb21ba62e5ac6d9f880077e04"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/project_skill.rs": {
+    "mtime": 1776871480.8343189,
+    "hash": "6797d8b3411d46f4fe660412d49022a0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/repo.rs": {
+    "mtime": 1777659235.9683304,
+    "hash": "ad0fd3b86b62ec461b6a9e0e423a6225"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/commands/clawhub.rs": {
+    "mtime": 1778598361.417347,
+    "hash": "e4e0440d2686fcfbee09824556b09e2e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/tag_service.rs": {
+    "mtime": 1777659235.976133,
+    "hash": "007b1c0bc121e76c54e9e3bd4fdd3dce"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/skill_service.rs": {
+    "mtime": 1777474678.4428575,
+    "hash": "0256b2e9723b42d4ceb9958fbc01d351"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/skill_file_service.rs": {
+    "mtime": 1776950469.4220417,
+    "hash": "a7342259c0f27eb5846dfbd43a3ec9a6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/distribution_service.rs": {
+    "mtime": 1775924064.0303876,
+    "hash": "905695dc8cae6332697479f56c1103a2"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/project_service.rs": {
+    "mtime": 1776179874.772704,
+    "hash": "5de497ee103a56c3bfe9284878f5cc1a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/mod.rs": {
+    "mtime": 1778598361.419174,
+    "hash": "f759485cd3f43669f294e817f134a99f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/tag_binding_service.rs": {
+    "mtime": 1775492994.4412615,
+    "hash": "f82c4688c93608e4c7b01cc45e1e3b3c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/config_service.rs": {
+    "mtime": 1776871485.8973358,
+    "hash": "c51670f778bf45dbb893d65dd6663046"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/proxy_service.rs": {
+    "mtime": 1776871485.8978255,
+    "hash": "3276b6ae8fd171b74298e8b0f930e453"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/repo_service.rs": {
+    "mtime": 1777659235.9742277,
+    "hash": "a30c54d29df8f9ac5843715ba35f6676"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/clawhub_service.rs": {
+    "mtime": 1778598361.4190114,
+    "hash": "30b5789e6a05abfd490d2e3d53f5f438"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/src/services/log_service.rs": {
+    "mtime": 1775658996.7599473,
+    "hash": "370690c40fc2696794b7b1b4be322232"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/App.tsx": {
+    "mtime": 1778598361.419799,
+    "hash": "b2c2fa0035d74359042b561515787107"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/main.tsx": {
+    "mtime": 1775319921.3769732,
+    "hash": "42c0b1d9c2751a5e4e55876cee46fc57"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/project.ts": {
+    "mtime": 1775320460.5563996,
+    "hash": "8bb66ba43cec06bc46503173e7db7ac2"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/tag.ts": {
+    "mtime": 1775320461.095444,
+    "hash": "8bb66ba43cec06bc46503173e7db7ac2"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/tauri.d.ts": {
+    "mtime": 1775407151.3925858,
+    "hash": "13925fc1e8a4b2ea011b39bfe6b16c9f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/sort.ts": {
+    "mtime": 1775736216.9200852,
+    "hash": "371faf2490926c46e245e40c7108a5e0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/index.ts": {
+    "mtime": 1778598361.4236534,
+    "hash": "d6f018966a4fbbbf6ee038aff87c8a14"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/skill.ts": {
+    "mtime": 1775324088.9549978,
+    "hash": "8bb66ba43cec06bc46503173e7db7ac2"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/types/__tests__/sourceMetadata.test.ts": {
+    "mtime": 1775904266.669946,
+    "hash": "e6077fedcdf886d6f450086bf9e88cc7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/contexts/SkillContext.tsx": {
+    "mtime": 1777659235.9914527,
+    "hash": "e4c29fd0c35dc2b64a03c1455c830757"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/test/setup.ts": {
+    "mtime": 1775495702.7428243,
+    "hash": "7b9edf3bed133bf3f4f7d8017c7fc77e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/logStore.ts": {
+    "mtime": 1775659147.0685055,
+    "hash": "15765a3c6644099f4307aef90f7b2dd3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/appStore.ts": {
+    "mtime": 1778393584.835237,
+    "hash": "264f404fd3737fc1e8114354c7e052ad"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/repositoryStore.test.ts": {
+    "mtime": 1776092478.3358772,
+    "hash": "2d32655747884a105c4f9c0a2623576c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/tagTreeStore.ts": {
+    "mtime": 1775491098.116127,
+    "hash": "f4646c719009207e5975aca2ca401259"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/clawhubStore.ts": {
+    "mtime": 1778598361.4234366,
+    "hash": "636e9bb88f56e3b3f020393732c4d1be"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/fileSkillStore.ts": {
+    "mtime": 1777659236.0026393,
+    "hash": "414f57cde9fe6253aa51f33b44dbfdfb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/projectStore.ts": {
+    "mtime": 1776787145.8111188,
+    "hash": "046f7585dabfbbd2f4b1fb9c4a1d6145"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/repoStore.ts": {
+    "mtime": 1775646257.3151093,
+    "hash": "1518bf267acb9be6ac32f5ea642237c1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/repositoryStore.ts": {
+    "mtime": 1777659236.003524,
+    "hash": "56cadc0602928b43892a3eeb29604519"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/stores/skillStore.ts": {
+    "mtime": 1777659236.0038283,
+    "hash": "6718499c9caf5432928b50a20f006a92"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/utils/skillSourceMetadata.ts": {
+    "mtime": 1777659236.0047193,
+    "hash": "93d672d6aafa0fd277b1ac4f89c73e81"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/NotificationToast.tsx": {
+    "mtime": 1775371991.0440476,
+    "hash": "a4267da2faf564344bcca0342d4ced59"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/TagDialog.tsx": {
+    "mtime": 1776095674.6159823,
+    "hash": "36fd6433c75c11bd22b422eefa1fd6c5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/useTagSearch.ts": {
+    "mtime": 1775364207.2041345,
+    "hash": "754da1136c70f6022c663e7722405212"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/DraggableTagNode.tsx": {
+    "mtime": 1776587573.5773249,
+    "hash": "7aca7bb4f9a88d0608bd1a30eb80a236"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/DraggableTreeNode.tsx": {
+    "mtime": 1776096476.6754801,
+    "hash": "6d393c9631ae8a60f2a1a6acc34f5f8e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/TreeView.tsx": {
+    "mtime": 1777659235.9910638,
+    "hash": "9852c3e1ade142087ad258dc3bf7c769"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/HighlightText.tsx": {
+    "mtime": 1775904266.6646245,
+    "hash": "6173e5359beaf537fcb2135720bb72f0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/VirtualizedTree.tsx": {
+    "mtime": 1776096483.0885494,
+    "hash": "6f09986c5b895c078e2bc63771a0ad7b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/TreeNode.tsx": {
+    "mtime": 1776096052.7324014,
+    "hash": "54fbdf66316f086ce2a98e9c3e262453"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/SearchResults.tsx": {
+    "mtime": 1775374871.9016004,
+    "hash": "165d5f32b87e435487ff3364684af4d9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/DraggableTree.tsx": {
+    "mtime": 1775374257.0081594,
+    "hash": "a236f63f35904582fe7155090c6ccfdb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/index.ts": {
+    "mtime": 1776574996.3064852,
+    "hash": "64606463709f38addf02756543e5754f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/SearchInput.tsx": {
+    "mtime": 1775374852.569264,
+    "hash": "5f4cd5a1aab61030035f19657504f738"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/TagTree/DroppableZone.tsx": {
+    "mtime": 1775374271.689116,
+    "hash": "c245783ec4c19a7b5aa3931ad5468995"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryCard.tsx": {
+    "mtime": 1776095003.7768312,
+    "hash": "827429d9532aed947fd5dccbeb1a3959"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryManagementPage.tsx": {
+    "mtime": 1776260467.236026,
+    "hash": "036ce354fbea3ac9949b8a92099fe2c0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryGrid.tsx": {
+    "mtime": 1775571493.6093032,
+    "hash": "8031a004050cc03b6ea0f6377156a515"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryListItem.tsx": {
+    "mtime": 1776095059.2454073,
+    "hash": "7ef0fc0c0b79887d096b822c7f8a6cdb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryToolbar.tsx": {
+    "mtime": 1775737747.2419238,
+    "hash": "a4f1d52359d3a430290c53416c524d30"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryDetailDrawer.tsx": {
+    "mtime": 1777659235.9792337,
+    "hash": "0e09eedc02e9b31129c90033c0099a18"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/index.ts": {
+    "mtime": 1776260467.2362885,
+    "hash": "844a5343e36e8428ebcf96529900e078"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryManagementPage.test.tsx": {
+    "mtime": 1776260467.235018,
+    "hash": "744ca31bb1e6dc816bb5f83ad5cce51d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/RepositoryManagement/RepositoryAddDialog.tsx": {
+    "mtime": 1776175373.8871853,
+    "hash": "c304b4e6ae5c66d57ddde7242ebf280f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/ToolPresetSettings.test.tsx": {
+    "mtime": 1775917284.2685845,
+    "hash": "8b78c58b799af9a2cb12faf7c394553a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/ToolPresetSettings.tsx": {
+    "mtime": 1776086903.392194,
+    "hash": "76b30ffacfad1a57ef4510eb0340b1b5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/ProxySettings.tsx": {
+    "mtime": 1776871485.9040577,
+    "hash": "7de2de9ad318e8a4880957e953fbb05c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/ClawhubSourceSettings.tsx": {
+    "mtime": 1778599790.9913988,
+    "hash": "578fb810da47df3b238a3e80595aba32"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/index.ts": {
+    "mtime": 1778598361.4215136,
+    "hash": "1475e407f260f6c6b7ca5049309bdf1c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/About.tsx": {
+    "mtime": 1776264137.0333416,
+    "hash": "5e6913d37cd5b27c7e653be8b11e7ea1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/SettingsTabs.tsx": {
+    "mtime": 1778598361.4213598,
+    "hash": "b063581008ad134a239674ecf5649682"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/LogPanel/LogPanel.tsx": {
+    "mtime": 1776100666.8450532,
+    "hash": "41fc37440877f4b259eb2b6dc1e5fec3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/LogPanel/LogViewer.tsx": {
+    "mtime": 1776087883.6412566,
+    "hash": "cf579c7b4c21711c16edacc6d8fbff12"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/LogPanel/index.ts": {
+    "mtime": 1775659213.0472066,
+    "hash": "90ad0b731de891bbee8af6c8b294a4c4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/Settings/LogPanel/LogToolbar.tsx": {
+    "mtime": 1775659180.8779426,
+    "hash": "05338cb42ad699324d0284fab310e65c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/ImportButton.tsx": {
+    "mtime": 1778598361.4202933,
+    "hash": "c25e75b9488ed3f484216a41bcc7dd7b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/SkillGrid.tsx": {
+    "mtime": 1778598361.4205618,
+    "hash": "00d8c77c32656980934315a71ae76920"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/ClawHubPage.tsx": {
+    "mtime": 1778598361.4200716,
+    "hash": "bae765b326b6153756f78aeab13be49f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/SkillDetailDrawer.tsx": {
+    "mtime": 1778598361.4204113,
+    "hash": "f3171664aaf2b4859674d529cd61c227"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/index.ts": {
+    "mtime": 1778598361.4207733,
+    "hash": "965ad78ae1f77a814d688c0f6ab1e34b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/SourceSidebar.tsx": {
+    "mtime": 1778598361.4206772,
+    "hash": "8078de42448ee98a3b63f955e78911fb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ClawHub/EmptyState.tsx": {
+    "mtime": 1778598361.4201772,
+    "hash": "0dbf0d1b97cc12d29f59322a90ebd1e9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/UserGuide/UserGuideModal.tsx": {
+    "mtime": 1776265256.2348368,
+    "hash": "2480ca667eb40e5735d48a6c205aeddf"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/UserGuide/index.ts": {
+    "mtime": 1775904266.6657715,
+    "hash": "ecabba02bc43055c07633655040fc8d4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/shared/SortDropdown.tsx": {
+    "mtime": 1775736649.611256,
+    "hash": "180d591e5f71158df1fdba3e7de8ab36"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/shared/index.ts": {
+    "mtime": 1775736650.3672469,
+    "hash": "736a953847d2ad51d3457fb61b8f19bd"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillSearchInput.tsx": {
+    "mtime": 1775928155.7795293,
+    "hash": "dc1c3b00bb4b942a8eb239b30803c93a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillIcon.tsx": {
+    "mtime": 1775444616.8474574,
+    "hash": "43332e7897c11445679ac24aed421990"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/FileImportDialog.tsx": {
+    "mtime": 1778160493.0560927,
+    "hash": "abfa685f5a1dbcb66039ab638d80a6f4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillCard.tsx": {
+    "mtime": 1777703162.4718063,
+    "hash": "907741da9fed99e324e4dda4ee87eeb5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/DroppableSkillListItem.tsx": {
+    "mtime": 1777659235.9816046,
+    "hash": "a0bf1945a72a5b65740805505a575833"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/RepositorySelectDialog.tsx": {
+    "mtime": 1777659235.9869645,
+    "hash": "70540dcba1233fc10972b7be89916c47"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillCenter.tsx": {
+    "mtime": 1777659235.9889224,
+    "hash": "66ce4a14c616d02734095a46cd1013d1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/ImportDropdown.tsx": {
+    "mtime": 1776260467.2369838,
+    "hash": "22a252aef046ddd4f90d303ec3ffa58f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/AddSkillButton.tsx": {
+    "mtime": 1776172394.3419633,
+    "hash": "07bf18e7e3c9590b98481ddd863507ec"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/DroppableSkillArea.tsx": {
+    "mtime": 1776586507.300585,
+    "hash": "b29fbba7de96a7f1bb563cf670f107ba"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/TerminalOutput.tsx": {
+    "mtime": 1775408064.992328,
+    "hash": "ecb810ccf30b01b12a942b1178e8def3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillList.tsx": {
+    "mtime": 1775926688.2982738,
+    "hash": "d1f7ab501a7dc190f649b0eb95182ef9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SimpleTagTree.tsx": {
+    "mtime": 1775408064.9917455,
+    "hash": "874e8553b9c57c08caf0c8206fc9f67c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/NpxImportDialog.tsx": {
+    "mtime": 1778404379.7273183,
+    "hash": "aafe6f41e5f478b1dcf7e734efde8265"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/HighlightText.tsx": {
+    "mtime": 1776098452.781739,
+    "hash": "4506dda09be136915d1e2fdf1b100416"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/FileImportDialog.test.tsx": {
+    "mtime": 1776101540.7333465,
+    "hash": "3b9b83aad9640da33b309561bc528254"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/ViewToggle.tsx": {
+    "mtime": 1775410936.6599257,
+    "hash": "0b555b1035d01747ea3e34eb46b8e6b1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillDetailDrawer.tsx": {
+    "mtime": 1777659235.9906409,
+    "hash": "569e70ba8a99bf4a44639d76785e35dc"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/NpxFindDialog.tsx": {
+    "mtime": 1778404089.9321625,
+    "hash": "148e632511bd6e2dde1e7c3b05152d43"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/NpxImportDialog.test.tsx": {
+    "mtime": 1778423709.2055366,
+    "hash": "95e3beca98d9852001d7a40dfe3dcb52"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillDetailDrawer.test.tsx": {
+    "mtime": 1777384147.4336925,
+    "hash": "755f83aea216457169a4d2a3c4583570"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/RepositorySelectDialog.test.tsx": {
+    "mtime": 1777659235.9856462,
+    "hash": "5b4befed31153959564cbc2457c9032a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/index.ts": {
+    "mtime": 1775407603.6705832,
+    "hash": "b1ce71bce48126f856516213c1e54e09"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/SkillMarkdownPreview.tsx": {
+    "mtime": 1775904266.663722,
+    "hash": "522f16392215832329e0a491f2c9be6c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/DroppableSkill.tsx": {
+    "mtime": 1777659235.9800699,
+    "hash": "1d6ec450eeb6ba68333dcc53b48eca99"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/EmptyState.tsx": {
+    "mtime": 1775828765.0103152,
+    "hash": "4d0d6cf6062755b07cae764d60c89948"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/SkillCenter/NpxImportDialog.error-handling.test.tsx": {
+    "mtime": 1778404186.2290773,
+    "hash": "70f822e52ebd465e3d389fdb7b4b00ca"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/ProjectSkillImportDialog.tsx": {
+    "mtime": 1776950469.4229712,
+    "hash": "cc0fbcad11cff49ce223fe2c5c501fb3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/ProjectSkillList.tsx": {
+    "mtime": 1777709902.4615996,
+    "hash": "09c106ff913cd3f289690054fbea185d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/ProjectSkillList.test.tsx": {
+    "mtime": 1775918687.17628,
+    "hash": "2902309ca6e181cb9eae3e337872efaa"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/ProjectSkillCard.tsx": {
+    "mtime": 1777709377.365491,
+    "hash": "90fdedc08f54d604604e40cf81ff1422"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/index.ts": {
+    "mtime": 1775904266.653696,
+    "hash": "5fac6a66394fcc0984f63b8154573129"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/components/ProjectSkill/ProjectSkillListItem.tsx": {
+    "mtime": 1776871480.8354988,
+    "hash": "c1deec0e9b6cae57e3ece441bfa36d4d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/hooks/useDebounce.ts": {
+    "mtime": 1775408064.9927952,
+    "hash": "d27dae30b9112b1ee7c2fd7bb06b05a1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/hooks/useSort.ts": {
+    "mtime": 1775736428.4966097,
+    "hash": "7d8a4eb36bd5dd3cd5e86fcf5edbcde2"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/desktop.ts": {
+    "mtime": 1778393584.8296556,
+    "hash": "5313cbfe33b4ee2475b4ba18171f8a2f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/project.ts": {
+    "mtime": 1775904266.651617,
+    "hash": "2ab0be5475795ab93b3ef62eb7a390a8"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/tag.ts": {
+    "mtime": 1776095658.5029063,
+    "hash": "12612825d84203f0d874c779a2b9b7d3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/repo.ts": {
+    "mtime": 1777659235.9782784,
+    "hash": "664d0d915a4b7da3699071a3fd00bb15"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/clawhub.ts": {
+    "mtime": 1778598361.4199152,
+    "hash": "59d4391dc00901d07e1c36bbea687767"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/distribution.ts": {
+    "mtime": 1775495280.1842651,
+    "hash": "3043aff1b0f975f60b634e60780bc83b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/tauri.ts": {
+    "mtime": 1775560733.4249537,
+    "hash": "b951b0aa9225428348a6a3dfda95613b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/log.ts": {
+    "mtime": 1775659132.5608368,
+    "hash": "00c91ee27389e151e2185063bffa5543"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/config.ts": {
+    "mtime": 1776871485.9037206,
+    "hash": "039e80d064bda675ba3ebfed5c4eccfe"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/api/skill.ts": {
+    "mtime": 1777659235.9785633,
+    "hash": "f59f32f83dcc58607af083bb876dfe8f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/i18n/zh.ts": {
+    "mtime": 1778598361.4218566,
+    "hash": "58a9c4b6ad5384960416a2647941742a"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/i18n/index.ts": {
+    "mtime": 1775320293.2399833,
+    "hash": "1a8880656976571e1236725993f7785c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/data/userGuide.ts": {
+    "mtime": 1778160493.0564857,
+    "hash": "b0721872eefdf2617915f724bfce05f7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/pages/ProjectsPage.tsx": {
+    "mtime": 1778393584.8348217,
+    "hash": "e7f1e98c4fa533334bc65a692a3f3a3d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/pages/OverviewPage.tsx": {
+    "mtime": 1777659235.9970524,
+    "hash": "58cf018c2164deebe45ef41e44dc38f5"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/pages/TagGovernancePage.tsx": {
+    "mtime": 1777659235.9997706,
+    "hash": "6c9d2be02a6479a435b584b78ba990c6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src/pages/ProjectsPage.test.tsx": {
+    "mtime": 1777659235.9978318,
+    "hash": "ef1a0cdd2582ada014cf72aac0c57ebb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/index.html": {
+    "mtime": 1775398009.8369088,
+    "hash": "cbfc5a87c07ff64e64217445d4168935"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.md": {
+    "mtime": 1778160493.05407,
+    "hash": "d727a29275f4aeaf13921984f7544c7d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README-en.md": {
+    "mtime": 1778160493.0534465,
+    "hash": "dc32bfa02c0504957b4010a5574e3042"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/docs/superpowers/specs/2026-05-12-clawhub-source-design.md": {
+    "mtime": 1778598361.415231,
+    "hash": "eba5882274313e0af0bb09815bd15ef3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/public/skill-center-add-button-preview.html": {
+    "mtime": 1775408117.4078107,
+    "hash": "a7913e03598c33935ebe44904b341535"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/public/test-tauri-api.html": {
+    "mtime": 1775368196.9608662,
+    "hash": "94eb8ba9b0bf1dff2e87bb262ec92fb1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/specs/markdown-artifact-toc/spec.md": {
+    "mtime": 1777862087.3600764,
+    "hash": "7cfffc682d06ba69e59d4c3153d69f6e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/specs/project-detail-drawer/spec.md": {
+    "mtime": 1777741676.344632,
+    "hash": "816de6530e3a0ec190075cb22c01cfb1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/specs/openspec-cli-integration/spec.md": {
+    "mtime": 1777741676.3434722,
+    "hash": "cc9a38e04dfb6787caeefc8c882a74db"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/specs/openspec-board/spec.md": {
+    "mtime": 1777741676.3423097,
+    "hash": "2b192d88128484d95ab62d454a0ea4dd"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/tasks.md": {
+    "mtime": 1777741264.6311646,
+    "hash": "db521cf17b1bc1763eb44018025a9a96"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/design.md": {
+    "mtime": 1777726173.2223442,
+    "hash": "b34b838e9a460ef55b03f083f64ed157"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/proposal.md": {
+    "mtime": 1777726130.1641817,
+    "hash": "5a66412dbdca15eb480159914ceefe19"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/specs/project-detail-drawer/spec.md": {
+    "mtime": 1777726263.8861563,
+    "hash": "38a682f7ba8cc61442173160fc4ccf2e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/specs/openspec-cli-integration/spec.md": {
+    "mtime": 1777726252.0220597,
+    "hash": "37b5a808a8deb90ce20204535d109e7b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-02-add-openspec-board/specs/openspec-board/spec.md": {
+    "mtime": 1777726227.1584527,
+    "hash": "87978a327d95f801e416ebb1f0eca911"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-04-artifact-toc-sidebar/tasks.md": {
+    "mtime": 1777824754.9019969,
+    "hash": "8f5bd231e1969ddcc97d5aa3a0e11694"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-04-artifact-toc-sidebar/design.md": {
+    "mtime": 1777823167.9691138,
+    "hash": "562fd897063cabedad1cb7f218438a66"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-04-artifact-toc-sidebar/proposal.md": {
+    "mtime": 1777824763.3423023,
+    "hash": "fe42706d92e2b907664f2cc3a5a9d86f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/2026-05-04-artifact-toc-sidebar/specs/markdown-artifact-toc/spec.md": {
+    "mtime": 1777824772.331294,
+    "hash": "7fbd9f11d61ff0f7621493e118259251"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/openspec/config.yaml": {
+    "mtime": 1777782146.984846,
+    "hash": "1e5dbdf32178645ce689c877cc38f56c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/openspec/schemas/rapid/schema.yaml": {
+    "mtime": 1777782146.9845715,
+    "hash": "5f8b9da9eb3deb67af6aa24d5deef7b7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/openspec/schemas/rapid/templates/tasks.md": {
+    "mtime": 1777782146.984742,
+    "hash": "3b34b77bc12efc52f881847e0f9acd05"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/archive/openspec/schemas/rapid/templates/proposal.md": {
+    "mtime": 1777782146.9846935,
+    "hash": "b67a3b8984db360707ebf40d7a1d0a79"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-suspend-feature/tasks.md": {
+    "mtime": 1777951420.2690427,
+    "hash": "bbf59aad6ae91f150dbade5c54320735"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-suspend-feature/design.md": {
+    "mtime": 1777947800.6827412,
+    "hash": "6d50d59de3078773207c53d7174ba961"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-suspend-feature/proposal.md": {
+    "mtime": 1777947750.1272452,
+    "hash": "5d174fa3f6f6dd5b3bcf143211bd7b89"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-suspend-feature/specs/openspec-board-suspend/spec.md": {
+    "mtime": 1777947842.7225626,
+    "hash": "535ba51ffaf44e3a2c9de785638c94af"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-suspend-feature/specs/openspec-board/spec.md": {
+    "mtime": 1777947861.245216,
+    "hash": "9ba51c1ec125b8945c3e3d6706200962"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-init-detection/tasks.md": {
+    "mtime": 1777908370.072986,
+    "hash": "b945bc6ec55d882972de95e74f408e4e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-init-detection/design.md": {
+    "mtime": 1777904430.8015745,
+    "hash": "220037f472c3a2b14274f6dc4dd84daa"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-init-detection/proposal.md": {
+    "mtime": 1777904362.681987,
+    "hash": "83f1ba0517768194175a23bb387621c7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-init-detection/specs/openspec-init-workflow/spec.md": {
+    "mtime": 1777904523.7897182,
+    "hash": "487c410cb5f692ee9791d325c8428b97"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-init-detection/specs/openspec-init-detection/spec.md": {
+    "mtime": 1777904479.115599,
+    "hash": "fb0703a97ec86d8a48334bb88861b18e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-board-settings/tasks.md": {
+    "mtime": 1777880479.9041848,
+    "hash": "f81ee8409941883871556d24d0c6f23b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-board-settings/design.md": {
+    "mtime": 1777879676.4973578,
+    "hash": "926da658bedc259bd075e62d64082be1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-board-settings/proposal.md": {
+    "mtime": 1777879638.0600574,
+    "hash": "39153cb953718604b9e60fe89ef9dc37"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/openspec/changes/add-openspec-board-settings/specs/openspec-board-settings/spec.md": {
+    "mtime": 1777879716.1574552,
+    "hash": "23204e3d3e7c0405982ff60aef59152c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image2-1.png": {
+    "mtime": 1777659235.8959506,
+    "hash": "1980aa2a256098a6569b4901cf22de1e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image2-3.png": {
+    "mtime": 1777659235.9279766,
+    "hash": "de866fc6c8bcca0ef984a85d0ba19f11"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image2-2.png": {
+    "mtime": 1777659235.9048169,
+    "hash": "81e50eaf6e04bfbd2dfe548932143715"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image3-1.png": {
+    "mtime": 1777659235.941572,
+    "hash": "a2541b09dc09ee4af37ac9c65b6f52a3"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image-20260430135315259.png": {
+    "mtime": 1777659235.885974,
+    "hash": "fd303d4a0131f00e926469e4b4d2d762"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image6.png": {
+    "mtime": 1777659235.9638362,
+    "hash": "1720ec16c960d8a4f531d263360a3eb4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image4.png": {
+    "mtime": 1777659235.9556122,
+    "hash": "9b3ee34ba97c714af1b3743a844d2d7c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image5.png": {
+    "mtime": 1777659235.959339,
+    "hash": "ea57e039230095a34403f959c46d66b6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image2.png": {
+    "mtime": 1777659235.9370596,
+    "hash": "6217456648ed79ac60af17a134c70482"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/README.assets/image3.png": {
+    "mtime": 1777659235.9482565,
+    "hash": "3dd7a83ec19bfe2cfa71a43cde4af393"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/icon.png": {
+    "mtime": 1776081168.726779,
+    "hash": "b99e607139a240563ac5748c94a70a61"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square30x30Logo.png": {
+    "mtime": 1776081168.7093723,
+    "hash": "b42f441d64a19ab5555475ab242ef7ca"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square150x150Logo.png": {
+    "mtime": 1776081168.7088478,
+    "hash": "c23d111271b232c0e94435657aea1d93"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/StoreLogo.png": {
+    "mtime": 1776081168.710795,
+    "hash": "d8d46b79241576b4d2d8920501998b9e"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square107x107Logo.png": {
+    "mtime": 1776081168.708104,
+    "hash": "9e45c06bba82977e25f5fab50df41d99"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square89x89Logo.png": {
+    "mtime": 1776081168.7105582,
+    "hash": "0b4996f172843743b654dcf09d8e3b33"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square310x310Logo.png": {
+    "mtime": 1776081168.7097561,
+    "hash": "b66549d8dff9b37ceb9a82b61fa62544"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/icon.svg": {
+    "mtime": 1776081168.7270188,
+    "hash": "d214c0d85e29e851f9f5d7675be3e0a1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square142x142Logo.png": {
+    "mtime": 1776081168.708409,
+    "hash": "0e5408ea390c7b44e238d936d7e03f8f"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/128x128.png": {
+    "mtime": 1776081168.706971,
+    "hash": "fee428bf51b7cd344ef5e043e8956260"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square284x284Logo.png": {
+    "mtime": 1776081168.709228,
+    "hash": "f41e8b544f53b7a95cc46b160a11f54d"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/32x32.png": {
+    "mtime": 1776081168.7075233,
+    "hash": "d7505dbc3bfea3b805a8f307c76d63d0"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square44x44Logo.png": {
+    "mtime": 1776081168.7100074,
+    "hash": "a5ed1ce6dc8fc5912677f4ed36245732"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/Square71x71Logo.png": {
+    "mtime": 1776081168.7102704,
+    "hash": "0f0e87856eca18896f92946ce617a5ba"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/128x128@2x.png": {
+    "mtime": 1776081168.70729,
+    "hash": "c5d319a6539293412f188876d3f043df"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/64x64.png": {
+    "mtime": 1776081168.7077384,
+    "hash": "b62dcc819598fe9e79df026a9e4d7da7"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-20x20@3x.png": {
+    "mtime": 1776081168.7281442,
+    "hash": "77fe4d347619c1c848e454fa98cd4cc6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-512@2x.png": {
+    "mtime": 1776081168.731273,
+    "hash": "a9edb954142c15a8ad388b6f8e1179f6"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-83.5x83.5@2x.png": {
+    "mtime": 1776081168.7325017,
+    "hash": "da98cbf305a40419f8e77f08c6110629"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-20x20@2x.png": {
+    "mtime": 1776081168.7278872,
+    "hash": "b179c30630d18edfcc9aa5cf8028e9f9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-29x29@3x.png": {
+    "mtime": 1776081168.7289777,
+    "hash": "4f322a7188a41717ea921788ad41fc4c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-40x40@2x.png": {
+    "mtime": 1776081168.7293012,
+    "hash": "cf44dc232171e1d05ee1e40d0ef86741"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-60x60@3x.png": {
+    "mtime": 1776081168.731633,
+    "hash": "956359f18dd6e615897e78582f226010"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-40x40@2x-1.png": {
+    "mtime": 1776081168.7291996,
+    "hash": "cf44dc232171e1d05ee1e40d0ef86741"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-20x20@2x-1.png": {
+    "mtime": 1776081168.7278104,
+    "hash": "b179c30630d18edfcc9aa5cf8028e9f9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-60x60@2x.png": {
+    "mtime": 1776081168.7313726,
+    "hash": "61c3ad6694fd5e810bbd589bfd2e6025"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-76x76@1x.png": {
+    "mtime": 1776081168.732104,
+    "hash": "5a118f0b24e2c9cf5a9c843fd4b2f732"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-40x40@3x.png": {
+    "mtime": 1776081168.7294543,
+    "hash": "61c3ad6694fd5e810bbd589bfd2e6025"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-29x29@2x.png": {
+    "mtime": 1776081168.7288086,
+    "hash": "c611ef1b068ef2dae2b8e1b4403dab4b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-76x76@2x.png": {
+    "mtime": 1776081168.732341,
+    "hash": "62cab5ccc3e14bf6427429c4200ca581"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-29x29@1x.png": {
+    "mtime": 1776081168.728517,
+    "hash": "b9718bf716119fab4a3c6a20e4302c58"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-40x40@1x.png": {
+    "mtime": 1776081168.7290561,
+    "hash": "b179c30630d18edfcc9aa5cf8028e9f9"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-20x20@1x.png": {
+    "mtime": 1776081168.727375,
+    "hash": "0c82133ce48d98f1cbb6f2c4daa8f9fb"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/ios/AppIcon-29x29@2x-1.png": {
+    "mtime": 1776081168.7287278,
+    "hash": "c611ef1b068ef2dae2b8e1b4403dab4b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-mdpi/ic_launcher_foreground.png": {
+    "mtime": 1776081168.712314,
+    "hash": "0032e4adb85cafc7423709dbe528ae26"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1776081168.7120135,
+    "hash": "c91f5b29bb9bc604632af2662f3dc12b"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-mdpi/ic_launcher_round.png": {
+    "mtime": 1776081168.7124577,
+    "hash": "18c34347ba72eb83933b3d9faaf15c6c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-hdpi/ic_launcher_foreground.png": {
+    "mtime": 1776081168.7116685,
+    "hash": "aa8d4015582e48cf330e34c20f1bfb42"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1776081168.7114341,
+    "hash": "f88d57ba70fc0c34bffbae6915dafde1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-hdpi/ic_launcher_round.png": {
+    "mtime": 1776081168.7118282,
+    "hash": "70b00cee991f2bcf9a3c225959720324"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1776081168.7157373,
+    "hash": "ecfcf39b3eee9a54ee3a7db636f1b665"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1776081168.7145047,
+    "hash": "de84b2e3480a71c7410b65c68563f45c"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxxhdpi/ic_launcher_round.png": {
+    "mtime": 1776081168.7161071,
+    "hash": "9b4cd2e738e0faadf7a98303b18d2fdd"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxhdpi/ic_launcher_foreground.png": {
+    "mtime": 1776081168.7137856,
+    "hash": "af98ef2edfaed45742b4c37511850e22"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1776081168.7133355,
+    "hash": "96e708958a3bac259feb1a4a706dd6b4"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xxhdpi/ic_launcher_round.png": {
+    "mtime": 1776081168.7142272,
+    "hash": "38b05a3ee324dd64e9b2aee482eac126"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xhdpi/ic_launcher_foreground.png": {
+    "mtime": 1776081168.712923,
+    "hash": "0965b22048d6b951df392719b8b42cf1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1776081168.7126844,
+    "hash": "a56c1577d3eb749a252b47f339ad68c1"
+  },
+  "/Users/akio/Akio/AFunc-OPC/Skiller/src-tauri/icons/android/mipmap-xhdpi/ic_launcher_round.png": {
+    "mtime": 1776081168.713089,
+    "hash": "cd895016c140b5658acba109eecea611"
+  }
+}

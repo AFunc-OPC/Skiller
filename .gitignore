@@ -47,3 +47,5 @@ coverage/
 .claude/
 .opencode/
 openspec/
+graphify-out/cache/
+graphify-out/.graphify_python
