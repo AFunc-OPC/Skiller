@@ -442,8 +442,9 @@ fn search_api(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
         let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
-        let skills = parse_skill_list_response(&body, "api")?;
-        Ok(skills)
+        let search_resp: ClawhubSearchResponse = serde_json::from_str(&body)
+            .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+        Ok(search_resp.results.into_iter().map(|r| r.into_clawhub_skill()).collect())
     })
 }
 
@@ -451,21 +452,43 @@ fn search_cli(source: &ClawhubSource, query: &str) -> Result<Vec<ClawhubSkill>, 
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
     let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
-    cmd.arg("search").arg(query).arg("--json");
+    cmd.arg("search").arg(query);
     config.apply_to_command(&mut cmd);
     let output = cmd.output().map_err(|e| SkillerError::ClawhubCliError(format!("Failed to execute CLI: {}", e)))?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("unknown option '--json'") {
-            return Err(SkillerError::ClawhubCliError("CLI search does not support --json. Use API connection type for search.".to_string()));
-        }
         return Err(SkillerError::ClawhubCliError(format!("CLI error: {}", stderr.trim())));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
-    if stdout.trim().is_empty() {
-        return Err(SkillerError::ClawhubCliError("CLI search does not support --json. Use API connection type for search.".to_string()));
+    parse_cli_search_output(&stdout)
+}
+
+fn parse_cli_search_output(output: &str) -> Result<Vec<ClawhubSkill>, SkillerError> {
+    let mut skills = Vec::new();
+    for line in output.lines() {
+        let line = strip_ansi(line).trim().to_string();
+        if line.is_empty() || line.starts_with('-') || line.to_lowercase().contains("searching") {
+            continue;
+        }
+        let parts: Vec<&str> = line.splitn(2, "  ").collect();
+        if parts.len() >= 2 {
+            let slug = parts[0].trim();
+            let rest = parts[1].trim();
+            let name = rest.split("  ").next().unwrap_or("").trim().to_string();
+            if !slug.is_empty() {
+                skills.push(ClawhubSkill {
+                    slug: slug.to_string(),
+                    name: if name.is_empty() { slug.to_string() } else { name },
+                    description: None,
+                    version: None,
+                    downloads: None,
+                    rating: None,
+                    created_at: None,
+                    updated_at: None,
+                });
+            }
+        }
     }
-    let skills = parse_skill_list_response(&stdout, "cli")?;
     Ok(skills)
 }
 
@@ -913,7 +936,7 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_cli_skill_detail_response, parse_skill_list_response, parse_skill_overview_response, parse_skill_versions_response, parse_skill_files_response};
+    use super::{parse_cli_skill_detail_response, parse_skill_list_response, parse_skill_overview_response, parse_skill_versions_response, parse_skill_files_response, parse_cli_search_output};
 
     #[test]
     fn parses_api_skill_wrapper_with_metadata() {
@@ -1094,5 +1117,62 @@ mod tests {
         assert_eq!(files.len(), 2);
         assert_eq!(files[0].path, "SKILL.md");
         assert_eq!(files[1].content_type.as_deref(), Some("text/plain"));
+    }
+
+    #[test]
+    fn parses_api_search_response_with_results_field() {
+        use crate::models::clawhub::ClawhubSearchResponse;
+
+        let body = r#"{
+            "results": [
+                {
+                    "slug": "test-skill",
+                    "displayName": "Test Skill",
+                    "summary": "A test skill",
+                    "score": 4.23,
+                    "updatedAt": 1778485852489
+                },
+                {
+                    "slug": "another-skill",
+                    "displayName": "Another",
+                    "summary": "Another skill",
+                    "score": 3.10
+                }
+            ]
+        }"#;
+
+        let resp: ClawhubSearchResponse = serde_json::from_str(body).expect("should parse search response");
+        let skills: Vec<crate::models::clawhub::ClawhubSkill> = resp.results.into_iter().map(|r| r.into_clawhub_skill()).collect();
+
+        assert_eq!(skills.len(), 2);
+        assert_eq!(skills[0].slug, "test-skill");
+        assert_eq!(skills[0].name, "Test Skill");
+        assert_eq!(skills[0].description.as_deref(), Some("A test skill"));
+        assert_eq!(skills[0].updated_at.as_deref(), Some("1778485852489"));
+        assert_eq!(skills[1].slug, "another-skill");
+        assert!(skills[1].updated_at.is_none());
+    }
+
+    #[test]
+    fn parses_cli_search_text_output() {
+        let output = "- Searching\ntest  Test  (4.232)\nbot-status-api-test  Test  (3.102)\nken-test  test  (2.944)\n";
+
+        let skills = parse_cli_search_output(output).expect("should parse cli search output");
+
+        assert_eq!(skills.len(), 3);
+        assert_eq!(skills[0].slug, "test");
+        assert_eq!(skills[0].name, "Test");
+        assert_eq!(skills[1].slug, "bot-status-api-test");
+        assert_eq!(skills[2].slug, "ken-test");
+    }
+
+    #[test]
+    fn parses_cli_search_with_ansi_codes() {
+        let output = "\u{1b}[32m- Searching\u{1b}[0m\n\u{1b}[1mtest\u{1b}[0m  Test  (4.232)\n";
+
+        let skills = parse_cli_search_output(output).expect("should parse ansi output");
+
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].slug, "test");
     }
 }

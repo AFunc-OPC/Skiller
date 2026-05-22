@@ -45,6 +45,44 @@ pub struct ClawhubExploreResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClawhubSearchResult {
+    pub slug: String,
+    #[serde(default)]
+    pub display_name: String,
+    #[serde(default)]
+    pub summary: Option<String>,
+    #[serde(default)]
+    pub score: Option<f64>,
+    #[serde(default)]
+    pub version: Option<String>,
+    #[serde(default)]
+    pub updated_at: Option<i64>,
+    #[serde(default)]
+    pub owner_handle: Option<String>,
+}
+
+impl ClawhubSearchResult {
+    pub fn into_clawhub_skill(self) -> ClawhubSkill {
+        ClawhubSkill {
+            slug: self.slug,
+            name: self.display_name,
+            description: self.summary,
+            version: self.version,
+            downloads: None,
+            rating: None,
+            created_at: None,
+            updated_at: self.updated_at.map(|t| t.to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubSearchResponse {
+    pub results: Vec<ClawhubSearchResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClawhubSkill {
     pub slug: String,
     pub name: String,
