@@ -488,14 +488,9 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
           {skills.map((skill) => (
             <article
               key={skill.slug}
-              className={`clawhub-skill-card card-view ${selectedSkillSlug === skill.slug ? 'selected' : ''}`}
-              onClick={() => handleInspect(skill.slug)}
+              className={`clawhub-skill-card card-view ${batchMode && selectedSlugs.has(skill.slug) ? 'skill-selected' : ''} ${!batchMode && selectedSkillSlug === skill.slug ? 'selected' : ''}`}
+              onClick={() => batchMode ? toggleBatchSelection(skill.slug) : handleInspect(skill.slug)}
             >
-              {batchMode && (
-                <div className="clawhub-card-checkbox" onClick={(e) => { e.stopPropagation(); toggleBatchSelection(skill.slug) }}>
-                  <input type="checkbox" checked={selectedSlugs.has(skill.slug)} readOnly />
-                </div>
-              )}
               <div className="clawhub-card-header">
                 <div className="clawhub-card-title">
                   <h4 className="clawhub-card-name">{skill.name}</h4>
@@ -521,14 +516,9 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
           {skills.map((skill) => (
             <article
               key={skill.slug}
-              className={`clawhub-skill-record ${selectedSkillSlug === skill.slug ? 'selected' : ''}`}
-              onClick={() => handleInspect(skill.slug)}
+              className={`clawhub-skill-record ${batchMode && selectedSlugs.has(skill.slug) ? 'skill-selected' : ''} ${!batchMode && selectedSkillSlug === skill.slug ? 'selected' : ''}`}
+              onClick={() => batchMode ? toggleBatchSelection(skill.slug) : handleInspect(skill.slug)}
             >
-              {batchMode && (
-                <div className="clawhub-card-checkbox clawhub-record-checkbox" onClick={(e) => { e.stopPropagation(); toggleBatchSelection(skill.slug) }}>
-                  <input type="checkbox" checked={selectedSlugs.has(skill.slug)} readOnly />
-                </div>
-              )}
               <div className="clawhub-record-content">
                 <div className="clawhub-record-main">
                   <div className="clawhub-record-name-row">

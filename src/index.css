@@ -7866,14 +7866,15 @@ align-items: center;
 
 .clawhub-grid.card-view {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.5rem;
+  align-content: start;
 }
 
 .clawhub-record-list {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.375rem;
   overflow-y: auto;
   min-height: 0;
 }
@@ -7883,17 +7884,13 @@ align-items: center;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  min-height: 220px;
-  height: 220px;          /* 👈 强制固定高度 */
-  max-height: 220px;      /* 👈 防止内容撑大 */
   padding: 0;
   border: 1px solid var(--border-soft);
-  border-radius: 0.875rem;
+  border-radius: 0.625rem;
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   background: var(--bg-elevated);
   position: relative;
-  overflow: hidden;
 }
 
 .clawhub-skill-card:hover {
@@ -7911,62 +7908,69 @@ align-items: center;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.625rem;
-  padding: 1rem 1rem 0;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem 0;
 }
 
-.clawhub-card-checkbox {
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0 0.25rem 1rem;
-}
-
-.clawhub-card-content {
-  /* height: 156px;
-  flex: 0 0 156px; */
+.clawhub-card-title {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  overflow: hidden;
+  gap: 0.1rem;
+}
+
+.clawhub-skill-card.skill-selected {
+  border-color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+[data-theme="dark"] .clawhub-skill-card.skill-selected {
+  background: rgba(52, 211, 153, 0.06);
+}
+
+.clawhub-card-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem 0.625rem;
 }
 
 .clawhub-card-name {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
   margin: 0;
   color: var(--text-primary);
-  line-height: 1.35;
+  line-height: 1.3;
   letter-spacing: -0.01em;
 }
 
 .clawhub-card-slug {
   display: inline-block;
-  margin-top: 0.15rem;
-  font-size: 0.6875rem;
+  margin-top: 0.1rem;
+  font-size: 0.625rem;
   color: oklch(0.55 0.01 260);
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   letter-spacing: 0.02em;
 }
 
 .clawhub-card-desc {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: oklch(0.45 0.02 260);
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.55;
+  line-height: 1.5;
   letter-spacing: 0.005em;
 }
 
 .clawhub-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
-  font-size: 0.6875rem;
+  gap: 0.25rem;
+  font-size: 0.625rem;
   color: var(--text-secondary);
 }
 
@@ -7974,17 +7978,17 @@ align-items: center;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0 1.25rem 0.75rem;
+  gap: 0.25rem;
+  padding: 0 0.75rem 0.5rem;
 }
 
 .clawhub-card-version {
   background: oklch(0.65 0.15 160 / 0.12);
   color: oklch(0.55 0.12 160);
-  padding: 0.1875rem 0.5rem;
-  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
   font-weight: 600;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   letter-spacing: 0.01em;
 }
 
@@ -7993,12 +7997,12 @@ align-items: center;
 .clawhub-card-updated-at {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.1875rem 0.5rem;
-  border-radius: 0.375rem;
+  gap: 0.2rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
   background: oklch(0.97 0.005 260);
   color: oklch(0.48 0.02 260);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
 }
 
 .clawhub-card-downloads svg {
@@ -8010,8 +8014,8 @@ align-items: center;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  /* margin-top: auto; */
-  padding: 0 1rem 0.875rem;
+  flex-shrink: 0;
+  padding: 0;
 }
 
 .clawhub-record-actions {
@@ -8019,20 +8023,20 @@ align-items: center;
   flex: 0 0 auto;
   align-self: center;
   justify-content: flex-end;
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .clawhub-import-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  padding: 0.4375rem 0.75rem;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid oklch(0.65 0.15 160 / 0.25);
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   background: oklch(0.65 0.15 160 / 0.08);
   color: oklch(0.55 0.12 160);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -8389,7 +8393,7 @@ align-items: center;
   gap: 0;
   padding: 0;
   border: 1px solid var(--border-soft);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   background: var(--bg-elevated);
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -8415,21 +8419,21 @@ align-items: center;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem 1.25rem 0.625rem;
+  gap: 0.2rem;
+  padding: 0.625rem 0.75rem 0.5rem;
 }
 
 .clawhub-record-name-row {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 
 .clawhub-record-desc {
   margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: 0.75rem;
+  line-height: 1.45;
   color: oklch(0.45 0.02 260);
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -8438,8 +8442,13 @@ align-items: center;
   letter-spacing: 0.005em;
 }
 
-.clawhub-record-checkbox {
-  padding: 0.25rem 0 0.25rem 1rem;
+.clawhub-skill-record.skill-selected {
+  border-color: var(--accent-mint);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+[data-theme="dark"] .clawhub-skill-record.skill-selected {
+  background: rgba(52, 211, 153, 0.06);
 }
 
 @media (max-width: 1100px) {
