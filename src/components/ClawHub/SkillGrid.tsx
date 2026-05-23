@@ -6,7 +6,6 @@ import { t } from '../../i18n'
 import { SkillDetailDrawer } from './SkillDetailDrawer'
 import { ImportButton } from './ImportButton'
 import { EmptyState } from './EmptyState'
-import { useDebounce } from '../../hooks/useDebounce'
 import { formatClawhubDate } from './formatClawhubDate'
 
 type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
@@ -44,9 +43,8 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const [batchMode, setBatchMode] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set())
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
-  const debouncedSearch = useDebounce(localSearch, 300)
   const lastExploreRequestKeyRef = useRef<string | null>(null)
-  const previousSearchRef = useRef(searchQuery)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,8 +55,37 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     lastExploreRequestKeyRef.current = null
   }, [sourceId])
 
+  const handleSearchSubmit = () => {
+    const trimmed = localSearch.trim()
+    if (!sourceId) return
+    if (trimmed) {
+      lastExploreRequestKeyRef.current = null
+      setSearchQuery(trimmed)
+      void searchSkills(sourceId, trimmed)
+    } else if (searchQuery) {
+      lastExploreRequestKeyRef.current = null
+      setSearchQuery('')
+      void exploreSkills(sourceId)
+    }
+  }
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit()
+    }
+  }
+
+  const handleSearchClear = () => {
+    setLocalSearch('')
+    if (searchQuery && sourceId) {
+      lastExploreRequestKeyRef.current = null
+      setSearchQuery('')
+      void exploreSkills(sourceId)
+    }
+  }
+
   useEffect(() => {
-    if (!sourceId || debouncedSearch.trim()) {
+    if (!sourceId || searchQuery) {
       return
     }
 
@@ -76,28 +103,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     return () => {
       window.clearTimeout(timer)
     }
-  }, [debouncedSearch, exploreSkills, sourceId, sortOption])
-
-  useEffect(() => {
-    if (!sourceId || debouncedSearch === searchQuery) {
-      previousSearchRef.current = searchQuery
-      return
-    }
-
-    if (debouncedSearch.trim()) {
-      lastExploreRequestKeyRef.current = null
-      void searchSkills(sourceId, debouncedSearch)
-      previousSearchRef.current = debouncedSearch
-      return
-    }
-
-    if (previousSearchRef.current.trim()) {
-      lastExploreRequestKeyRef.current = null
-      void exploreSkills(sourceId)
-    }
-
-    previousSearchRef.current = debouncedSearch
-  }, [debouncedSearch, exploreSkills, searchQuery, searchSkills, sourceId])
+  }, [searchQuery, exploreSkills, sourceId, sortOption])
 
   useEffect(() => {
     if (!sortMenuOpen) return
@@ -189,15 +195,17 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               <path d="m12 12 4.5 4.5" />
             </svg>
             <input
+              ref={searchInputRef}
               type="text"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder={t('clawhubSearch', language)}
               className="clawhub-search-input"
               aria-label={t('clawhubSearch', language)}
             />
             {localSearch && (
-              <button className="clawhub-search-clear" onClick={() => { setLocalSearch('') }}>
+              <button className="clawhub-search-clear" onClick={handleSearchClear}>
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 6L6 14M6 6l8 8" /></svg>
               </button>
             )}
