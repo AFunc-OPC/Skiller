@@ -53,7 +53,7 @@ pub async fn clawhub_test_connection(app: AppHandle, source_id: String) -> Resul
 }
 
 #[tauri::command]
-pub async fn clawhub_explore(app: AppHandle, source_id: String, sort: String, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, String> {
+pub async fn clawhub_explore(app: AppHandle, source_id: String, sort: String, limit: Option<i32>) -> Result<ClawhubExploreResult, String> {
     let app_data_dir = app
         .path()
         .app_data_dir()

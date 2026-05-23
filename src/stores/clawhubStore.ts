@@ -12,6 +12,7 @@ import type {
   ImportSkillResult,
 } from '../types'
 import { clawhubApi } from '../api/clawhub'
+import type { AlertDialogState } from '../components/AlertDialog'
 
 type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
 type ClawhubDetailTab = 'overview' | 'versions' | 'files'
@@ -20,6 +21,9 @@ interface ClawhubState {
   sources: ClawhubSource[]
   selectedSourceId: string | null
   skills: ClawhubSkill[]
+  hasMore: boolean
+  currentLimit: number
+  cliLimitedTip: boolean
   selectedSkillSlug: string | null
   skillDetail: ClawhubSkillDetail | null
   skillOverview: ClawhubSkillOverview | null
@@ -36,10 +40,12 @@ interface ClawhubState {
   sortOption: SortOption
   loading: boolean
   skillsLoading: boolean
+  loadingMore: boolean
   detailLoading: boolean
   importing: boolean
   importProgress: { completed: number; total: number; currentSlug: string } | null
   error: string | null
+  alertDialog: AlertDialogState | null
   connectionTestResult: ConnectionTestResult | null
   duplicateCheckResults: DuplicateCheckResult[] | null
 
@@ -50,6 +56,7 @@ interface ClawhubState {
   selectSource: (id: string | null) => void
   testConnection: (sourceId: string) => Promise<ConnectionTestResult>
   exploreSkills: (sourceId: string) => Promise<void>
+  loadMoreSkills: (sourceId: string) => Promise<void>
   searchSkills: (sourceId: string, query: string) => Promise<void>
   inspectSkill: (sourceId: string, slug: string) => Promise<void>
   loadSkillVersions: (sourceId: string, slug: string) => Promise<void>
@@ -63,6 +70,7 @@ interface ClawhubState {
   importSkills: (sourceId: string, slugs: string[], overwrite?: boolean) => Promise<ImportSkillResult[]>
   checkDuplicates: (slugs: string[]) => Promise<DuplicateCheckResult[]>
   clearError: () => void
+  clearAlertDialog: () => void
   clearConnectionTestResult: () => void
 }
 
@@ -70,6 +78,9 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   sources: [],
   selectedSourceId: null,
   skills: [],
+  hasMore: false,
+  currentLimit: 200,
+  cliLimitedTip: false,
   selectedSkillSlug: null,
   skillDetail: null,
   skillOverview: null,
@@ -86,10 +97,12 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   sortOption: 'newest',
   loading: false,
   skillsLoading: false,
+  loadingMore: false,
   detailLoading: false,
   importing: false,
   importProgress: null,
   error: null,
+  alertDialog: null,
   connectionTestResult: null,
   duplicateCheckResults: null,
 
@@ -106,7 +119,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
         set({ sources, loading: false })
       }
     } catch (error) {
-      set({ error: String(error), loading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, loading: false })
     }
   },
 
@@ -119,9 +132,9 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
         connection_type: connectionType,
         cli_path: cliPath,
       })
-      set((state) => ({ sources: [...state.sources, source] }))
+      set((state) => ({ sources: [...state.sources, source], alertDialog: { title: 'ClawHub', message: '添加成功', type: 'success' } }))
     } catch (error) {
-      set({ error: String(error) })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
     }
   },
 
@@ -130,9 +143,10 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       const updated = await clawhubApi.updateSource({ id, ...updates })
       set((state) => ({
         sources: state.sources.map(s => s.id === id ? updated : s),
+        alertDialog: { title: 'ClawHub', message: '更新成功', type: 'success' },
       }))
     } catch (error) {
-      set({ error: String(error) })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
     }
   },
 
@@ -142,9 +156,10 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       set((state) => ({
         sources: state.sources.filter(s => s.id !== id),
         selectedSourceId: state.selectedSourceId === id ? null : state.selectedSourceId,
+        alertDialog: { title: 'ClawHub', message: '删除成功', type: 'success' },
       }))
     } catch (error) {
-      set({ error: String(error) })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
     }
   },
 
@@ -152,14 +167,20 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
     set({
       selectedSourceId: id,
       skills: [],
+      hasMore: false,
+      currentLimit: 200,
+      cliLimitedTip: false,
       searchQuery: '',
       skillDetail: null,
       skillOverview: null,
       selectedSkillSlug: null,
       activeDetailTab: 'overview',
       skillVersions: null,
+      versionsLoading: false,
       skillFiles: null,
+      filesLoading: false,
       fileContent: null,
+      fileContentLoading: false,
       selectedVersion: null,
       selectedFilePath: null,
     })
@@ -169,27 +190,58 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
     set({ connectionTestResult: null })
     try {
       const result = await clawhubApi.testConnection(sourceId)
-      set({ connectionTestResult: result })
+      set({
+        connectionTestResult: result,
+        alertDialog: result.success
+          ? { title: 'ClawHub', message: result.username ? `连接成功 (${result.username})` : '连接成功', type: 'success' }
+          : { title: 'ClawHub', message: result.message, type: 'error' },
+      })
       return result
     } catch (error) {
       const result: ConnectionTestResult = { success: false, message: String(error), username: null }
-      set({ connectionTestResult: result })
+      set({
+        connectionTestResult: result,
+        alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' },
+      })
       return result
     }
   },
 
   exploreSkills: async (sourceId) => {
-    set({ skillsLoading: true, error: null })
+    set({ skillsLoading: true, error: null, hasMore: false, currentLimit: 200, cliLimitedTip: false })
     try {
-      const skills = await clawhubApi.explore(sourceId, get().sortOption)
-      set({ skills, skillsLoading: false })
+      const result = await clawhubApi.explore(sourceId, get().sortOption, 200)
+      set({
+        skills: result.skills,
+        hasMore: result.has_more,
+        cliLimitedTip: result.cli_limited,
+        skillsLoading: false,
+      })
     } catch (error) {
-      set({ error: String(error), skillsLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, skillsLoading: false })
+    }
+  },
+
+  loadMoreSkills: async (sourceId) => {
+    const { skillsLoading, loadingMore } = get()
+    if (skillsLoading || loadingMore) return
+    const newLimit = get().currentLimit + 200
+    set({ loadingMore: true, currentLimit: newLimit })
+    try {
+      const result = await clawhubApi.explore(sourceId, get().sortOption, newLimit)
+      set({
+        skills: result.skills,
+        hasMore: result.has_more,
+        cliLimitedTip: result.cli_limited,
+        loadingMore: false,
+      })
+    } catch (error) {
+      set({ loadingMore: false, error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
     }
   },
 
   searchSkills: async (sourceId, query) => {
-    set({ skillsLoading: true, error: null, searchQuery: query })
+    set({ skillsLoading: true, error: null, searchQuery: query, hasMore: false, currentLimit: 200, cliLimitedTip: false })
     try {
       if (!query.trim()) {
         return get().exploreSkills(sourceId)
@@ -197,7 +249,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       const skills = await clawhubApi.search(sourceId, query)
       set({ skills, skillsLoading: false })
     } catch (error) {
-      set({ error: String(error), skillsLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, skillsLoading: false })
     }
   },
 
@@ -238,7 +290,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
         detailLoading: false,
       })
     } catch (error) {
-      set({ error: String(error), detailLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, detailLoading: false })
     }
   },
 
@@ -248,7 +300,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       const skillVersions = await clawhubApi.listVersions(sourceId, slug)
       set({ skillVersions, versionsLoading: false })
     } catch (error) {
-      set({ error: String(error), versionsLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, versionsLoading: false })
     }
   },
 
@@ -258,7 +310,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       const skillFiles = await clawhubApi.listFiles(sourceId, slug, version)
       set({ skillFiles, filesLoading: false })
     } catch (error) {
-      set({ error: String(error), filesLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, filesLoading: false })
     }
   },
 
@@ -268,7 +320,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       const fileContent = await clawhubApi.readFile(sourceId, slug, path, version)
       set({ fileContent, fileContentLoading: false })
     } catch (error) {
-      set({ error: String(error), fileContentLoading: false })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' }, fileContentLoading: false })
     }
   },
 
@@ -310,10 +362,18 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
     set({ importing: true, importProgress: { completed: 0, total: slugs.length, currentSlug: slugs[0] || '' }, error: null })
     try {
       const results = await clawhubApi.importSkills(sourceId, slugs, overwrite)
-      set({ importing: false, importProgress: null })
+      const failedCount = results.filter(r => !r.success).length
+      const successCount = results.filter(r => r.success).length
+      set({
+        importing: false,
+        importProgress: null,
+        alertDialog: failedCount > 0
+          ? { title: 'ClawHub', message: `导入完成: ${successCount} 成功, ${failedCount} 失败`, type: 'error' }
+          : { title: 'ClawHub', message: `导入成功: ${successCount} 个技能`, type: 'success' },
+      })
       return results
     } catch (error) {
-      set({ importing: false, importProgress: null, error: String(error) })
+      set({ importing: false, importProgress: null, error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
       throw error
     }
   },
@@ -324,11 +384,18 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
       set({ duplicateCheckResults: results })
       return results
     } catch (error) {
-      set({ error: String(error) })
+      set({ error: String(error), alertDialog: { title: 'ClawHub', message: extractErrorMessage(error), type: 'error' } })
       return []
     }
   },
 
   clearError: () => set({ error: null }),
+  clearAlertDialog: () => set({ alertDialog: null }),
   clearConnectionTestResult: () => set({ connectionTestResult: null }),
 }))
+
+function extractErrorMessage(error: unknown): string {
+  const str = String(error)
+  const match = str.match(/^Error:\s*调用\s+\w+\s+失败:\s*(.+)$/)
+  return match ? match[1] : str.replace(/^Error:\s*/, '')
+}

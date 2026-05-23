@@ -45,6 +45,14 @@ pub struct ClawhubExploreResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClawhubExploreResult {
+    pub skills: Vec<ClawhubSkill>,
+    pub has_more: bool,
+    #[serde(default)]
+    pub cli_limited: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClawhubSearchResult {
     pub slug: String,
@@ -97,7 +105,7 @@ pub struct ClawhubSkill {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClawhubCliExploreResponse {
     pub items: Vec<ClawhubCliItem>,
-    #[serde(default)]
+    #[serde(default, rename = "nextCursor")]
     pub next_cursor: Option<String>,
 }
 

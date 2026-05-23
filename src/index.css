@@ -8169,6 +8169,59 @@ align-items: center;
   margin-top: 0.875rem;
 }
 
+.clawhub-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.clawhub-load-more-btn {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clawhub-load-more-btn:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.clawhub-load-more-btn:active {
+  transform: scale(0.97);
+}
+
+.clawhub-load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clawhub-load-more-tip {
+  text-align: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  margin-top: 0.75rem;
+}
+
+[data-theme="dark"] .clawhub-batch-bar {
+  background: oklch(0.18 0.01 260 / 0.95);
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.3);
+}
+
+[data-theme="dark"] .clawhub-load-more-tip {
+  background: oklch(0.18 0.01 260);
+}
+
 .clawhub-drawer-overlay {
   position: fixed;
   top: 0;

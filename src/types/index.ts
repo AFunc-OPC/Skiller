@@ -375,6 +375,12 @@ export interface UpdateClawhubSourceRequest {
   sort_order?: number
 }
 
+export interface ClawhubExploreResult {
+  skills: ClawhubSkill[]
+  has_more: boolean
+  cli_limited: boolean
+}
+
 export interface ClawhubSkill {
   slug: string
   name: string

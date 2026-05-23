@@ -3,6 +3,7 @@ import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
 import type { ClawhubSource } from '../../types'
+import { AlertDialog } from '../AlertDialog'
 
 export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
   const {
@@ -12,10 +13,11 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
     updateSource,
     deleteSource,
     testConnection,
-    connectionTestResult,
     clearConnectionTestResult,
     error,
     clearError,
+    alertDialog,
+    clearAlertDialog,
   } = useClawhubStore()
 
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -35,12 +37,6 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
           {language === 'zh' ? '配置 ClawHub 数据源，支持 API 和 CLI 两种连接方式' : 'Configure ClawHub data sources with API or CLI connection modes'}
         </p>
       </div>
-
-      {error && (
-        <div className="settings-error-banner" onClick={clearError}>
-          {error}
-        </div>
-      )}
 
       <div className="settings-card">
         <div className="settings-card-header">
@@ -104,14 +100,6 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
             </div>
           ))}
         </div>
-
-        {connectionTestResult && (
-          <div className={`settings-test-result ${connectionTestResult.success ? 'success' : 'error'}`}>
-            {connectionTestResult.success
-              ? `${t('clawhubTestSuccess', language)}${connectionTestResult.username ? ` (${connectionTestResult.username})` : ''}`
-              : `${t('clawhubTestFailed', language)}: ${connectionTestResult.message}`}
-          </div>
-        )}
       </div>
 
       {showAddDialog && (
@@ -167,6 +155,10 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
             </div>
           </div>
         </div>
+      )}
+
+      {alertDialog && (
+        <AlertDialog dialog={alertDialog} onClose={clearAlertDialog} confirmLabel={language === 'zh' ? '确定' : 'OK'} />
       )}
     </div>
   )

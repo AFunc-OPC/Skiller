@@ -1,6 +1,8 @@
 import { useState, memo } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { t } from '../../i18n'
+import { AlertDialog } from '../AlertDialog'
+import type { AlertDialogState } from '../AlertDialog'
 
 interface ImportButtonProps {
   language: 'zh' | 'en'
@@ -12,7 +14,7 @@ interface ImportButtonProps {
 export function ImportButton({ language, slug, sourceId, isBatch }: ImportButtonProps) {
   const { importSkills, importing, importProgress, checkDuplicates } = useClawhubStore()
   const [imported, setImported] = useState(false)
-  const [importError, setImportError] = useState<string | null>(null)
+  const [localAlert, setLocalAlert] = useState<AlertDialogState | null>(null)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
   const [duplicateInfo, setDuplicateInfo] = useState<{ slugs: string[]; duplicates: number } | null>(null)
 
@@ -39,23 +41,23 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
 
       await doImport(slugs, false)
     } catch (error) {
-      setImportError(String(error))
+      setLocalAlert({ title: 'ClawHub', message: String(error), type: 'error' })
     }
   }
 
   const doImport = async (slugsToImport: string[], overwrite: boolean) => {
     try {
-      setImportError(null)
+      setLocalAlert(null)
       const results = await importSkills(sourceId, slugsToImport, overwrite)
       const allSuccess = results.every(r => r.success)
       if (allSuccess) {
         setImported(true)
       } else {
         const failed = results.filter(r => !r.success)
-        setImportError(failed.map(r => r.error || r.slug).join(', '))
+        setLocalAlert({ title: 'ClawHub', message: `${t('clawhubImportFailed', language)}: ${failed.map(r => r.error || r.slug).join(', ')}`, type: 'error' })
       }
     } catch (error) {
-      setImportError(String(error))
+      setLocalAlert({ title: 'ClawHub', message: String(error), type: 'error' })
     }
     setShowDuplicateDialog(false)
     setDuplicateInfo(null)
@@ -97,10 +99,8 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
         )}
       </button>
 
-      {importError && (
-        <div className="clawhub-import-error" onClick={() => setImportError(null)}>
-          {t('clawhubImportFailed', language)}: {importError}
-        </div>
+      {localAlert && (
+        <AlertDialog dialog={localAlert} onClose={() => setLocalAlert(null)} confirmLabel={language === 'zh' ? '确定' : 'OK'} />
       )}
 
       {showDuplicateDialog && duplicateInfo && (

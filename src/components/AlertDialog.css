@@ -1,0 +1,110 @@
+.alert-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  animation: pm-fadeIn 0.2s ease-out;
+}
+
+.alert-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  max-width: calc(100vw - 2rem);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  z-index: 101;
+  animation: pm-slideUp 0.25s ease-out;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.alert-dialog-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+}
+
+.alert-dialog-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-dialog-icon.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.alert-dialog-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-mint);
+}
+
+.alert-dialog-icon.info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.alert-dialog-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.alert-dialog-title {
+  text-align: center;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem 0;
+  color: var(--text-primary);
+}
+
+.alert-dialog-message {
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  padding: 0.5rem 1.25rem 1.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.alert-dialog-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--border-soft);
+  background: var(--bg-base);
+  border-radius: 0 0 12px 12px;
+}
+
+.alert-dialog-footer .pm-btn-primary {
+  min-width: 80px;
+}
+
+[data-theme="dark"] .alert-dialog {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .alert-dialog-icon.error {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .alert-dialog-icon.success {
+  background: rgba(52, 211, 153, 0.15);
+}
+
+[data-theme="dark"] .alert-dialog-icon.info {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}

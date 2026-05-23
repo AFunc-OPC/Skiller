@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { t } from '../../i18n'
 import { SourceSidebar } from './SourceSidebar'
 import { SkillGrid } from './SkillGrid'
+import { AlertDialog } from '../AlertDialog'
 
 function CopyButton({ text, language }: { text: string; language: string }) {
   const [copied, setCopied] = useState(false)
@@ -43,6 +44,8 @@ export function ClawHubPage() {
     selectSource,
     error,
     clearError,
+    alertDialog,
+    clearAlertDialog,
   } = useClawhubStore()
 
   const enabledSources = sources.filter(s => s.is_enabled)
@@ -83,11 +86,6 @@ export function ClawHubPage() {
         onSelectSource={handleSelectSource}
       />
       <div className="clawhub-content">
-        {error && (
-          <div className="clawhub-error-banner" onClick={clearError}>
-            {error}
-          </div>
-        )}
         {!selectedSource ? (
           <div className="clawhub-empty-state">
             <div className="clawhub-empty-icon">
@@ -122,6 +120,9 @@ export function ClawHubPage() {
           </div>
         )}
       </div>
+      {alertDialog && (
+        <AlertDialog dialog={alertDialog} onClose={clearAlertDialog} confirmLabel={language === 'zh' ? '确定' : 'OK'} />
+      )}
     </div>
   )
 }

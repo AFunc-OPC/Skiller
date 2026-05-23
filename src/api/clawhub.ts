@@ -4,6 +4,7 @@ import type {
   CreateClawhubSourceRequest,
   UpdateClawhubSourceRequest,
   ClawhubSkill,
+  ClawhubExploreResult,
   ClawhubSkillDetail,
   ClawhubSkillOverview,
   ClawhubSkillVersionItem,
@@ -35,7 +36,7 @@ export const clawhubApi = {
     return await invoke('clawhub_test_connection', { sourceId })
   },
 
-  explore: async (sourceId: string, sort: string = 'newest', limit?: number): Promise<ClawhubSkill[]> => {
+  explore: async (sourceId: string, sort: string = 'newest', limit?: number): Promise<ClawhubExploreResult> => {
     return await invoke('clawhub_explore', { sourceId, sort, limit })
   },
 

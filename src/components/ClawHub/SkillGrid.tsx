@@ -21,12 +21,16 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const {
     skills,
     skillsLoading,
+    loadingMore,
+    hasMore,
+    cliLimitedTip,
     searchQuery,
     sortOption,
     selectedSkillSlug,
     skillOverview,
     detailLoading,
     exploreSkills,
+    loadMoreSkills,
     searchSkills,
     setSortOption,
     setSearchQuery,
@@ -366,6 +370,28 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
               </div>
             </article>
           ))}
+        </div>
+      )}
+
+      {cliLimitedTip && !searchQuery && (
+        <div className="clawhub-load-more-tip">
+          {language === 'zh'
+            ? 'CLI 模式至多展示 200 条数据，请使用搜索缩小范围'
+            : 'CLI mode shows up to 200 items. Use search to narrow results'}
+        </div>
+      )}
+
+      {!skillsLoading && hasMore && !searchQuery && (
+        <div className="clawhub-load-more">
+          <button
+            className="clawhub-load-more-btn"
+            onClick={() => loadMoreSkills(sourceId)}
+            disabled={loadingMore}
+          >
+            {loadingMore
+              ? (language === 'zh' ? '加载中...' : 'Loading...')
+              : (language === 'zh' ? '加载更多' : 'Load More')}
+          </button>
         </div>
       )}
 

@@ -373,7 +373,7 @@ fn parse_cli_skill_detail_response(body: &str) -> Result<ClawhubSkillDetail, Ski
     })
 }
 
-pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
+pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32>) -> Result<ClawhubExploreResult, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
     match source.connection_type.as_str() {
         "api" => explore_api(&source, sort, limit),
@@ -382,11 +382,11 @@ pub fn explore(conn: &Connection, source_id: &str, sort: &str, limit: Option<i32
     }
 }
 
-fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
+fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result<ClawhubExploreResult, SkillerError> {
     let runtime = tokio::runtime::Runtime::new().map_err(|e| SkillerError::ClawhubApiError(e.to_string()))?;
     runtime.block_on(async {
         let client = reqwest::Client::new();
-        let limit_val = limit.unwrap_or(25);
+        let limit_val = limit.unwrap_or(200);
         let url = format!("{}/api/v1/skills?sort={}&limit={}", source.registry_url.trim_end_matches('/'), sort, limit_val);
         let mut request = client.get(&url);
         if !source.token.is_empty() {
@@ -397,14 +397,21 @@ fn explore_api(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
             return Err(SkillerError::ClawhubApiError(format!("API error: HTTP {}", response.status())));
         }
         let body = response.text().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read body error: {}", e)))?;
-        let skills = parse_skill_list_response(&body, "api")?;
-        Ok(skills)
+        let cli_resp: ClawhubCliExploreResponse = serde_json::from_str(&body)
+            .map_err(|e| SkillerError::ClawhubApiError(format!("Parse error: {}", e)))?;
+        let has_more = cli_resp.next_cursor.is_some();
+        let skills = cli_resp.items.into_iter().map(|item| item.into_clawhub_skill()).collect();
+        Ok(ClawhubExploreResult {
+            skills,
+            has_more,
+            cli_limited: false,
+        })
     })
 }
 
-fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result<Vec<ClawhubSkill>, SkillerError> {
+fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result<ClawhubExploreResult, SkillerError> {
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
-    let limit_val = limit.unwrap_or(25);
+    let limit_val = limit.unwrap_or(200).min(200);
     let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
     cmd.arg("explore").arg("--json").arg("--limit").arg(limit_val.to_string()).arg("--sort").arg(sort);
@@ -416,7 +423,11 @@ fn explore_cli(source: &ClawhubSource, sort: &str, limit: Option<i32>) -> Result
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
     let skills = parse_skill_list_response(&stdout, "cli")?;
-    Ok(skills)
+    Ok(ClawhubExploreResult {
+        skills,
+        has_more: false,
+        cli_limited: true,
+    })
 }
 
 pub fn search(conn: &Connection, source_id: &str, query: &str) -> Result<Vec<ClawhubSkill>, SkillerError> {
