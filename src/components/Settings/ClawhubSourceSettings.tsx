@@ -20,6 +20,8 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
     clearAlertDialog,
   } = useClawhubStore()
 
+  const { clawhubMenuEnabled, setClawhubMenuEnabled } = useAppStore()
+
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingSource, setEditingSource] = useState<ClawhubSource | null>(null)
   const [deletingSource, setDeletingSource] = useState<ClawhubSource | null>(null)
@@ -32,10 +34,20 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
   return (
     <div className="settings-section">
       <div className="settings-section-header">
-        <h2 className="settings-section-title">{t('clawhubSourceConfig', language)}</h2>
-        <p className="settings-section-desc">
-          {language === 'zh' ? '配置 ClawHub 数据源，支持 API 和 CLI 两种连接方式' : 'Configure ClawHub data sources with API or CLI connection modes'}
-        </p>
+        <div>
+          <h2 className="settings-section-title">{t('clawhubSourceConfig', language)}</h2>
+          <p className="settings-section-desc">
+            {language === 'zh' ? '配置 ClawHub 数据源，支持 API 和 CLI 两种连接方式' : 'Configure ClawHub data sources with API or CLI connection modes'}
+          </p>
+        </div>
+        <label className="settings-toggle" title={language === 'zh' ? '显示/隐藏 ClawHub 菜单' : 'Toggle ClawHub menu'}>
+          <input
+            type="checkbox"
+            checked={clawhubMenuEnabled}
+            onChange={() => setClawhubMenuEnabled(!clawhubMenuEnabled)}
+          />
+          <span className="settings-toggle-slider" />
+        </label>
       </div>
 
       <div className="settings-card">
@@ -62,9 +74,6 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
                   <span className="settings-source-type">
                     {source.connection_type === 'api' ? t('clawhubConnectionApi', language) : t('clawhubConnectionCli', language)}
                   </span>
-                  <span className={`settings-source-status ${source.is_enabled ? 'enabled' : 'disabled'}`}>
-                    {source.is_enabled ? t('clawhubEnabled', language) : t('clawhubDisabled', language)}
-                  </span>
                 </div>
               </div>
               <div className="settings-source-actions">
@@ -82,14 +91,6 @@ export function ClawhubSourceSettings({ language }: { language: 'zh' | 'en' }) {
                     ? (language === 'zh' ? '测试中...' : 'Testing...')
                     : t('clawhubTestConnection', language)}
                 </button>
-                <label className="settings-toggle">
-                  <input
-                    type="checkbox"
-                    checked={source.is_enabled}
-                    onChange={() => updateSource(source.id, { is_enabled: !source.is_enabled })}
-                  />
-                  <span className="settings-toggle-slider" />
-                </label>
                 <button className="pm-btn-ghost" onClick={() => setEditingSource(source)}>
                   {language === 'zh' ? '编辑' : 'Edit'}
                 </button>

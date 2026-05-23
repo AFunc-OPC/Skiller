@@ -110,11 +110,10 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const sources = await clawhubApi.listSources()
-      const enabledSources = sources.filter(s => s.is_enabled)
       const currentSelectedId = get().selectedSourceId
-      if (currentSelectedId && !enabledSources.find(s => s.id === currentSelectedId)) {
-        const firstEnabled = enabledSources.length > 0 ? enabledSources[0].id : null
-        set({ sources, selectedSourceId: firstEnabled, loading: false })
+      if (currentSelectedId && !sources.find(s => s.id === currentSelectedId)) {
+        const firstSource = sources.length > 0 ? sources[0].id : null
+        set({ sources, selectedSourceId: firstSource, loading: false })
       } else {
         set({ sources, loading: false })
       }

@@ -48,7 +48,6 @@ export function ClawHubPage() {
     clearAlertDialog,
   } = useClawhubStore()
 
-  const enabledSources = sources.filter(s => s.is_enabled)
   const selectedSource = sources.find(s => s.id === selectedSourceId)
 
   useEffect(() => {
@@ -62,16 +61,16 @@ export function ClawHubPage() {
   }, [fetchSources])
 
   useEffect(() => {
-    if (selectedSource?.is_enabled) {
+    if (selectedSource) {
       return
     }
 
-    const firstEnabledSource = enabledSources[0]
+    const firstSource = sources[0]
 
-    if (firstEnabledSource) {
-      selectSource(firstEnabledSource.id)
+    if (firstSource) {
+      selectSource(firstSource.id)
     }
-  }, [enabledSources, selectedSource, selectSource])
+  }, [sources, selectedSource, selectSource])
 
   const handleSelectSource = (id: string | null) => {
     selectSource(id)
@@ -81,7 +80,7 @@ export function ClawHubPage() {
     <div className="clawhub-layout">
       <SourceSidebar
         language={language}
-        sources={enabledSources}
+        sources={sources}
         selectedSourceId={selectedSourceId}
         onSelectSource={handleSelectSource}
       />

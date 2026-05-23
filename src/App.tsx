@@ -126,6 +126,7 @@ interface SidebarProps {
   reposCount: number
   tagsCount: number
   projectsCount: number
+  clawhubMenuEnabled: boolean
 }
 
 const Sidebar = memo(function Sidebar({
@@ -139,6 +140,7 @@ const Sidebar = memo(function Sidebar({
   reposCount,
   tagsCount,
   projectsCount,
+  clawhubMenuEnabled,
 }: SidebarProps) {
   const appStamp = t('appStamp', language)
   const [hoveredModule, setHoveredModule] = useState<{ note: string; title: string } | null>(null)
@@ -161,7 +163,7 @@ const Sidebar = memo(function Sidebar({
       </div>
       
       <nav className="nav-stack">
-        {modules.map((item) => {
+        {modules.filter((item) => item.key !== 'clawhub' || clawhubMenuEnabled).map((item) => {
           const title = language === 'zh' ? item.titleZh : item.titleEn
           const note = language === 'zh' ? item.noteZh : item.noteEn
           let displayTitle = title
@@ -215,7 +217,7 @@ const Sidebar = memo(function Sidebar({
 })
 
 function App() {
-  const { language, theme, setLanguage, setTheme } = useAppStore()
+  const { language, theme, clawhubMenuEnabled, setLanguage, setTheme } = useAppStore()
   const { fetchSkills, fetchTags, fetchTagGroups } = useSkillStore()
   const { skills: fileSkills, fetchSkills: fetchFileSkills } = useFileSkillStore()
   const { projects, fetchProjects, createProject } = useProjectStore()
@@ -249,7 +251,13 @@ function App() {
   }, [tree])
   
   const projectCount = projects.length
-  
+
+  useEffect(() => {
+    if (!clawhubMenuEnabled && activeModule === 'clawhub') {
+      setActiveModule('overview')
+    }
+  }, [clawhubMenuEnabled, activeModule])
+
   useEffect(() => {
     if (!isTauriEnvironment()) {
       return
@@ -428,6 +436,7 @@ function App() {
           reposCount={repos.length}
           tagsCount={tagCount}
           projectsCount={projectCount}
+          clawhubMenuEnabled={clawhubMenuEnabled}
         />
         
         <main className="workspace">
