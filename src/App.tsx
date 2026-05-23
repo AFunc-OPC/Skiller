@@ -390,7 +390,11 @@ function App() {
         )
       
       case 'clawhub':
-        return <ClawHubPage />
+        return (
+          <SkillProvider>
+            <ClawHubPage />
+          </SkillProvider>
+        )
       
       case 'tags':
         return (

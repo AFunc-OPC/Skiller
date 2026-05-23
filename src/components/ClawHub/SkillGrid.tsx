@@ -1,8 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
-import { ArrowUpDown, CheckSquare, ListChecks, Square } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { ArrowUpDown, CheckSquare, Download, ListChecks, Square } from 'lucide-react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
+import { useSkillContext } from '../../contexts/SkillContext'
+import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { t } from '../../i18n'
+import type { TreeNode } from '../../types'
 import { SkillDetailDrawer } from './SkillDetailDrawer'
 import { ImportButton } from './ImportButton'
 import { EmptyState } from './EmptyState'
@@ -36,13 +39,23 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     inspectSkill,
     clearSkillDetail,
     importSkills,
+    checkDuplicates,
+    importing,
   } = useClawhubStore()
+  const { updateSkillTags, refreshSkillData } = useSkillContext()
+  const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [localSearch, setLocalSearch] = useState('')
   const [batchMode, setBatchMode] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set())
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false)
+  const [importConfirmData, setImportConfirmData] = useState<{ existing: string[]; newSlugs: string[] }>({ existing: [], newSlugs: [] })
+  const [importingToCenter, setImportingToCenter] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
+  const [tagSearchKeyword, setTagSearchKeyword] = useState('')
+  const [expandedTagIds, setExpandedTagIds] = useState<Set<string>>(new Set())
   const lastExploreRequestKeyRef = useRef<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
@@ -52,8 +65,16 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     setBatchMode(false)
     setSelectedSlugs(new Set())
     setSortMenuOpen(false)
+    setImportConfirmOpen(false)
+    setSelectedTagIds(new Set())
+    setTagSearchKeyword('')
+    setExpandedTagIds(new Set())
     lastExploreRequestKeyRef.current = null
   }, [sourceId])
+
+  useEffect(() => {
+    fetchTagTree()
+  }, [fetchTagTree])
 
   const handleSearchSubmit = () => {
     const trimmed = localSearch.trim()
@@ -153,6 +174,133 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     })
   }
 
+  const handleImportToCenter = useCallback(async () => {
+    if (selectedSlugs.size === 0) return
+    try {
+      const duplicates = await checkDuplicates(Array.from(selectedSlugs))
+      const existingSlugs = duplicates.filter(d => d.exists).map(d => d.slug)
+      const newSlugs = duplicates.filter(d => !d.exists).map(d => d.slug)
+      const slugsWithoutCheck = Array.from(selectedSlugs).filter(s => !duplicates.some(d => d.slug === s))
+      setImportConfirmData({ existing: existingSlugs, newSlugs: [...newSlugs, ...slugsWithoutCheck] })
+      setSelectedTagIds(new Set())
+      setTagSearchKeyword('')
+      setExpandedTagIds(new Set())
+      setImportConfirmOpen(true)
+    } catch (error) {
+      console.error('Failed to check duplicates:', error)
+    }
+  }, [selectedSlugs, checkDuplicates])
+
+  const handleConfirmImport = useCallback(async () => {
+    const allSlugs = [...importConfirmData.existing, ...importConfirmData.newSlugs]
+    if (allSlugs.length === 0) return
+
+    setImportingToCenter(true)
+    setImportConfirmOpen(false)
+
+    try {
+      const overwrite = importConfirmData.existing.length > 0
+      const results = await importSkills(sourceId, allSlugs, overwrite)
+      const successSlugs = results.filter(r => r.success)
+
+      if (selectedTagIds.size > 0 && successSlugs.length > 0) {
+        const tagIds = Array.from(selectedTagIds)
+        for (const result of successSlugs) {
+          if (result.skill_id) {
+            try {
+              await updateSkillTags(result.skill_id, tagIds, { refresh: false })
+            } catch (e) {
+              console.error(`Failed to apply tags to skill ${result.slug}:`, e)
+            }
+          }
+        }
+      }
+
+      await refreshSkillData()
+      setSelectedSlugs(new Set())
+      setSelectedTagIds(new Set())
+    } catch (error) {
+      console.error('Import failed:', error)
+    } finally {
+      setImportingToCenter(false)
+    }
+  }, [importConfirmData, selectedTagIds, importSkills, sourceId, updateSkillTags, refreshSkillData])
+
+  const toggleTagSelection = useCallback((tagId: string) => {
+    setSelectedTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }, [])
+
+  const toggleTagExpand = useCallback((tagId: string) => {
+    setExpandedTagIds(prev => {
+      const next = new Set(prev)
+      if (next.has(tagId)) {
+        next.delete(tagId)
+      } else {
+        next.add(tagId)
+      }
+      return next
+    })
+  }, [])
+
+  const hasMatchingDescendant = useCallback((node: TreeNode, search: string): boolean => {
+    if (!search.trim()) return true
+    const searchLower = search.toLowerCase()
+    for (const child of node.children) {
+      if (child.tag.name.toLowerCase().includes(searchLower)) return true
+      if (hasMatchingDescendant(child, search)) return true
+    }
+    return false
+  }, [])
+
+  const renderTagNode = useCallback((node: TreeNode, depth: number) => {
+    const { tag } = node
+    const isExpanded = expandedTagIds.has(tag.id)
+    const isSelected = selectedTagIds.has(tag.id)
+    const hasChildren = node.children.length > 0
+    const matchesSearch = !tagSearchKeyword.trim() || tag.name.toLowerCase().includes(tagSearchKeyword.toLowerCase())
+
+    if (tagSearchKeyword.trim() && !matchesSearch && !hasMatchingDescendant(node, tagSearchKeyword)) return null
+
+    return (
+      <div key={tag.id}>
+        <div
+          className={`repo-tag-node ${isSelected ? 'selected' : ''}`}
+          style={{ paddingLeft: `${depth * 16 + 8}px` }}
+        >
+          <button
+            className={`repo-tag-toggle ${!hasChildren ? 'invisible' : ''}`}
+            onClick={() => toggleTagExpand(tag.id)}
+          >
+            {hasChildren && (
+              <svg viewBox="0 0 24 24" className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                <path fill="currentColor" d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <button className="repo-tag-label" onClick={() => toggleTagSelection(tag.id)}>
+            <span className="repo-tag-name">{tag.name}</span>
+            {isSelected && (
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {isExpanded && hasChildren && (
+          <div>{node.children.map(child => renderTagNode(child, depth + 1))}</div>
+        )}
+      </div>
+    )
+  }, [expandedTagIds, selectedTagIds, tagSearchKeyword, hasMatchingDescendant, toggleTagExpand, toggleTagSelection])
+
   const sortOptions: Array<{ value: SortOption; label: string }> = [
     { value: 'newest', label: t('clawhubSortNewest', language) },
     { value: 'updated', label: t('clawhubSortUpdated', language) },
@@ -247,6 +395,18 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                   >
                     {allSkillsSelected ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
                   </button>
+                  <button
+                    className="skill-multi-action-btn export"
+                    onClick={handleImportToCenter}
+                    disabled={selectedSlugs.size === 0 || importing || importingToCenter}
+                    title={language === 'zh' ? '导入到技能中心' : 'Import to Skill Center'}
+                    aria-label={language === 'zh' ? '导入到技能中心' : 'Import to Skill Center'}
+                    type="button"
+                  >
+                    {importingToCenter
+                      ? <div className="clawhub-spinner-small" />
+                      : <Download className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               )}
             </div>
@@ -336,20 +496,20 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                   <input type="checkbox" checked={selectedSlugs.has(skill.slug)} readOnly />
                 </div>
               )}
-              <div className="clawhub-card-content">
-                <div className="clawhub-card-header">
-                  <div>
-                    <h4 className="clawhub-card-name">{skill.name}</h4>
-                    <span className="clawhub-card-slug">{skill.slug}</span>
-                  </div>
+              <div className="clawhub-card-header">
+                <div className="clawhub-card-title">
+                  <h4 className="clawhub-card-name">{skill.name}</h4>
+                  <span className="clawhub-card-slug">{skill.slug}</span>
                 </div>
+                <div className="clawhub-card-actions" onClick={(e) => e.stopPropagation()}>
+                  <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
+                </div>
+              </div>
+              <div className="clawhub-card-content">
                 {skill.description && <p className="clawhub-card-desc" title={skill.description}>{skill.description}</p>}
                 <div className="clawhub-card-meta">
                   {renderMeta(skill)}
                 </div>
-              </div>
-              <div className="clawhub-card-actions" onClick={(e) => e.stopPropagation()}>
-                <ImportButton language={language} slug={skill.slug} sourceId={sourceId} />
               </div>
             </article>
           ))}
@@ -417,16 +577,93 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
         </div>
       )}
 
-      {batchMode && selectedSlugs.size > 0 && (
-        <div className="clawhub-batch-bar">
-          <span>{language === 'zh' ? `已选择 ${selectedSlugs.size} 项` : `${selectedSlugs.size} selected`}</span>
-          <ImportButton
-            language={language}
-            slug={Array.from(selectedSlugs)}
-            sourceId={sourceId}
-            isBatch
-          />
-        </div>
+      {importConfirmOpen && (
+        <>
+          <div className="repo-overlay" onClick={() => setImportConfirmOpen(false)} />
+          <div className="repo-confirm-modal repo-import-confirm-modal">
+            <div className="repo-confirm-icon repo-confirm-icon-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4M12 16h.01" />
+              </svg>
+            </div>
+            <h3>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h3>
+            <div className="repo-import-confirm-content">
+              {importConfirmData.existing.length > 0 && (
+                <div className="repo-import-existing">
+                  <p className="repo-import-section-title">
+                    {language === 'zh'
+                      ? `以下 ${importConfirmData.existing.length} 个技能已存在，导入后将覆盖：`
+                      : `${importConfirmData.existing.length} skill(s) already exist and will be overwritten:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {importConfirmData.existing.map(slug => (
+                      <li key={slug}>{slug}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {importConfirmData.newSlugs.length > 0 && (
+                <div className="repo-import-new">
+                  <p className="repo-import-section-title">
+                    {language === 'zh'
+                      ? `以下 ${importConfirmData.newSlugs.length} 个技能将新增：`
+                      : `${importConfirmData.newSlugs.length} skill(s) will be added:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {importConfirmData.newSlugs.map(slug => (
+                      <li key={slug}>{slug}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="repo-import-tag-section">
+                <p className="repo-import-section-title">
+                  {language === 'zh' ? '添加标签（可选）' : 'Add Tags (optional)'}
+                </p>
+                <div className="repo-import-tag-search">
+                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                    <circle cx="11" cy="11" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={tagSearchKeyword}
+                    onChange={(e) => setTagSearchKeyword(e.target.value)}
+                    placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                  />
+                </div>
+                <div className="repo-import-tag-tree">
+                  {tagTree.length > 0 ? (
+                    tagTree.map(node => renderTagNode(node, 0))
+                  ) : (
+                    <div className="repo-tag-empty">
+                      {language === 'zh' ? '暂无可选标签' : 'No available tags'}
+                    </div>
+                  )}
+                </div>
+                {selectedTagIds.size > 0 && (
+                  <div className="repo-import-selected-tags">
+                    {language === 'zh'
+                      ? `已选择 ${selectedTagIds.size} 个标签`
+                      : `${selectedTagIds.size} tag${selectedTagIds.size > 1 ? 's' : ''} selected`}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="repo-confirm-actions">
+              <button className="repo-btn-ghost" onClick={() => setImportConfirmOpen(false)}>
+                {language === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button
+                className="repo-btn-primary"
+                onClick={handleConfirmImport}
+              >
+                {language === 'zh' ? '确认导入' : 'Confirm Import'}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {selectedSkillSlug && skillOverview && (
