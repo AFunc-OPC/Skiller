@@ -50,6 +50,14 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const sortDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    setLocalSearch('')
+    setBatchMode(false)
+    setSelectedSlugs(new Set())
+    setSortMenuOpen(false)
+    lastExploreRequestKeyRef.current = null
+  }, [sourceId])
+
+  useEffect(() => {
     if (!sourceId || debouncedSearch.trim()) {
       return
     }
@@ -373,25 +381,31 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
         </div>
       )}
 
-      {cliLimitedTip && !searchQuery && (
-        <div className="clawhub-load-more-tip">
-          {language === 'zh'
-            ? 'CLI 模式至多展示 200 条数据，请使用搜索缩小范围'
-            : 'CLI mode shows up to 200 items. Use search to narrow results'}
-        </div>
-      )}
-
-      {!skillsLoading && hasMore && !searchQuery && (
-        <div className="clawhub-load-more">
-          <button
-            className="clawhub-load-more-btn"
-            onClick={() => loadMoreSkills(sourceId)}
-            disabled={loadingMore}
-          >
-            {loadingMore
-              ? (language === 'zh' ? '加载中...' : 'Loading...')
-              : (language === 'zh' ? '加载更多' : 'Load More')}
-          </button>
+      {!skillsLoading && skills.length > 0 && (
+        <div className="clawhub-load-more-footer">
+          <span className="clawhub-load-more-count">
+            {language === 'zh' ? `共 ${skills.length} 条` : `${skills.length} items`}
+          </span>
+          {cliLimitedTip && !searchQuery && (
+            <>
+              <span className="clawhub-load-more-divider" />
+              <span className="clawhub-load-more-hint">{language === 'zh' ? 'CLI 模式至多展示 200 条数据，请使用搜索缩小范围' : 'CLI mode shows up to 200 items. Use search to narrow results'}</span>
+            </>
+          )}
+          {hasMore && !searchQuery && (
+            <>
+              <span className="clawhub-load-more-divider" />
+              <button
+                className="clawhub-load-more-btn"
+                onClick={() => loadMoreSkills(sourceId)}
+                disabled={loadingMore}
+              >
+                {loadingMore
+                  ? (language === 'zh' ? '加载中...' : 'Loading...')
+                  : (language === 'zh' ? '加载更多' : 'Load More')}
+              </button>
+            </>
+          )}
         </div>
       )}
 
