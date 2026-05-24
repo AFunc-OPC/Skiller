@@ -14,17 +14,21 @@ interface ImportButtonProps {
   isBatch?: boolean
 }
 
+interface ImportConfirmData {
+  existing: string[]
+  newSlugs: string[]
+  allSlugs: string[]
+  overwrite: boolean
+}
+
 export function ImportButton({ language, slug, sourceId, isBatch }: ImportButtonProps) {
   const { importSkills, importing, importProgress, checkDuplicates } = useClawhubStore()
   const { updateSkillTags, refreshSkillData } = useSkillContext()
   const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
   const [imported, setImported] = useState(false)
   const [localAlert, setLocalAlert] = useState<AlertDialogState | null>(null)
-  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
-  const [duplicateInfo, setDuplicateInfo] = useState<{ slugs: string[]; duplicates: number } | null>(null)
-  const [showTagDialog, setShowTagDialog] = useState(false)
-  const [importWithOverwrite, setImportWithOverwrite] = useState(false)
-  const [importSlugs, setImportSlugs] = useState<string[]>([])
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [confirmData, setConfirmData] = useState<ImportConfirmData>({ existing: [], newSlugs: [], allSlugs: [], overwrite: false })
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [tagSearchKeyword, setTagSearchKeyword] = useState('')
   const [expandedTagIds, setExpandedTagIds] = useState<Set<string>>(new Set())
@@ -36,46 +40,39 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
     fetchTagTree()
   }, [fetchTagTree])
 
-  const openTagDialog = useCallback((slugsToImport: string[], overwrite: boolean) => {
-    setImportSlugs(slugsToImport)
-    setImportWithOverwrite(overwrite)
-    setSelectedTagIds(new Set())
-    setTagSearchKeyword('')
-    setExpandedTagIds(new Set())
-    setShowTagDialog(true)
-  }, [])
-
   const handleClick = async () => {
     if (imported || isImporting) return
 
     try {
       const duplicates = await checkDuplicates(slugs)
-      const existingDuplicates = duplicates.filter(d => d.exists)
+      const existingSlugs = duplicates.filter(d => d.exists).map(d => d.slug)
+      const newSlugs = duplicates.filter(d => !d.exists).map(d => d.slug)
+      const slugsWithoutCheck = Array.from(slugs).filter(s => !duplicates.some(d => d.slug === s))
 
-      if (existingDuplicates.length > 0) {
-        if (isBatch && existingDuplicates.length > 1) {
-          setDuplicateInfo({ slugs, duplicates: existingDuplicates.length })
-          setShowDuplicateDialog(true)
-          return
-        }
-        setDuplicateInfo({ slugs, duplicates: 1 })
-        setShowDuplicateDialog(true)
-        return
-      }
-
-      openTagDialog(slugs, false)
+      setConfirmData({
+        existing: existingSlugs,
+        newSlugs: [...newSlugs, ...slugsWithoutCheck],
+        allSlugs: Array.from(slugs),
+        overwrite: existingSlugs.length > 0,
+      })
+      setSelectedTagIds(new Set())
+      setTagSearchKeyword('')
+      setExpandedTagIds(new Set())
+      setShowConfirmDialog(true)
     } catch (error) {
       setLocalAlert({ title: 'ClawHub', message: String(error), type: 'error' })
     }
   }
 
-  const doImport = useCallback(async (slugsToImport: string[], overwrite: boolean, tagIds: string[]) => {
+  const handleConfirmImport = useCallback(async () => {
+    const { allSlugs, overwrite } = confirmData
     try {
       setLocalAlert(null)
-      const results = await importSkills(sourceId, slugsToImport, overwrite)
+      const results = await importSkills(sourceId, allSlugs, overwrite)
       const allSuccess = results.every(r => r.success)
       if (allSuccess) {
         const successResults = results.filter(r => r.success)
+        const tagIds = Array.from(selectedTagIds)
         if (tagIds.length > 0 && successResults.length > 0) {
           for (const result of successResults) {
             if (result.skill_id) {
@@ -96,8 +93,8 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
     } catch (error) {
       setLocalAlert({ title: 'ClawHub', message: String(error), type: 'error' })
     }
-    setShowTagDialog(false)
-  }, [importSkills, sourceId, updateSkillTags, refreshSkillData, language])
+    setShowConfirmDialog(false)
+  }, [confirmData, selectedTagIds, importSkills, sourceId, updateSkillTags, refreshSkillData, language])
 
   const toggleTagSelection = useCallback((tagId: string) => {
     setSelectedTagIds(prev => {
@@ -214,49 +211,9 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
         <AlertDialog dialog={localAlert} onClose={() => setLocalAlert(null)} confirmLabel={language === 'zh' ? '确定' : 'OK'} />
       )}
 
-      {showDuplicateDialog && duplicateInfo && (
-        <div className="pm-overlay" onClick={() => { setShowDuplicateDialog(false); setDuplicateInfo(null) }}>
-          <div className="pm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pm-modal-header">
-              <h2>{t('clawhubDuplicateDetected', language)}</h2>
-            </div>
-            <div className="pm-modal-body">
-              {isBatch && duplicateInfo.duplicates > 1 ? (
-                <p>{language === 'zh'
-                  ? `${duplicateInfo.duplicates} 个技能已存在。`
-                  : `${duplicateInfo.duplicates} skills already exist.`}</p>
-              ) : (
-                <p>{t('clawhubDuplicateDetected', language)}</p>
-              )}
-            </div>
-            <div className="pm-modal-footer">
-              <button className="pm-btn-ghost" onClick={() => { setShowDuplicateDialog(false); setDuplicateInfo(null) }}>
-                {t('clawhubCancel', language)}
-              </button>
-              {isBatch && duplicateInfo.duplicates > 1 && (
-                <button className="pm-btn-ghost" onClick={() => {
-                  const nonDuplicateSlugs = slugs.filter(s => !duplicateInfo.slugs.includes(s))
-                  setShowDuplicateDialog(false)
-                  setDuplicateInfo(null)
-                  openTagDialog(nonDuplicateSlugs, false)
-                }}>
-                  {t('clawhubSkipDuplicates', language)}
-                </button>
-              )}
-              <button className="pm-btn-primary" onClick={() => {
-                setShowDuplicateDialog(false)
-                openTagDialog(slugs, true)
-              }}>
-                {t('clawhubOverwrite', language)}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showTagDialog && (
+      {showConfirmDialog && (
         <>
-          <div className="repo-overlay" onClick={() => setShowTagDialog(false)} />
+          <div className="repo-overlay" onClick={() => setShowConfirmDialog(false)} />
           <div className="repo-confirm-modal repo-import-confirm-modal">
             <div className="repo-confirm-icon repo-confirm-icon-warning">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -266,18 +223,34 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
             </div>
             <h3>{language === 'zh' ? '确认导入' : 'Confirm Import'}</h3>
             <div className="repo-import-confirm-content">
-              <div className="repo-import-new">
-                <p className="repo-import-section-title">
-                  {language === 'zh'
-                    ? `将导入 ${importSlugs.length} 个技能`
-                    : `${importSlugs.length} skill(s) will be imported`}
-                </p>
-                <ul className="repo-import-skill-list">
-                  {importSlugs.map(s => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
-              </div>
+              {confirmData.existing.length > 0 && (
+                <div className="repo-import-existing">
+                  <p className="repo-import-section-title">
+                    {language === 'zh'
+                      ? `以下 ${confirmData.existing.length} 个技能已存在，导入后将覆盖：`
+                      : `${confirmData.existing.length} skill(s) already exist and will be overwritten:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {confirmData.existing.map(slug => (
+                      <li key={slug}>{slug}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {confirmData.newSlugs.length > 0 && (
+                <div className="repo-import-new">
+                  <p className="repo-import-section-title">
+                    {language === 'zh'
+                      ? `以下 ${confirmData.newSlugs.length} 个技能将新增：`
+                      : `${confirmData.newSlugs.length} skill(s) will be added:`}
+                  </p>
+                  <ul className="repo-import-skill-list">
+                    {confirmData.newSlugs.map(slug => (
+                      <li key={slug}>{slug}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="repo-import-tag-section">
                 <p className="repo-import-section-title">
                   {language === 'zh' ? '添加标签（可选）' : 'Add Tags (optional)'}
@@ -313,12 +286,12 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
               </div>
             </div>
             <div className="repo-confirm-actions">
-              <button className="repo-btn-ghost" onClick={() => setShowTagDialog(false)}>
+              <button className="repo-btn-ghost" onClick={() => setShowConfirmDialog(false)}>
                 {language === 'zh' ? '取消' : 'Cancel'}
               </button>
               <button
                 className="repo-btn-primary"
-                onClick={() => doImport(importSlugs, importWithOverwrite, Array.from(selectedTagIds))}
+                onClick={handleConfirmImport}
               >
                 {language === 'zh' ? '确认导入' : 'Confirm Import'}
               </button>
