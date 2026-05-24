@@ -19,6 +19,7 @@ export interface ClawhubSourceMetadata {
   type: 'clawhub'
   source_id: string
   slug: string
+  registry_url?: string
 }
 
 export type SourceMetadata = FileSourceMetadata | NpxSourceMetadata | RepoSourceMetadata | ClawhubSourceMetadata

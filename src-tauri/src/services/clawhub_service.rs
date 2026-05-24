@@ -832,7 +832,8 @@ fn import_single_skill(
             let source_metadata = serde_json::json!({
                 "type": "clawhub",
                 "source_id": source.id,
-                "slug": slug
+                "slug": slug,
+                "registry_url": source.registry_url
             });
             let metadata_path = target_dir.join(".skiller-source.json");
             if let Ok(contents) = serde_json::to_string_pretty(&source_metadata) {

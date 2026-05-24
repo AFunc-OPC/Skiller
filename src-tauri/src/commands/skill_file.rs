@@ -31,7 +31,7 @@ enum FileSkillSourceMetadata {
     #[serde(rename = "repository")]
     Repository { repo_id: String },
     #[serde(rename = "clawhub")]
-    Clawhub { source_id: String, slug: String },
+    Clawhub { source_id: String, slug: String, registry_url: Option<String> },
 }
 
 impl FileSkillSourceMetadata {
