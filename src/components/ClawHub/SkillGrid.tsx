@@ -43,7 +43,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     importing,
   } = useClawhubStore()
   const { updateSkillTags, refreshSkillData } = useSkillContext()
-  const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
+  const { tree: tagTree } = useTagTreeStore()
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [localSearch, setLocalSearch] = useState(searchQuery || '')
@@ -71,10 +71,6 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
     setExpandedTagIds(new Set())
     lastExploreRequestKeyRef.current = null
   }, [sourceId])
-
-  useEffect(() => {
-    fetchTagTree()
-  }, [fetchTagTree])
 
   const handleSearchSubmit = () => {
     const trimmed = localSearch.trim()

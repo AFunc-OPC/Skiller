@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
+import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { t } from '../../i18n'
 import { SourceSidebar } from './SourceSidebar'
 import { SkillGrid } from './SkillGrid'
@@ -47,6 +48,7 @@ export function ClawHubPage() {
     alertDialog,
     clearAlertDialog,
   } = useClawhubStore()
+  const { fetchTree: fetchTagTree } = useTagTreeStore()
 
   const selectedSource = sources.find(s => s.id === selectedSourceId)
 
@@ -71,6 +73,10 @@ export function ClawHubPage() {
       selectSource(firstSource.id)
     }
   }, [sources, selectedSource, selectSource])
+
+  useEffect(() => {
+    fetchTagTree()
+  }, [fetchTagTree])
 
   const handleSelectSource = (id: string | null) => {
     selectSource(id)

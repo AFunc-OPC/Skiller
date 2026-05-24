@@ -42,15 +42,26 @@ export const useTagTreeStore = create<TagTreeState>((set, get) => ({
   selectedTagId: null,
   loading: false,
   error: null,
+  _fetchPromise: null as Promise<void> | null,
   
   fetchTree: async () => {
-    set({ loading: true, error: null })
-    try {
-      const tree = await tagApi.getTree()
-      set({ tree, loading: false })
-    } catch (error) {
-      set({ error: String(error), loading: false })
+    const state = get() as TagTreeState & { _fetchPromise: Promise<void> | null }
+    if (state._fetchPromise) {
+      return state._fetchPromise
     }
+    const promise = (async () => {
+      try {
+        set({ loading: true, error: null })
+        const tree = await tagApi.getTree()
+        set({ tree, loading: false })
+      } catch (error) {
+        set({ error: String(error), loading: false })
+      } finally {
+        set({ _fetchPromise: null } as any)
+      }
+    })()
+    set({ _fetchPromise: promise } as any)
+    return promise
   },
   
   createTag: async (name, groupId, parentId) => {

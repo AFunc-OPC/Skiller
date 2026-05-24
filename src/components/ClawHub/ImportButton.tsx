@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useEffect } from 'react'
+import { useState, memo, useCallback } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useTagTreeStore } from '../../stores/tagTreeStore'
@@ -24,7 +24,7 @@ interface ImportConfirmData {
 export function ImportButton({ language, slug, sourceId, isBatch }: ImportButtonProps) {
   const { importSkills, importing, importProgress, checkDuplicates } = useClawhubStore()
   const { updateSkillTags, refreshSkillData } = useSkillContext()
-  const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
+  const { tree: tagTree } = useTagTreeStore()
   const [imported, setImported] = useState(false)
   const [localAlert, setLocalAlert] = useState<AlertDialogState | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -35,10 +35,6 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
 
   const slugs = Array.isArray(slug) ? slug : [slug]
   const isImporting = importing && importProgress?.currentSlug === slugs[0]
-
-  useEffect(() => {
-    fetchTagTree()
-  }, [fetchTagTree])
 
   const handleClick = async () => {
     if (imported || isImporting) return
