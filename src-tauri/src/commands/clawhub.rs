@@ -178,7 +178,7 @@ pub async fn clawhub_import_skills(app: AppHandle, source_id: String, slugs: Vec
 }
 
 #[tauri::command]
-pub fn clawhub_check_duplicates(db: State<'_, DbConnection>, slugs: Vec<String>) -> Result<Vec<DuplicateCheckResult>, String> {
-    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+pub fn clawhub_check_duplicates(_db: State<'_, DbConnection>, slugs: Vec<String>) -> Result<Vec<DuplicateCheckResult>, String> {
+    let conn = get_connection(&_db).map_err(|e| e.to_string())?;
     clawhub_service::check_duplicates(&conn, &slugs).map_err(|e| e.to_string())
 }

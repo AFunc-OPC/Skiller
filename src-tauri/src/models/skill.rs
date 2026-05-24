@@ -27,6 +27,8 @@ pub enum SourceMetadata {
     Npx { command: String },
     #[serde(rename = "repository")]
     Repository { repo_id: String },
+    #[serde(rename = "clawhub")]
+    Clawhub { source_id: String, slug: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

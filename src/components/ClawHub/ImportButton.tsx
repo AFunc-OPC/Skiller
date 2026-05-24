@@ -1,5 +1,6 @@
 import { useState, memo } from 'react'
 import { useClawhubStore } from '../../stores/clawhubStore'
+import { useSkillContext } from '../../contexts/SkillContext'
 import { t } from '../../i18n'
 import { AlertDialog } from '../AlertDialog'
 import type { AlertDialogState } from '../AlertDialog'
@@ -13,6 +14,7 @@ interface ImportButtonProps {
 
 export function ImportButton({ language, slug, sourceId, isBatch }: ImportButtonProps) {
   const { importSkills, importing, importProgress, checkDuplicates } = useClawhubStore()
+  const { refreshSkillData } = useSkillContext()
   const [imported, setImported] = useState(false)
   const [localAlert, setLocalAlert] = useState<AlertDialogState | null>(null)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
@@ -52,6 +54,7 @@ export function ImportButton({ language, slug, sourceId, isBatch }: ImportButton
       const allSuccess = results.every(r => r.success)
       if (allSuccess) {
         setImported(true)
+        await refreshSkillData()
       } else {
         const failed = results.filter(r => !r.success)
         setLocalAlert({ title: 'ClawHub', message: `${t('clawhubImportFailed', language)}: ${failed.map(r => r.error || r.slug).join(', ')}`, type: 'error' })

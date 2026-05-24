@@ -41,6 +41,7 @@ fn validate_source_metadata_with_conn(
                 )));
             }
         }
+        SourceMetadata::Clawhub { .. } => {}
     }
     Ok(())
 }

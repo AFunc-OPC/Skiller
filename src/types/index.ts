@@ -15,7 +15,13 @@ export interface RepoSourceMetadata {
   repo_url?: string
 }
 
-export type SourceMetadata = FileSourceMetadata | NpxSourceMetadata | RepoSourceMetadata
+export interface ClawhubSourceMetadata {
+  type: 'clawhub'
+  source_id: string
+  slug: string
+}
+
+export type SourceMetadata = FileSourceMetadata | NpxSourceMetadata | RepoSourceMetadata | ClawhubSourceMetadata
 
 export interface Skill {
   id: string

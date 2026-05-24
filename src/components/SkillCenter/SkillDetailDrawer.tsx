@@ -64,6 +64,7 @@ function getSourceDisplay(skill: Skill, language: string): { kind: string; label
     file: language === 'zh' ? '从文件导入' : 'Imported from file',
     npx: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
     repository: language === 'zh' ? '从仓库导入' : 'Imported from repository',
+    clawhub: language === 'zh' ? '从 ClawHub 导入' : 'Imported from ClawHub',
   }
 
   if (!sourceMetadata) {
@@ -85,6 +86,12 @@ function getSourceDisplay(skill: Skill, language: string): { kind: string; label
       }
     case 'repository':
       return { kind: 'repository', label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
+    case 'clawhub':
+      return {
+        kind: 'clawhub',
+        label: language === 'zh' ? '从 ClawHub 导入' : 'Imported from ClawHub',
+        detail: sourceMetadata.slug,
+      }
   }
 }
 

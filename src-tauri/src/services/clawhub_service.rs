@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 use std::process::Command;
 use uuid::Uuid;
-use chrono::Utc;
+use chrono::{Local, Utc};
 use std::io::Write;
 
 use crate::error::SkillerError;
@@ -721,35 +721,57 @@ fn read_file_cli(source: &ClawhubSource, slug: &str, path: &str, version: Option
     })
 }
 
-pub fn check_duplicates(conn: &Connection, slugs: &[String]) -> Result<Vec<DuplicateCheckResult>, SkillerError> {
+pub fn check_duplicates(_conn: &Connection, slugs: &[String]) -> Result<Vec<DuplicateCheckResult>, SkillerError> {
+    let home = dirs::home_dir().ok_or_else(|| {
+        SkillerError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Cannot get home directory",
+        ))
+    })?;
+    let skills_dir = home.join(".skiller").join("skills");
+
     let mut results = Vec::new();
     for slug in slugs {
-        let exists = conn.query_row(
-            "SELECT id, name FROM skills WHERE file_path LIKE ?1 OR name = ?1",
-            rusqlite::params![format!("%{}%", slug)],
-            |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
-        ).ok();
+        let skill_path = skills_dir.join(slug);
+        let skill_md = skill_path.join("SKILL.md");
+        let exists = skill_path.is_dir() && skill_md.exists();
 
-        match exists {
-            Some((id, name)) => {
-                results.push(DuplicateCheckResult {
-                    slug: slug.clone(),
-                    exists: true,
-                    existing_skill_id: Some(id),
-                    existing_skill_name: Some(name),
-                });
-            }
-            None => {
-                results.push(DuplicateCheckResult {
-                    slug: slug.clone(),
-                    exists: false,
-                    existing_skill_id: None,
-                    existing_skill_name: None,
-                });
-            }
-        }
+        results.push(DuplicateCheckResult {
+            slug: slug.clone(),
+            exists,
+            existing_skill_id: if exists { Some(skill_path.to_string_lossy().to_string()) } else { None },
+            existing_skill_name: if exists { Some(slug.clone()) } else { None },
+        });
     }
     Ok(results)
+}
+
+fn get_skiller_skills_dir() -> Result<std::path::PathBuf, SkillerError> {
+    let home = dirs::home_dir().ok_or_else(|| {
+        SkillerError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Cannot get home directory",
+        ))
+    })?;
+    let skills_dir = home.join(".skiller").join("skills");
+    if !skills_dir.exists() {
+        std::fs::create_dir_all(&skills_dir)?;
+    }
+    Ok(skills_dir)
+}
+
+fn get_skiller_root_dir() -> Result<std::path::PathBuf, SkillerError> {
+    let home = dirs::home_dir().ok_or_else(|| {
+        SkillerError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Cannot get home directory",
+        ))
+    })?;
+    let skiller_dir = home.join(".skiller");
+    if !skiller_dir.exists() {
+        std::fs::create_dir_all(&skiller_dir)?;
+    }
+    Ok(skiller_dir)
 }
 
 pub fn import_skills(
@@ -757,13 +779,13 @@ pub fn import_skills(
     source_id: &str,
     slugs: &[String],
     overwrite: bool,
-    app_data_dir: &str,
+    _app_data_dir: &str,
 ) -> Result<Vec<ImportSkillResult>, SkillerError> {
     let source = get_source_by_id_with_token(conn, source_id)?;
     let mut results = Vec::new();
 
     for slug in slugs {
-        let result = import_single_skill(conn, &source, slug, overwrite, app_data_dir);
+        let result = import_single_skill(&source, slug, overwrite);
         results.push(result);
     }
 
@@ -771,13 +793,11 @@ pub fn import_skills(
 }
 
 fn import_single_skill(
-    conn: &Connection,
     source: &ClawhubSource,
     slug: &str,
     overwrite: bool,
-    app_data_dir: &str,
 ) -> ImportSkillResult {
-    let duplicates = match check_duplicates(conn, &[slug.to_string()]) {
+    let skills_dir = match get_skiller_skills_dir() {
         Ok(d) => d,
         Err(e) => {
             return ImportSkillResult {
@@ -790,18 +810,8 @@ fn import_single_skill(
         }
     };
 
-    if !duplicates.is_empty() && duplicates[0].exists && !overwrite {
-        return ImportSkillResult {
-            slug: slug.to_string(),
-            success: false,
-            error: None,
-            skill_id: duplicates[0].existing_skill_id.clone(),
-            already_exists: true,
-        };
-    }
-
-    let skill_dir = std::path::Path::new(app_data_dir).join("skills").join(slug);
-    if skill_dir.exists() && !overwrite {
+    let target_dir = skills_dir.join(slug);
+    if target_dir.exists() && !overwrite {
         return ImportSkillResult {
             slug: slug.to_string(),
             success: false,
@@ -812,60 +822,29 @@ fn import_single_skill(
     }
 
     let download_result = match source.connection_type.as_str() {
-        "api" => download_skill_api(source, slug, &skill_dir),
-        "cli" => install_skill_cli(source, slug, &skill_dir),
+        "api" => download_and_install_skill_api(source, slug, &target_dir, overwrite),
+        "cli" => download_and_install_skill_cli(source, slug, &target_dir, overwrite),
         _ => Err(SkillerError::ValidationError(format!("Unknown connection type: {}", source.connection_type))),
     };
 
     match download_result {
-        Ok(skill_name) => {
-            let skill_id = Uuid::new_v4().to_string();
-            let now = Utc::now().to_rfc3339();
-            let file_path = skill_dir.to_string_lossy().to_string();
+        Ok(_skill_name) => {
             let source_metadata = serde_json::json!({
                 "type": "clawhub",
                 "source_id": source.id,
                 "slug": slug
-            }).to_string();
-
-            if overwrite {
-                if let Ok(existing_id) = conn.query_row(
-                    "SELECT id FROM skills WHERE name = ?1 OR file_path LIKE ?2",
-                    rusqlite::params![slug, format!("%{}%", slug)],
-                    |row| row.get::<_, String>(0),
-                ) {
-                    conn.execute(
-                        "UPDATE skills SET name = ?1, file_path = ?2, source_metadata = ?3, updated_at = ?4 WHERE id = ?5",
-                        rusqlite::params![skill_name, file_path, source_metadata, now, existing_id],
-                    ).ok();
-                    return ImportSkillResult {
-                        slug: slug.to_string(),
-                        success: true,
-                        error: None,
-                        skill_id: Some(existing_id),
-                        already_exists: true,
-                    };
-                }
+            });
+            let metadata_path = target_dir.join(".skiller-source.json");
+            if let Ok(contents) = serde_json::to_string_pretty(&source_metadata) {
+                let _ = std::fs::write(&metadata_path, contents);
             }
 
-            match conn.execute(
-                "INSERT INTO skills (id, name, description, file_path, source, source_metadata, repo_id, tags, status, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
-                rusqlite::params![skill_id, skill_name, Option::<String>::None, file_path, "clawhub", source_metadata, Option::<String>::None, "[]", "available", now, now],
-            ) {
-                Ok(_) => ImportSkillResult {
-                    slug: slug.to_string(),
-                    success: true,
-                    error: None,
-                    skill_id: Some(skill_id),
-                    already_exists: false,
-                },
-                Err(e) => ImportSkillResult {
-                    slug: slug.to_string(),
-                    success: false,
-                    error: Some(e.to_string()),
-                    skill_id: None,
-                    already_exists: false,
-                },
+            ImportSkillResult {
+                slug: slug.to_string(),
+                success: true,
+                error: None,
+                skill_id: Some(target_dir.to_string_lossy().to_string()),
+                already_exists: false,
             }
         }
         Err(e) => ImportSkillResult {
@@ -878,19 +857,56 @@ fn import_single_skill(
     }
 }
 
-fn download_skill_api(source: &ClawhubSource, slug: &str, target_dir: &std::path::Path) -> Result<String, SkillerError> {
-    if let Some(parent) = target_dir.parent() {
-        std::fs::create_dir_all(parent)?;
+fn find_skill_md_recursive(base_dir: &std::path::Path) -> Option<std::path::PathBuf> {
+    if base_dir.join("SKILL.md").exists() {
+        return Some(base_dir.to_path_buf());
     }
-    if target_dir.exists() {
-        std::fs::remove_dir_all(target_dir)?;
+
+    if let Ok(entries) = std::fs::read_dir(base_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let dir_name = path.file_name()?.to_string_lossy();
+                if dir_name.starts_with('.') || dir_name == "__MACOSX" {
+                    continue;
+                }
+                if let Some(found) = find_skill_md_recursive(&path) {
+                    return Some(found);
+                }
+            }
+        }
     }
-    std::fs::create_dir_all(target_dir)?;
+
+    None
+}
+
+fn download_and_install_skill_api(
+    source: &ClawhubSource,
+    slug: &str,
+    target_dir: &std::path::Path,
+    overwrite: bool,
+) -> Result<String, SkillerError> {
+    let root_dir = get_skiller_root_dir()?;
+    let temp_dir = root_dir.join(".temp");
+    std::fs::create_dir_all(&temp_dir)?;
+
+    if target_dir.exists() && overwrite {
+        let backup_dir = root_dir.join(".backup");
+        std::fs::create_dir_all(&backup_dir)?;
+        let timestamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let backup_path = backup_dir.join(format!("{}-{}", slug, timestamp));
+        let _ = fs_extra::dir::copy(target_dir, &backup_path, &fs_extra::dir::CopyOptions {
+            copy_inside: false,
+            content_only: false,
+            ..fs_extra::dir::CopyOptions::new()
+        });
+        let _ = std::fs::remove_dir_all(target_dir);
+    }
 
     let runtime = tokio::runtime::Runtime::new().map_err(|e| SkillerError::ClawhubApiError(e.to_string()))?;
-    runtime.block_on(async {
+    let bytes = runtime.block_on(async {
         let client = reqwest::Client::new();
-        let url = format!("{}/api/v1/download/{}", source.registry_url.trim_end_matches('/'), slug);
+        let url = format!("{}/api/v1/download?slug={}", source.registry_url.trim_end_matches('/'), slug);
         let mut request = client.get(&url);
         if !source.token.is_empty() {
             request = request.bearer_auth(&source.token);
@@ -899,34 +915,85 @@ fn download_skill_api(source: &ClawhubSource, slug: &str, target_dir: &std::path
         if !response.status().is_success() {
             return Err(SkillerError::ClawhubApiError(format!("Download failed: HTTP {}", response.status())));
         }
-
         let bytes = response.bytes().await.map_err(|e| SkillerError::ClawhubApiError(format!("Read error: {}", e)))?;
-        let zip_path = target_dir.with_extension("zip");
-        std::fs::write(&zip_path, &bytes)?;
-        let zip_file = std::fs::File::open(&zip_path)?;
-        let mut archive = zip::ZipArchive::new(zip_file).map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
-        archive.extract(target_dir).map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
-        let _ = std::fs::remove_file(&zip_path);
+        Ok(bytes)
+    })?;
 
-        let skill_name = target_dir
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_else(|| slug.to_string());
+    let session_id = Uuid::new_v4().to_string();
+    let temp_extract_dir = temp_dir.join(&session_id);
+    std::fs::create_dir_all(&temp_extract_dir)?;
 
-        Ok(skill_name)
-    })
+    let zip_path = temp_extract_dir.join(format!("{}.zip", slug));
+    std::fs::write(&zip_path, &bytes)?;
+    let zip_file = std::fs::File::open(&zip_path)
+        .map_err(|e| SkillerError::IoError(e))?;
+    let mut archive = zip::ZipArchive::new(zip_file)
+        .map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    archive.extract(&temp_extract_dir)
+        .map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+    let _ = std::fs::remove_file(&zip_path);
+
+    let (source_content_dir, skill_name) = match find_skill_md_recursive(&temp_extract_dir) {
+        Some(skill_dir) => {
+            let name = skill_dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(slug)
+                .to_string();
+            (skill_dir, name)
+        }
+        None => {
+            let _ = std::fs::remove_dir_all(&temp_extract_dir);
+            return Err(SkillerError::ValidationError(
+                "Downloaded skill does not contain a SKILL.md file".to_string(),
+            ));
+        }
+    };
+
+    std::fs::create_dir_all(target_dir)?;
+    let copy_options = fs_extra::dir::CopyOptions {
+        content_only: true,
+        ..fs_extra::dir::CopyOptions::new()
+    };
+    fs_extra::dir::copy(&source_content_dir, target_dir, &copy_options)
+        .map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    let _ = std::fs::remove_dir_all(&temp_extract_dir);
+
+    Ok(skill_name)
 }
 
-fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path::Path) -> Result<String, SkillerError> {
-    if target_dir.exists() {
-        std::fs::remove_dir_all(target_dir)?;
+fn download_and_install_skill_cli(
+    source: &ClawhubSource,
+    slug: &str,
+    target_dir: &std::path::Path,
+    overwrite: bool,
+) -> Result<String, SkillerError> {
+    let root_dir = get_skiller_root_dir()?;
+    let temp_dir = root_dir.join(".temp");
+    std::fs::create_dir_all(&temp_dir)?;
+
+    if target_dir.exists() && overwrite {
+        let backup_dir = root_dir.join(".backup");
+        std::fs::create_dir_all(&backup_dir)?;
+        let timestamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let backup_path = backup_dir.join(format!("{}-{}", slug, timestamp));
+        let _ = fs_extra::dir::copy(target_dir, &backup_path, &fs_extra::dir::CopyOptions {
+            copy_inside: false,
+            content_only: false,
+            ..fs_extra::dir::CopyOptions::new()
+        });
+        let _ = std::fs::remove_dir_all(target_dir);
     }
-    std::fs::create_dir_all(target_dir)?;
+
+    let session_id = Uuid::new_v4().to_string();
+    let install_dir = temp_dir.join(&session_id);
+    std::fs::create_dir_all(&install_dir)?;
 
     let cli_path = source.cli_path.as_deref().unwrap_or("clawhub");
     let config = TempClawhubConfig::create(&source.registry_url, &source.token)?;
     let mut cmd = Command::new(cli_path);
-    cmd.arg("install").arg(slug).arg("--dir").arg(target_dir.to_string_lossy().as_ref());
+    cmd.arg("install").arg(slug).arg("--dir").arg(install_dir.to_string_lossy().as_ref());
     config.apply_to_command(&mut cmd);
 
     let output = cmd.output().map_err(|e| {
@@ -938,11 +1005,39 @@ fn install_skill_cli(source: &ClawhubSource, slug: &str, target_dir: &std::path:
     })?;
 
     if !output.status.success() {
+        let _ = std::fs::remove_dir_all(&install_dir);
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(SkillerError::ClawhubCliError(format!("Install failed: {}", stderr.trim())));
     }
 
-    Ok(slug.to_string())
+    let (source_content_dir, skill_name) = match find_skill_md_recursive(&install_dir) {
+        Some(skill_dir) => {
+            let name = skill_dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(slug)
+                .to_string();
+            (skill_dir, name)
+        }
+        None => {
+            let _ = std::fs::remove_dir_all(&install_dir);
+            return Err(SkillerError::ValidationError(
+                "Downloaded skill does not contain a SKILL.md file".to_string(),
+            ));
+        }
+    };
+
+    std::fs::create_dir_all(target_dir)?;
+    let copy_options = fs_extra::dir::CopyOptions {
+        content_only: true,
+        ..fs_extra::dir::CopyOptions::new()
+    };
+    fs_extra::dir::copy(&source_content_dir, target_dir, &copy_options)
+        .map_err(|e| SkillerError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+
+    let _ = std::fs::remove_dir_all(&install_dir);
+
+    Ok(skill_name)
 }
 
 #[cfg(test)]
