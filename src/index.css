@@ -8,6 +8,7 @@
   --border-soft: #e5e7eb;
   --text-primary: #111827;
   --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
   --accent-mint: #10b981;
   --accent-amber: #f59e0b;
   --accent-ink: #3b82f6;
@@ -19,6 +20,7 @@
   --border-soft: #262626;
   --text-primary: #fafafa;
   --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
   --accent-mint: #34d399;
   --accent-amber: #fbbf24;
   --accent-ink: #60a5fa;
@@ -293,7 +295,7 @@ body {
 }
 
 .nav-footer {
-  padding: 0.875rem 0.75rem 1rem;
+  padding: 0.5rem 0.625rem 0.625rem;
   border-top: 1px solid var(--border-soft);
   flex-shrink: 0;
   background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.02) 100%);
@@ -301,29 +303,39 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.nav-footer-row {
+  display: flex;
+  gap: 0.375rem;
+  width: 100%;
 }
 
 .nav-user-guide-btn {
+  flex: 4;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.08) 100%);
   border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .nav-user-guide-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
   color: var(--accent-mint);
   transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
@@ -333,7 +345,6 @@ body {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
   border-color: var(--accent-mint);
   color: var(--text-primary);
-  transform: translateX(2px);
 }
 
 .nav-user-guide-btn:hover svg {
@@ -341,15 +352,93 @@ body {
 }
 
 .nav-user-guide-btn:active {
-  transform: translateX(2px) scale(0.98);
+  transform: scale(0.98);
 }
 
 .nav-user-guide-text {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-github-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.25rem 0.25rem 0.375rem;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nav-github-octicon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.nav-github-star-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-github-star-icon {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  color: #e3b341;
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.nav-github-text {
+  white-space: nowrap;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-github-btn:hover {
+  background: rgba(227, 179, 65, 0.08);
+  color: var(--text-secondary);
+}
+
+.nav-github-btn:hover .nav-github-octicon {
+  color: var(--text-primary);
+}
+
+.nav-github-btn:hover .nav-github-star-icon {
+  transform: scale(1.2) rotate(14deg);
+}
+
+.nav-github-btn:hover .nav-github-text {
+  color: var(--text-secondary);
+}
+
+.nav-github-btn:active {
+  transform: scale(0.96);
+}
+
+.sidebar.collapsed .nav-footer-row {
+  flex-direction: column;
 }
 
 .sidebar.collapsed .nav-user-guide-btn {
-  padding: 0.5rem;
+  flex: none;
+  padding: 0.375rem;
   justify-content: center;
 }
 
@@ -357,13 +446,35 @@ body {
   display: none;
 }
 
+.sidebar.collapsed .nav-github-btn {
+  flex: none;
+  padding: 0.25rem;
+  gap: 0;
+}
+
+.sidebar.collapsed .nav-github-octicon {
+  display: block;
+}
+
+.sidebar.collapsed .nav-github-star-row {
+  display: none;
+}
+
+.sidebar.collapsed .nav-github-text {
+  display: none;
+}
+
 .sidebar.collapsed .nav-footer {
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
   align-items: center;
 }
 
 [data-theme="dark"] .nav-footer {
   background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+[data-theme="dark"] .nav-github-btn:hover {
+  background: rgba(227, 179, 65, 0.10);
 }
 
 .nav-footer-meta {
