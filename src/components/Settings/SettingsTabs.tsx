@@ -3,6 +3,7 @@ import { ToolPresetSettings } from './ToolPresetSettings'
 import { LogPanel } from './LogPanel'
 import { About } from './About'
 import { ProxySettings } from './ProxySettings'
+import { ClawhubSourceSettings } from './ClawhubSourceSettings'
 import { t } from '../../i18n'
 
 interface SettingsTabsProps {
@@ -10,9 +11,10 @@ interface SettingsTabsProps {
   setLanguage: (lang: 'zh' | 'en') => void
   theme: 'light' | 'dark'
   setTheme: (theme: 'light' | 'dark') => void
+  defaultTab?: string
 }
 
-type TabKey = 'general' | 'presets' | 'proxy' | 'logs' | 'about'
+type TabKey = 'general' | 'clawhub' | 'presets' | 'proxy' | 'logs' | 'about'
 
 const TAB_ICONS: Record<TabKey, JSX.Element> = {
   general: (
@@ -47,13 +49,20 @@ const TAB_ICONS: Record<TabKey, JSX.Element> = {
       <path d="M10 7v1M10 10.5v3"/>
     </svg>
   ),
+  clawhub: (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="10" r="7.5"/>
+      <path d="M2 10h16M10 2a13 13 0 014 8 13 13 0 01-4 8 13 13 0 01-4-8 13 13 0 014-8z"/>
+    </svg>
+  ),
 }
 
-export function SettingsTabs({ language, setLanguage, theme, setTheme }: SettingsTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>('general')
+export function SettingsTabs({ language, setLanguage, theme, setTheme, defaultTab }: SettingsTabsProps) {
+  const [activeTab, setActiveTab] = useState<TabKey>((defaultTab as TabKey) || 'general')
   
   const tabs: Array<{ key: TabKey; label: string; labelEn: string }> = [
     { key: 'general', label: '通用设置', labelEn: 'General' },
+    { key: 'clawhub', label: 'ClawHub 源', labelEn: 'ClawHub Source' },
     { key: 'presets', label: '路径预设', labelEn: 'Path Presets' },
     { key: 'proxy', label: '代理', labelEn: 'Proxy' },
     { key: 'logs', label: '运行日志', labelEn: 'Logs' },
@@ -175,6 +184,8 @@ export function SettingsTabs({ language, setLanguage, theme, setTheme }: Setting
               </div>
             </div>
           )}
+          
+          {activeTab === 'clawhub' && <ClawhubSourceSettings language={language} />}
           
           {activeTab === 'presets' && <ToolPresetSettings language={language} />}
           

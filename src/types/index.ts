@@ -15,7 +15,14 @@ export interface RepoSourceMetadata {
   repo_url?: string
 }
 
-export type SourceMetadata = FileSourceMetadata | NpxSourceMetadata | RepoSourceMetadata
+export interface ClawhubSourceMetadata {
+  type: 'clawhub'
+  source_id: string
+  slug: string
+  registry_url?: string
+}
+
+export type SourceMetadata = FileSourceMetadata | NpxSourceMetadata | RepoSourceMetadata | ClawhubSourceMetadata
 
 export interface Skill {
   id: string
@@ -339,6 +346,125 @@ export interface ProxyConfig {
   mode: ProxyMode
   system?: SystemProxyConfig
   custom?: CustomProxyConfig
+}
+
+export interface ClawhubSource {
+  id: string
+  name: string
+  registry_url: string
+  token: string
+  connection_type: 'api' | 'cli'
+  cli_path: string | null
+  is_enabled: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateClawhubSourceRequest {
+  name: string
+  registry_url: string
+  token: string
+  connection_type: 'api' | 'cli'
+  cli_path?: string
+  is_enabled?: boolean
+  sort_order?: number
+}
+
+export interface UpdateClawhubSourceRequest {
+  id: string
+  name?: string
+  registry_url?: string
+  token?: string
+  connection_type?: 'api' | 'cli'
+  cli_path?: string
+  is_enabled?: boolean
+  sort_order?: number
+}
+
+export interface ClawhubExploreResult {
+  skills: ClawhubSkill[]
+  has_more: boolean
+  cli_limited: boolean
+}
+
+export interface ClawhubSkill {
+  slug: string
+  name: string
+  description: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface ClawhubSkillDetail {
+  slug: string
+  name: string
+  description: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+  skill_md_content: string | null
+}
+
+export interface ClawhubSkillOverview {
+  slug: string
+  name: string
+  description: string | null
+  summary: string | null
+  version: string | null
+  downloads: number | null
+  rating: number | null
+  created_at: string | null
+  updated_at: string | null
+  owner_handle: string | null
+  owner_name: string | null
+  metadata_os: string[] | null
+  metadata_systems: string[] | null
+}
+
+export interface ClawhubSkillVersionItem {
+  version: string
+  created_at: string | null
+  changelog: string | null
+  is_latest: boolean
+}
+
+export interface ClawhubSkillFileEntry {
+  path: string
+  size: number | null
+  content_type: string | null
+}
+
+export interface ClawhubSkillFileContent {
+  path: string
+  content: string | null
+  is_markdown: boolean
+}
+
+export interface ConnectionTestResult {
+  success: boolean
+  message: string
+  username: string | null
+}
+
+export interface ImportSkillResult {
+  slug: string
+  success: boolean
+  error: string | null
+  skill_id: string | null
+  already_exists: boolean
+}
+
+export interface DuplicateCheckResult {
+  slug: string
+  exists: boolean
+  existing_skill_id: string | null
+  existing_skill_name: string | null
 }
 
 export * from './sort'

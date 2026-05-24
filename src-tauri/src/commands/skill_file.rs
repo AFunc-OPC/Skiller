@@ -30,6 +30,8 @@ enum FileSkillSourceMetadata {
     Npx { command: String },
     #[serde(rename = "repository")]
     Repository { repo_id: String },
+    #[serde(rename = "clawhub")]
+    Clawhub { source_id: String, slug: String, registry_url: Option<String> },
 }
 
 impl FileSkillSourceMetadata {
@@ -38,6 +40,7 @@ impl FileSkillSourceMetadata {
             Self::File { .. } => "file",
             Self::Npx { .. } => "npx",
             Self::Repository { .. } => "repository",
+            Self::Clawhub { .. } => "clawhub",
         }
     }
 }

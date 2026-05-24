@@ -16,6 +16,7 @@ interface SkillDetailDrawerProps {
   onToggleStatus: (skillId: string) => Promise<void>
   onDelete: (skillId: string) => Promise<void>
   onNavigateToRepository?: (repoId: string) => void
+  onNavigateToClawhub?: (sourceId: string, slug: string) => void
 }
 
 function buildTagTree(tags: Tag[]): Map<string | null, Tag[]> {
@@ -64,6 +65,7 @@ function getSourceDisplay(skill: Skill, language: string): { kind: string; label
     file: language === 'zh' ? '从文件导入' : 'Imported from file',
     npx: language === 'zh' ? '通过 npx 命令导入' : 'Installed via npx command',
     repository: language === 'zh' ? '从仓库导入' : 'Imported from repository',
+    clawhub: language === 'zh' ? '从 ClawHub 导入' : 'Imported from ClawHub',
   }
 
   if (!sourceMetadata) {
@@ -85,6 +87,12 @@ function getSourceDisplay(skill: Skill, language: string): { kind: string; label
       }
     case 'repository':
       return { kind: 'repository', label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
+    case 'clawhub':
+      return {
+        kind: 'clawhub',
+        label: language === 'zh' ? '从 ClawHub 导入' : 'Imported from ClawHub',
+        detail: `${skill.name}<${sourceMetadata.slug}>`,
+      }
   }
 }
 
@@ -107,7 +115,8 @@ export function SkillDetailDrawer({
   onClose, 
   onToggleStatus, 
   onDelete,
-  onNavigateToRepository
+  onNavigateToRepository,
+  onNavigateToClawhub
 }: SkillDetailDrawerProps) {
   const { tags: allTags, getSkillTags, updateSkillTags, distributeSkill } = useSkillContext()
   const { language } = useAppStore()
@@ -655,10 +664,22 @@ export function SkillDetailDrawer({
                     </button>
                   )}
                 </span>
-                {sourceDisplay.detail && (
+                {sourceDisplay.detail && sourceMetadata?.type !== 'clawhub' && (
                   <span className="sk-source-detail" title={sourceDisplay.detail}>
                     {sourceDisplay.detail}
                   </span>
+                )}
+                {sourceMetadata?.type === 'clawhub' && sourceDisplay.detail && onNavigateToClawhub && sourceMetadata.source_id && (
+                  <button
+                    className="sk-source-repo-chip"
+                    onClick={() => onNavigateToClawhub(sourceMetadata.source_id, skill.name)}
+                    title={language === 'zh' ? '在 ClawHub 中查看' : 'View in ClawHub'}
+                  >
+                    <span>{sourceDisplay.detail}</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
                 )}
                 {sourceMetadata?.type === 'npx' && sourceDisplay.detail && (
                   <button

@@ -1,0 +1,164 @@
+<h2>ClawHub Layout Direction</h2>
+<p class="subtitle">Revision based on your feedback: closer to Skill Center, with explicit sort and card/list browsing controls.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Before: too independent</div>
+    <div class="mockup-body" style="padding:18px; background:#f6f8f7;">
+      <div style="border:1px dashed rgba(16,24,40,0.12); border-radius:20px; min-height:520px; padding:20px; display:flex; flex-direction:column; gap:14px; color:#667085;">
+        <div style="font-size:24px; font-weight:800; color:#101828;">Large branded header</div>
+        <div style="height:52px; border-radius:14px; background:#fff; border:1px solid rgba(16,24,40,0.08);"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="height:160px; border-radius:18px; background:#fff; border:1px solid rgba(16,24,40,0.08);"></div>
+          <div style="height:160px; border-radius:18px; background:#fff; border:1px solid rgba(16,24,40,0.08);"></div>
+        </div>
+        <div style="font-size:13px; line-height:1.6;">Problem: feels more like a standalone marketplace than a native app workspace.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">After: Skill Center-aligned workbench</div>
+    <div class="mockup-body" style="padding:18px; background:linear-gradient(180deg, #f8faf8 0%, #f4f6f5 100%); color:#101828;">
+      <div style="display:flex; flex-direction:column; min-height:520px; border:1px solid rgba(16,24,40,0.08); border-radius:24px; overflow:hidden; background:rgba(255,255,255,0.88); box-shadow:0 12px 30px rgba(16,24,40,0.06);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid rgba(16,24,40,0.08); background:rgba(255,255,255,0.92);">
+          <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
+            <div style="width:320px; max-width:100%; height:38px; border-radius:10px; border:1px solid rgba(16,24,40,0.08); background:#f8fafc; display:flex; align-items:center; padding:0 12px; color:#98a2b3; font-size:13px;">Search skills, descriptions, slugs...</div>
+            <div style="padding:0 12px; height:36px; border-radius:10px; border:1px solid rgba(16,24,40,0.08); background:#fff; display:flex; align-items:center; font-size:13px; color:#344054;">Sort: Updated</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; gap:2px; padding:2px; border-radius:10px; border:1px solid rgba(16,24,40,0.08); background:#f8fafc;">
+              <div style="width:30px; height:30px; border-radius:8px; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,0.08); color:#10b981; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">卡</div>
+              <div style="width:30px; height:30px; border-radius:8px; color:#667085; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">列</div>
+            </div>
+            <div style="padding:0 12px; height:36px; border-radius:10px; border:1px solid rgba(16,24,40,0.08); background:#fff; display:flex; align-items:center; font-size:13px; color:#344054;">Batch</div>
+          </div>
+        </div>
+
+        <div style="flex:1; display:grid; grid-template-columns:220px 1fr; min-height:0;">
+          <div style="border-right:1px solid rgba(16,24,40,0.08); display:flex; flex-direction:column; background:rgba(255,255,255,0.74);">
+            <div style="padding:14px; border-bottom:1px solid rgba(16,24,40,0.08);">
+              <div class="label">Sources</div>
+              <div style="font-size:12px; color:#667085;">Enabled connections</div>
+            </div>
+            <div style="padding:12px; display:flex; flex-direction:column; gap:10px;">
+              <div style="padding:12px; border-radius:14px; background:linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04)); border:1px solid rgba(16,185,129,0.18);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                  <strong style="font-size:13px;">official-clawhub</strong>
+                  <span style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#059669;">API</span>
+                </div>
+                <div style="font-size:12px; color:#667085;">126 visible</div>
+              </div>
+              <div style="padding:12px; border-radius:14px; background:#fff; border:1px solid rgba(16,24,40,0.08);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                  <strong style="font-size:13px;">local-clawhub</strong>
+                  <span style="font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#98a2b3;">CLI</span>
+                </div>
+                <div style="font-size:12px; color:#667085;">48 visible</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:14px; display:flex; flex-direction:column; gap:14px; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:14px 16px; border-radius:18px; border:1px solid rgba(16,185,129,0.12); background:linear-gradient(135deg, rgba(16,185,129,0.05), rgba(255,255,255,0.82));">
+              <div>
+                <div class="label">ClawHub</div>
+                <div style="font-size:22px; font-weight:800; letter-spacing:-0.02em; margin-bottom:4px;">Native catalog browsing inside Skiller</div>
+                <div style="font-size:13px; color:#667085; max-width:520px; line-height:1.6;">Smaller head block, more emphasis on filtering and browse rhythm. Discovery stays inside the same workspace grammar as Skill Center.</div>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <div style="padding:10px 12px; border-radius:14px; background:#fff; border:1px solid rgba(16,24,40,0.08); min-width:92px;">
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#667085;">Results</div>
+                  <div style="font-size:20px; font-weight:800;">126</div>
+                </div>
+                <div style="padding:10px 12px; border-radius:14px; background:#fff; border:1px solid rgba(16,24,40,0.08); min-width:92px;">
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:#667085;">Imported</div>
+                  <div style="font-size:20px; font-weight:800;">18</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;">
+              <div style="border:1px solid rgba(16,24,40,0.08); border-radius:18px; background:#fff; padding:16px; box-shadow:0 8px 20px rgba(16,24,40,0.05); display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                  <div>
+                    <div style="font-size:16px; font-weight:700;">Skill Graph Audit</div>
+                    <div style="font-size:12px; color:#667085;">skill-graph-audit</div>
+                  </div>
+                  <div style="padding:5px 9px; border-radius:999px; background:rgba(16,185,129,0.08); color:#047857; font-size:11px; font-weight:700;">v1.2.3</div>
+                </div>
+                <div style="font-size:13px; line-height:1.6; color:#475467; min-height:60px;">Analyze repository skill relationships, cluster dependencies, and generate visual reports for discovery workflows.</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:12px; color:#344054;">
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">12.4k downloads</span>
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">4.9 rating</span>
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">Updated 2d ago</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px;">
+                  <div style="font-size:12px; color:#98a2b3;">Card mode</div>
+                  <button class="mock-button" style="height:36px; padding:0 14px; border:none; border-radius:10px; background:#111827; color:#fff;">Import</button>
+                </div>
+              </div>
+
+              <div style="border:1px solid rgba(16,24,40,0.08); border-radius:18px; background:#fff; padding:16px; box-shadow:0 8px 20px rgba(16,24,40,0.05); display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                  <div>
+                    <div style="font-size:16px; font-weight:700;">Workspace Bootstrap</div>
+                    <div style="font-size:12px; color:#667085;">workspace-bootstrap</div>
+                  </div>
+                  <div style="padding:5px 9px; border-radius:999px; background:rgba(59,130,246,0.08); color:#1d4ed8; font-size:11px; font-weight:700;">v0.8.1</div>
+                </div>
+                <div style="font-size:13px; line-height:1.6; color:#475467; min-height:60px;">Scaffold local project conventions, connect defaults, and prepare reusable team workflows with one import.</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:12px; color:#344054;">
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">8.1k downloads</span>
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">4.7 rating</span>
+                  <span style="padding:5px 8px; border-radius:999px; background:#f8fafc; border:1px solid rgba(16,24,40,0.06);">Updated 6d ago</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px;">
+                  <div style="font-size:12px; color:#98a2b3;">Card mode</div>
+                  <button class="mock-button" style="height:36px; padding:0 14px; border:1px solid rgba(16,24,40,0.1); border-radius:10px; background:#fff; color:#111827;">Inspect</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="border:1px solid rgba(16,24,40,0.08); border-radius:18px; background:#fff; padding:0; overflow:hidden;">
+              <div style="padding:10px 14px; border-bottom:1px solid rgba(16,24,40,0.08); font-size:12px; color:#667085;">Record / list mode preview</div>
+              <div style="display:flex; flex-direction:column;">
+                <div style="display:grid; grid-template-columns: 1.4fr .7fr .7fr .6fr 104px; gap:12px; align-items:center; padding:12px 14px; font-size:13px; border-bottom:1px solid rgba(16,24,40,0.06);">
+                  <div><strong>skill-graph-audit</strong><div style="font-size:12px; color:#667085; margin-top:2px;">repo analysis + reporting</div></div>
+                  <div>12.4k</div>
+                  <div>4.9</div>
+                  <div>2d ago</div>
+                  <div style="text-align:right; color:#10b981; font-weight:700;">Import</div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1.4fr .7fr .7fr .6fr 104px; gap:12px; align-items:center; padding:12px 14px; font-size:13px;">
+                  <div><strong>workspace-bootstrap</strong><div style="font-size:12px; color:#667085; margin-top:2px;">project setup conventions</div></div>
+                  <div>8.1k</div>
+                  <div>4.7</div>
+                  <div>6d ago</div>
+                  <div style="text-align:right; color:#10b981; font-weight:700;">Inspect</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>This is the right revision</h3>
+      <p>Keep it aligned with Skill Center: compact toolbar, source rail, card/list switch, and explicit sorting.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Still needs adjustment</h3>
+      <p>The direction is closer, but the density, hierarchy, or source/content balance should change again.</p>
+    </div>
+  </div>
+</div>

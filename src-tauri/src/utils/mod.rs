@@ -1,3 +1,4 @@
+pub mod crypto;
 pub mod fs;
 pub mod git;
 pub mod markdown;
