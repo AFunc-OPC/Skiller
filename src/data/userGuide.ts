@@ -16,8 +16,9 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 | 技能中心 | 技能的集中管理、预览、导入和分发 |
 | 项目管理 | 项目与技能的关联配置 |
 | 仓库管理 | 外部技能仓库的接入和同步 |
+| ClawHub | 发现与导入线上技能目录，浏览版本与文件 |
 | 标签治理 | 标签的层级管理和技能分类 |
-| 设置 | 语言、主题、路径预设、日志查看 |
+| 设置 | 语言、主题、路径预设、ClawHub 源、代理、日志查看 |
 
 ---
 
@@ -386,7 +387,102 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 ---
 
-### 五、标签治理
+### 五、ClawHub
+
+ClawHub 是 Skiller 的在线技能发现与导入模块，支持连接多个技能目录，在线浏览、搜索和导入技能到本地技能中心。
+
+#### 数据源管理
+
+ClawHub 通过数据源（Source）连接在线技能目录，支持 API 和 CLI 两种连接方式。
+
+**连接类型**
+| 类型 | 说明 |
+|------|------|
+| API | 通过 HTTP API 直接访问技能注册表，速度快，功能完整 |
+| CLI | 通过本地 CLI 工具访问，适合离线或受限环境 |
+
+**配置数据源**
+1. 进入 设置 > ClawHub 源
+2. 点击"添加数据源"
+3. 填写名称、注册表 URL、Token
+4. 选择连接类型（API / CLI）
+5. 点击"测试连接"验证可用性
+6. 保存
+
+**管理数据源**
+- 编辑：修改名称、URL、Token 等配置
+- 删除：移除数据源（已导入的技能不受影响）
+- 启用/禁用：控制 ClawHub 菜单的显示
+
+#### 技能浏览
+
+**界面布局**
+- **左侧**：数据源列表，切换不同目录
+- **右侧**：技能网格/列表展示区
+
+**搜索与排序**
+- 搜索框支持按技能名称、描述关键词搜索
+- 排序选项：
+
+| 排序方式 | 说明 |
+|----------|------|
+| 最近更新 | 按更新时间排序 |
+| 创建时间 | 按创建时间排序 |
+| 下载量 | 按下载次数排序 |
+| 星标数 | 按星标数量排序 |
+| 安装量 | 按当前/累计安装量排序 |
+| 趋势 | 按热度趋势排序 |
+
+**视图模式**
+- 卡片视图：展示技能名称、描述、标签、下载量、星标数
+- 列表视图：紧凑展示，适合快速浏览
+
+**加载更多**
+- 技能列表支持分页加载
+- 点击"加载更多"获取下一页
+
+#### 技能详情
+
+点击技能卡片打开详情抽屉，包含以下标签页：
+
+**Overview（概览）**
+- 技能名称、Slug 标识
+- 描述信息
+- 作者、仓库链接
+- 下载量、星标数等统计
+- Markdown 渲染的技能说明文档
+
+**Versions（版本）**
+- 查看技能的所有发布版本
+- 选择版本后可浏览该版本的文件
+
+**Files（文件）**
+- 浏览技能的文件结构
+- 点击文件查看内容（Markdown 自动渲染）
+
+#### 导入技能
+
+**单个导入**
+1. 在技能卡片或详情抽屉中点击"导入到技能中心"
+2. 如果技能已存在，系统会提示是否覆盖
+3. 可选择为导入的技能添加标签
+4. 确认导入
+
+**批量导入**
+1. 点击"批量模式"按钮进入批量选择
+2. 勾选要导入的技能
+3. 点击"导入到技能中心"
+4. 系统检查重复并确认
+5. 可选择标签后确认导入
+
+**导入确认对话框**
+- 显示已存在的技能（将覆盖）和新增技能列表
+- 支持在导入时直接选择标签
+- 标签选择器支持搜索和树形浏览
+
+---
+
+### 六、标签治理
 
 标签治理模块提供标签的层级管理功能，帮助组织和分类技能。
 
@@ -439,9 +535,9 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 ---
 
-### 六、设置
+### 七、设置
 
-设置模块包含四个子页面：
+设置模块包含六个子页面：
 
 #### 通用设置
 
@@ -452,6 +548,30 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 **主题**
 - 明亮模式
 - 暗色模式
+
+#### ClawHub 源
+
+管理 ClawHub 数据源，配置在线技能目录的连接信息。
+
+**数据源列表**
+- 显示所有已配置的数据源
+- 展示名称、注册表 URL、连接类型（API/CLI）
+- 支持测试连接、编辑、删除操作
+
+**添加数据源**
+1. 点击"添加数据源"按钮
+2. 填写配置信息：
+   - **名称**：数据源显示名称
+   - **注册表 URL**：在线目录地址
+   - **Token**：访问令牌（如需要）
+   - **连接类型**：API 或 CLI
+   - **CLI 路径**（CLI 模式）：本地 CLI 工具路径
+3. 点击"测试连接"验证配置
+4. 保存
+
+**ClawHub 菜单开关**
+- 开启后侧边栏显示 ClawHub 入口
+- 关闭后隐藏入口，数据源配置保留
 
 #### 路径预设
 
@@ -476,6 +596,30 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 **Skilled 存储路径**
 - 显示 Skiller 数据存储位置
 - 支持复制路径、打开文件夹
+
+#### 代理设置
+
+配置应用的网络代理，用于访问外部资源（如 ClawHub 目录、NPX 安装等）。
+
+**代理模式**
+
+| 模式 | 说明 |
+|------|------|
+| 不使用代理 | 应用直连网络，不使用任何代理 |
+| 使用系统代理 | 自动读取 HTTP_PROXY、HTTPS_PROXY、NO_PROXY 环境变量 |
+| 自定义代理 | 手动配置代理服务器地址和端口 |
+
+**系统代理配置**
+- 优先使用 HTTPS_PROXY（可选）
+- 身份验证：用户名、密码（可选）
+
+**自定义代理配置**
+- 协议选择：HTTP / HTTPS
+- 服务器地址和端口
+- 身份验证：用户名、密码（可选）
+- 跳过代理：设置不使用代理的地址列表（逗号分隔）
+
+> 保存代理配置后需要重启应用才能生效。
 
 #### 运行日志
 
@@ -517,7 +661,7 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 ### 首次使用流程
 
-1. **导入技能**：从总览页点击"导入技能"，推荐使用"从 NPX 查找"
+1. **导入技能**：从总览页点击"导入技能"，推荐使用"从 NPX 查找"或 ClawHub 在线发现
 2. **创建标签**：在标签治理页面创建标签分类体系
 3. **关联标签**：为导入的技能添加标签
 4. **创建项目**：添加你的开发项目
@@ -525,11 +669,13 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 
 ### 技能管理最佳实践
 
-1. **建立标签体系**：按功能、场景、工具等维度创建标签层级
-2. **定期同步仓库**：保持远程仓库技能最新
-3. **项目隔离**：不同项目使用独立的技能配置
-4. **善用搜索**：快速定位所需技能
-5. **使用软链接**：开发中的技能使用软链接分发，方便迭代
+1. **利用 ClawHub 发现技能**：通过在线目录快速找到社区共享的技能
+2. **建立标签体系**：按功能、场景、工具等维度创建标签层级
+3. **定期同步仓库**：保持远程仓库技能最新
+4. **项目隔离**：不同项目使用独立的技能配置
+5. **善用搜索**：快速定位所需技能
+6. **使用软链接**：开发中的技能使用软链接分发，方便迭代
+7. **配置代理**：如需访问外部资源，提前在设置中配置网络代理
 
 ---
 
@@ -594,6 +740,29 @@ Skiller 采用现代化的单窗口布局，左侧为导航侧边栏，右侧为
 3. 添加仓库时选择 SSH 认证
 4. 保持 SSH Key 文件为默认或指定自定义路径
 
+### Q: 如何从 ClawHub 导入技能？
+
+1. 确保已在 设置 > ClawHub 源 中添加并启用数据源
+2. 进入 ClawHub 页面，选择数据源
+3. 浏览或搜索目标技能
+4. 点击"导入到技能中心"按钮
+5. 确认导入，可选择添加标签
+
+### Q: ClawHub 连接测试失败怎么办？
+
+1. 检查注册表 URL 是否正确
+2. 检查 Token 是否有效
+3. 如在中国大陆地区，尝试在 设置 > 代理 中配置网络代理
+4. 如果使用 CLI 模式，确认 CLI 工具已正确安装
+
+### Q: 如何配置代理以访问外部资源？
+
+1. 进入 设置 > 代理
+2. 选择代理模式（系统代理/自定义代理）
+3. 填写代理服务器地址和端口
+4. 如需身份验证，填写用户名和密码
+5. 点击"保存并重启"使配置生效
+
 ---
 
 ## 键盘快捷键
@@ -638,8 +807,9 @@ Skiller features a modern single-window layout with a navigation sidebar on the 
 | Skill Center | Centralized skill management, preview, import, and distribution |
 | Projects | Project and skill association configuration |
 | Repos | External skill repository connection and synchronization |
+| ClawHub | Discover and import skills from online catalogs |
 | Tag Governance | Hierarchical tag management and skill categorization |
-| Settings | Language, theme, path presets, and log viewing |
+| Settings | Language, theme, path presets, ClawHub source, proxy, and log viewing |
 
 ---
 
@@ -1008,7 +1178,102 @@ Click repository card to view details:
 
 ---
 
-### 5. Tag Governance
+### 5. ClawHub
+
+ClawHub is Skiller's online skill discovery and import module, supporting connections to multiple skill catalogs for browsing, searching, and importing skills to the local Skill Center.
+
+#### Source Management
+
+ClawHub connects to online skill catalogs through Sources, supporting both API and CLI connection types.
+
+**Connection Types**
+| Type | Description |
+|------|-------------|
+| API | Direct HTTP API access to skill registries, fast and feature-complete |
+| CLI | Access via local CLI tool, suitable for offline or restricted environments |
+
+**Configure Source**
+1. Go to Settings > ClawHub Source
+2. Click "Add Source"
+3. Fill in name, registry URL, and token
+4. Select connection type (API / CLI)
+5. Click "Test Connection" to verify availability
+6. Save
+
+**Manage Sources**
+- Edit: Modify name, URL, token, and other configuration
+- Delete: Remove source (imported skills are unaffected)
+- Enable/Disable: Control ClawHub menu visibility
+
+#### Skill Browsing
+
+**Interface Layout**
+- **Left**: Source list, switch between different catalogs
+- **Right**: Skill grid/list display area
+
+**Search & Sort**
+- Search box supports keyword search by skill name, description
+- Sort options:
+
+| Sort Option | Description |
+|-------------|-------------|
+| Recently Updated | Sort by update time |
+| Created At | Sort by creation time |
+| Downloads | Sort by download count |
+| Stars | Sort by star count |
+| Installs | Sort by current/all-time install count |
+| Trending | Sort by popularity trend |
+
+**View Modes**
+- Card View: Shows skill name, description, tags, downloads, stars
+- List View: Compact display, suitable for quick browsing
+
+**Load More**
+- Skill list supports paginated loading
+- Click "Load More" to fetch the next page
+
+#### Skill Details
+
+Click a skill card to open the detail drawer with the following tabs:
+
+**Overview**
+- Skill name, Slug identifier
+- Description
+- Author, repository link
+- Download count, stars, and other statistics
+- Markdown-rendered skill documentation
+
+**Versions**
+- View all published versions of the skill
+- Select a version to browse its files
+
+**Files**
+- Browse the skill's file structure
+- Click a file to view its content (Markdown auto-rendered)
+
+#### Import Skills
+
+**Single Import**
+1. Click "Import to Skill Center" on the skill card or in the detail drawer
+2. If the skill already exists, the system will prompt whether to overwrite
+3. Optionally add tags to the imported skill
+4. Confirm import
+
+**Batch Import**
+1. Click "Batch Mode" button to enter batch selection
+2. Check the skills to import
+3. Click "Import to Skill Center"
+4. System checks for duplicates and confirms
+5. Optionally select tags and confirm import
+
+**Import Confirmation Dialog**
+- Shows existing skills (will be overwritten) and new skills list
+- Supports selecting tags at import time
+- Tag selector supports search and tree browsing
+
+---
+
+### 6. Tag Governance
 
 The Tag Governance module provides hierarchical tag management for organizing and categorizing skills.
 
@@ -1061,9 +1326,9 @@ Add tags to skills in the skill detail drawer:
 
 ---
 
-### 6. Settings
+### 7. Settings
 
-The Settings module contains four sub-pages:
+The Settings module contains six sub-pages:
 
 #### General Settings
 
@@ -1074,6 +1339,30 @@ The Settings module contains four sub-pages:
 **Theme**
 - Light Mode
 - Dark Mode
+
+#### ClawHub Source
+
+Manage ClawHub data sources and configure connections to online skill catalogs.
+
+**Source List**
+- Shows all configured data sources
+- Displays name, registry URL, connection type (API/CLI)
+- Supports test connection, edit, and delete operations
+
+**Add Source**
+1. Click "Add Source" button
+2. Fill in configuration:
+   - **Name**: Source display name
+   - **Registry URL**: Online catalog address
+   - **Token**: Access token (if required)
+   - **Connection Type**: API or CLI
+   - **CLI Path** (CLI mode): Local CLI tool path
+3. Click "Test Connection" to verify configuration
+4. Save
+
+**ClawHub Menu Toggle**
+- Enable to show ClawHub entry in sidebar
+- Disable to hide entry, source configuration is preserved
 
 #### Path Presets
 
@@ -1098,6 +1387,30 @@ Path presets define skill storage rules for different tools, determining target 
 **Skilled Storage Path**
 - Shows Skiller data storage location
 - Supports copy path, open folder
+
+#### Proxy Settings
+
+Configure network proxy for accessing external resources (e.g., ClawHub catalogs, NPX installations).
+
+**Proxy Modes**
+
+| Mode | Description |
+|------|-------------|
+| No Proxy | Connect directly without any proxy |
+| Use System Proxy | Automatically read HTTP_PROXY, HTTPS_PROXY, NO_PROXY environment variables |
+| Custom Proxy | Manually configure proxy server address and port |
+
+**System Proxy Configuration**
+- Prefer HTTPS_PROXY (optional)
+- Authentication: username, password (optional)
+
+**Custom Proxy Configuration**
+- Protocol selection: HTTP / HTTPS
+- Server address and port
+- Authentication: username, password (optional)
+- Proxy bypass: list of addresses that skip the proxy (comma separated)
+
+> Proxy configuration requires an app restart to take effect after saving.
 
 #### Runtime Logs
 
@@ -1139,7 +1452,7 @@ Shows Skiller version information:
 
 ### First-Time Usage Flow
 
-1. **Import Skills**: Click "Import Skill" from Overview page, recommended: "NPX Find"
+1. **Import Skills**: Click "Import Skill" from Overview page, recommended: "NPX Find" or discover via ClawHub
 2. **Create Tags**: Create tag classification system in Tag Governance page
 3. **Associate Tags**: Add tags to imported skills
 4. **Create Project**: Add your development projects
@@ -1147,11 +1460,13 @@ Shows Skiller version information:
 
 ### Skill Management Best Practices
 
-1. **Build Tag System**: Create tag hierarchy by function, scenario, tool dimensions
-2. **Regular Repo Sync**: Keep remote repository skills up to date
-3. **Project Isolation**: Use independent skill configurations for different projects
-4. **Use Search**: Quickly locate needed skills
-5. **Use Symlinks**: For skills in development, use symlink distribution for easy iteration
+1. **Use ClawHub to discover skills**: Quickly find community-shared skills through online catalogs
+2. **Build Tag System**: Create tag hierarchy by function, scenario, tool dimensions
+3. **Regular Repo Sync**: Keep remote repository skills up to date
+4. **Project Isolation**: Use independent skill configurations for different projects
+5. **Use Search**: Quickly locate needed skills
+6. **Use Symlinks**: For skills in development, use symlink distribution for easy iteration
+7. **Configure Proxy**: If accessing external resources, set up network proxy in advance
 
 ---
 
@@ -1215,6 +1530,29 @@ No. Deleting project configuration only removes the project record in Skiller, i
 2. Add public key to Git provider (GitHub/GitLab, etc.)
 3. Select SSH authentication when adding repository
 4. Keep SSH Key file as default or specify custom path
+
+### Q: How to import skills from ClawHub?
+
+1. Make sure a data source is added and enabled in Settings > ClawHub Source
+2. Go to the ClawHub page and select a source
+3. Browse or search for target skills
+4. Click "Import to Skill Center" button
+5. Confirm import, optionally add tags
+
+### Q: What to do if ClawHub connection test fails?
+
+1. Check that the registry URL is correct
+2. Verify that the Token is valid
+3. If in regions with network restrictions, try configuring a proxy in Settings > Proxy
+4. If using CLI mode, ensure the CLI tool is properly installed
+
+### Q: How to configure proxy for accessing external resources?
+
+1. Go to Settings > Proxy
+2. Select proxy mode (System Proxy / Custom Proxy)
+3. Enter proxy server address and port
+4. If authentication is needed, fill in username and password
+5. Click "Save & Restart" to apply the configuration
 
 ---
 

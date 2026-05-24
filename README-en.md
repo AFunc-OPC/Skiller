@@ -1,10 +1,10 @@
 # Skiller - Cross-Platform Skill Management Tool
 
-**Version**: v0.1.8 `<br/>`
-**Status**: Production Ready `<br/>`
-**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller) `<br/>`
-**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)`<br/>`
-📄 **中文版**: [README.md](./README.md) `<br/>`
+**Version**: v0.1.8<br/>
+**Status**: Production Ready<br/>
+**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)<br/>
+**Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)<br/>
+📄 **中文版**: [README.md](./README.md)<br/>
 
 ## Overview
 
@@ -59,14 +59,16 @@ Simply install and use after downloading.
 
 ## Features
 
-### V0.1.5 Core Features
+### V0.1.8 Core Features
 
 - ✅ **Skill Center Management** - Create, edit, delete, search Skills
 - ✅ **Tag Category Management** - Tag grouping, many-to-many association, sidebar filtering
 - ✅ **Project Management** - Project list, custom Skill directories, preset tool selection
 - ✅ **Repository Management** - Online repository integration, pull updates
+- ✅ **ClawHub Online Discovery** - Connect to skill catalogs, browse, search, view versions, browse files, one-click import
 - ✅ **Skill Distribution** - Copy/soft link distribution to projects
 - ✅ **Multi-environment Configuration** - Development, testing, production environment support
+- ✅ **Proxy Settings** - System proxy / custom proxy with authentication and bypass rules
 - ✅ **Internationalization** - Chinese/English bilingual support
 - ✅ **Light/Dark Theme** - Theme switching
 
