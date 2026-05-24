@@ -14,7 +14,7 @@ import type {
 import { clawhubApi } from '../api/clawhub'
 import type { AlertDialogState } from '../components/AlertDialog'
 
-type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
+type SortOption = 'updated' | 'createdAt' | 'downloads' | 'stars' | 'installsCurrent' | 'installsAllTime' | 'trending'
 type ClawhubDetailTab = 'overview' | 'versions' | 'files'
 
 interface ClawhubState {
@@ -72,6 +72,7 @@ interface ClawhubState {
   clearError: () => void
   clearAlertDialog: () => void
   clearConnectionTestResult: () => void
+  searchAndSelect: (sourceId: string, query: string) => Promise<void>
 }
 
 export const useClawhubStore = create<ClawhubState>((set, get) => ({
@@ -94,7 +95,7 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   selectedVersion: null,
   selectedFilePath: null,
   searchQuery: '',
-  sortOption: 'newest',
+  sortOption: 'updated' as SortOption,
   loading: false,
   skillsLoading: false,
   loadingMore: false,
@@ -391,6 +392,15 @@ export const useClawhubStore = create<ClawhubState>((set, get) => ({
   clearError: () => set({ error: null }),
   clearAlertDialog: () => set({ alertDialog: null }),
   clearConnectionTestResult: () => set({ connectionTestResult: null }),
+
+  searchAndSelect: async (sourceId, query) => {
+    const { selectSource, searchSkills: doSearch } = get()
+    selectSource(sourceId)
+    if (query.trim()) {
+      set({ searchQuery: query })
+      await doSearch(sourceId, query)
+    }
+  },
 }))
 
 function extractErrorMessage(error: unknown): string {

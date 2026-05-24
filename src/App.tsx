@@ -13,6 +13,7 @@ import { ProjectsPage } from './pages/ProjectsPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { RepositoryManagementPage, RepositoryAddDialog } from './components/RepositoryManagement'
 import { ClawHubPage } from './components/ClawHub'
+import { useClawhubStore } from './stores/clawhubStore'
 import { isTauriEnvironment } from './api/tauri'
 import { ToolPresetSettings, SettingsTabs } from './components/Settings'
 import { desktopApi } from './api/desktop'
@@ -335,6 +336,12 @@ function App() {
     setActiveModule('repos')
   }, [])
 
+  const handleNavigateToClawhubSource = useCallback((sourceId: string, slug: string) => {
+    const { searchAndSelect } = useClawhubStore.getState()
+    void searchAndSelect(sourceId, slug)
+    setActiveModule('clawhub')
+  }, [])
+
   const handlePendingRepositoryDetailHandled = useCallback(() => {
     setPendingRepositoryDetailId(null)
   }, [])
@@ -363,6 +370,7 @@ function App() {
             <SkillCenter 
               onNavigateToRepository={handleNavigateToRepository}
               onNavigateToAddRepo={handleNavigateToAddRepo}
+              onNavigateToClawhub={handleNavigateToClawhubSource}
             />
           </SkillProvider>
         )

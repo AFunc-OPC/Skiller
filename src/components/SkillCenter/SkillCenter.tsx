@@ -41,9 +41,10 @@ import './DroppableSkill.css'
 interface SkillCenterProps {
   onNavigateToRepository?: (repoId: string) => void
   onNavigateToAddRepo?: () => void
+  onNavigateToClawhub?: (sourceId: string, slug: string) => void
 }
 
-export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: SkillCenterProps) {
+export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNavigateToClawhub }: SkillCenterProps) {
   const {
     skills,
     filteredSkills,
@@ -817,6 +818,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo }: Ski
           onToggleStatus={toggleSkillStatus}
           onDelete={deleteSkill}
           onNavigateToRepository={onNavigateToRepository}
+          onNavigateToClawhub={onNavigateToClawhub}
         />
 
         <FileImportDialog

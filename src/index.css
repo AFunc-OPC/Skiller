@@ -4546,7 +4546,7 @@ body {
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  max-width: 12rem;
+  max-width: 100%;
   gap: 0.25rem;
   padding: 0.1875rem 0.425rem;
   border: none;
@@ -4563,9 +4563,6 @@ body {
 
 .sk-source-repo-chip span {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .sk-source-repo-chip svg {

@@ -16,6 +16,7 @@ interface SkillDetailDrawerProps {
   onToggleStatus: (skillId: string) => Promise<void>
   onDelete: (skillId: string) => Promise<void>
   onNavigateToRepository?: (repoId: string) => void
+  onNavigateToClawhub?: (sourceId: string, slug: string) => void
 }
 
 function buildTagTree(tags: Tag[]): Map<string | null, Tag[]> {
@@ -58,7 +59,7 @@ function getSkillFolderName(skillPath: string): string {
   return parts[parts.length - 1] || skillPath
 }
 
-function getSourceDisplay(skill: Skill, language: string): { kind: string; label: string; detail?: string; url?: string } {
+function getSourceDisplay(skill: Skill, language: string): { kind: string; label: string; detail?: string } {
   const sourceMetadata = parseSourceMetadata(skill.source_metadata)
   const sourceLabels: Record<string, string> = {
     file: language === 'zh' ? '从文件导入' : 'Imported from file',
@@ -86,16 +87,12 @@ function getSourceDisplay(skill: Skill, language: string): { kind: string; label
       }
     case 'repository':
       return { kind: 'repository', label: language === 'zh' ? '从仓库导入' : 'Imported from repository' }
-    case 'clawhub': {
-      const registryUrl = sourceMetadata.registry_url?.replace(/\/+$/, '') || 'https://clawhub.ai'
-      const clawhubUrl = `${registryUrl}/${sourceMetadata.slug}`
+    case 'clawhub':
       return {
         kind: 'clawhub',
         label: language === 'zh' ? '从 ClawHub 导入' : 'Imported from ClawHub',
-        detail: sourceMetadata.slug,
-        url: clawhubUrl,
+        detail: `${skill.name}<${sourceMetadata.slug}>`,
       }
-    }
   }
 }
 
@@ -118,7 +115,8 @@ export function SkillDetailDrawer({
   onClose, 
   onToggleStatus, 
   onDelete,
-  onNavigateToRepository
+  onNavigateToRepository,
+  onNavigateToClawhub
 }: SkillDetailDrawerProps) {
   const { tags: allTags, getSkillTags, updateSkillTags, distributeSkill } = useSkillContext()
   const { language } = useAppStore()
@@ -671,20 +669,17 @@ export function SkillDetailDrawer({
                     {sourceDisplay.detail}
                   </span>
                 )}
-                {sourceMetadata?.type === 'clawhub' && sourceDisplay.url && (
-                  <a
+                {sourceMetadata?.type === 'clawhub' && sourceDisplay.detail && onNavigateToClawhub && sourceMetadata.source_id && (
+                  <button
                     className="sk-source-repo-chip"
-                    href={sourceDisplay.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={sourceDisplay.url}
+                    onClick={() => onNavigateToClawhub(sourceMetadata.source_id, skill.name)}
+                    title={language === 'zh' ? '在 ClawHub 中查看' : 'View in ClawHub'}
                   >
                     <span>{sourceDisplay.detail}</span>
                     <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                      <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                      <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                     </svg>
-                  </a>
+                  </button>
                 )}
                 {sourceMetadata?.type === 'npx' && sourceDisplay.detail && (
                   <button

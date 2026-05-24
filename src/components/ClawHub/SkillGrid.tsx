@@ -11,7 +11,7 @@ import { ImportButton } from './ImportButton'
 import { EmptyState } from './EmptyState'
 import { formatClawhubDate } from './formatClawhubDate'
 
-type SortOption = 'newest' | 'updated' | 'downloads' | 'rating'
+type SortOption = 'updated' | 'createdAt' | 'downloads' | 'stars' | 'installsCurrent' | 'installsAllTime' | 'trending'
 
 interface SkillGridProps {
   language: 'zh' | 'en'
@@ -46,7 +46,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const { tree: tagTree, fetchTree: fetchTagTree } = useTagTreeStore()
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
-  const [localSearch, setLocalSearch] = useState('')
+  const [localSearch, setLocalSearch] = useState(searchQuery || '')
   const [batchMode, setBatchMode] = useState(false)
   const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set())
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
@@ -61,7 +61,7 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const sortDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setLocalSearch('')
+    setLocalSearch(searchQuery || '')
     setBatchMode(false)
     setSelectedSlugs(new Set())
     setSortMenuOpen(false)
@@ -302,10 +302,13 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   }, [expandedTagIds, selectedTagIds, tagSearchKeyword, hasMatchingDescendant, toggleTagExpand, toggleTagSelection])
 
   const sortOptions: Array<{ value: SortOption; label: string }> = [
-    { value: 'newest', label: t('clawhubSortNewest', language) },
     { value: 'updated', label: t('clawhubSortUpdated', language) },
+    { value: 'createdAt', label: t('clawhubSortNewest', language) },
+    { value: 'trending', label: t('clawhubSortTrending', language) },
     { value: 'downloads', label: t('clawhubSortDownloads', language) },
-    { value: 'rating', label: t('clawhubSortRating', language) },
+    { value: 'installsCurrent', label: t('clawhubSortInstallsCurrent', language) },
+    { value: 'installsAllTime', label: t('clawhubSortInstallsAllTime', language) },
+    { value: 'stars', label: t('clawhubSortStars', language) },
   ]
   const allSkillsSelected = skills.length > 0 && selectedSlugs.size === skills.length
 

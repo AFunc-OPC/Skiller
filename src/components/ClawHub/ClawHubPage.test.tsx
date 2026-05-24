@@ -108,7 +108,7 @@ describe('ClawHubPage', () => {
       selectedVersion: null,
       selectedFilePath: null,
       searchQuery: '',
-      sortOption: 'newest',
+      sortOption: 'updated',
       loading: false,
       skillsLoading: false,
       detailLoading: false,
