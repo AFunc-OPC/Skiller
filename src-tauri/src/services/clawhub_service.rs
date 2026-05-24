@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 use std::process::Command;
 use uuid::Uuid;
-use chrono::{Local, Utc};
+use chrono::Utc;
 use std::io::Write;
 
 use crate::error::SkillerError;
