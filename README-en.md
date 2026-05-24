@@ -1,10 +1,10 @@
 # Skiller - Cross-Platform Skill Management Tool
 
-**Version**: v0.1.6`<br/>`
-**Status**: Production Ready`<br/>`
-**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)`<br/>`
+**Version**: v0.1.8 `<br/>`
+**Status**: Production Ready `<br/>`
+**GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller) `<br/>`
 **Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)`<br/>`
-📄 **中文版**: [README.md](./README.md)`<br/>`
+📄 **中文版**: [README.md](./README.md) `<br/>`
 
 ## Overview
 
@@ -14,11 +14,11 @@ Skiller is a cross-platform desktop application for unified management of AI too
 
 Download the installer for your platform from [GitHub Releases](https://github.com/AFunc-OPC/Skiller/releases):
 
-| Platform          | Installer Format    | Notes                                                                                                                                                                  |
-| ----------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **macOS**   | `.dmg`            | Supports Intel (x64) and Apple Silicon (aarch64), universal recommended<br />Mac users need to remove quarantine attribute`xattr -cr /Applications/Skiller.app` |
-| **Windows** | `.msi` / `.exe` | MSI installer or NSIS installer, supports x64                                                                                                                          |
-| **Linux**   | `.deb` / `.rpm` | DEB for Debian/Ubuntu as common format                                                                                                                                 |
+| Platform          | Installer Format    | Notes                                                                                                                                                              |
+| ----------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **macOS**   | `.dmg`            | Supports Intel (x64) and Apple Silicon (aarch64), universal recommended<br />Mac users need to remove quarantine attribute `xattr -cr /Applications/Skiller.app` |
+| **Windows** | `.msi` / `.exe` | MSI installer or NSIS installer, supports x64                                                                                                                      |
+| **Linux**   | `.deb` / `.rpm` | DEB for Debian/Ubuntu as common format                                                                                                                             |
 
 Simply install and use after downloading.
 
