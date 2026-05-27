@@ -47,6 +47,7 @@ coverage/
 .claude/
 .opencode/
 openspec/
+.agents/
 
 # graphify
 graphify-out/cache/

@@ -1,6 +1,6 @@
 # Skiller - Cross-Platform Skill Management Tool
 
-**Version**: v0.1.8<br/>
+**Version**: v0.1.9<br/>
 **Status**: Production Ready<br/>
 **GitHub**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)<br/>
 **Homepage**: [https://afunc-opc.github.io/home/](https://afunc-opc.github.io/home/)<br/>
@@ -59,7 +59,7 @@ Simply install and use after downloading.
 
 ## Features
 
-### V0.1.8 Core Features
+### V0.1.9 Core Features
 
 - ✅ **Skill Center Management** - Create, edit, delete, search Skills
 - ✅ **Tag Category Management** - Tag grouping, many-to-many association, sidebar filtering

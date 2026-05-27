@@ -784,7 +784,7 @@ ClawHub 通过数据源（Source）连接在线技能目录，支持 API 和 CLI
 
 ---
 
-**版本**：v0.1.8 (Beta)  
+**版本**：v0.1.9 (Beta)  
 **技术栈**：Tauri + React + TypeScript + Tailwind CSS  
 **开源地址**：[https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `
@@ -1575,7 +1575,7 @@ If you encounter issues, please get help through:
 
 ---
 
-**Version**: v0.1.8 (Beta)  
+**Version**: v0.1.9 (Beta)  
 **Tech Stack**: Tauri + React + TypeScript + Tailwind CSS  
 **Open Source**: [https://github.com/AFunc-OPC/Skiller](https://github.com/AFunc-OPC/Skiller)
 `
