@@ -40,6 +40,7 @@ fn main() {
             skiller::commands::skill_file::unzip_skill,
             skiller::commands::skill_file::copy_skill,
             skiller::commands::skill_file::distribute_skill,
+            skiller::commands::skill_file::check_distribution_conflicts,
             skiller::commands::skill_file::check_git_available,
             skiller::commands::skill_file::check_npx_available,
             skiller::commands::skill_file::diagnose_shell_env,

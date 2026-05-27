@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { configApi } from '../../api/config'
 import { desktopApi } from '../../api/desktop'
+import { distributionApi } from '../../api/distribution'
 import { projectApi } from '../../api/project'
 import { repoApi } from '../../api/repo'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useAppStore } from '../../stores/appStore'
-import { Project, Skill, SkillDistributionMode, SkillDistributionTarget, Tag, ToolPreset, Repo } from '../../types'
+import { ConflictInfo, Project, Skill, SkillDistributionMode, SkillDistributionTarget, Tag, ToolPreset, Repo } from '../../types'
 import { parseSourceMetadata } from '../../utils/skillSourceMetadata'
 import { SkillMarkdownPreview } from './SkillMarkdownPreview'
+import { DistributionConflictModal } from './DistributionConflictModal'
 
 interface SkillDetailDrawerProps {
   skill: Skill | null
@@ -145,6 +147,8 @@ export function SkillDetailDrawer({
   const [presetSearch, setPresetSearch] = useState('')
   const [repository, setRepository] = useState<Repo | null>(null)
   const [showMdPreview, setShowMdPreview] = useState(false)
+  const [conflicts, setConflicts] = useState<ConflictInfo[]>([])
+  const [showConflictModal, setShowConflictModal] = useState(false)
   const tagDropdownRef = useRef<HTMLDivElement>(null)
   const projectDropdownRef = useRef<HTMLDivElement>(null)
   const presetDropdownRef = useRef<HTMLDivElement>(null)
@@ -512,6 +516,38 @@ export function SkillDetailDrawer({
     setDistributionLoading(true)
     setDistributionError('')
     setDistributionSuccess('')
+    setConflicts([])
+
+    try {
+      const checkResult = await distributionApi.checkConflicts({
+        skill_ids: [skill.id],
+        skill_names: [skill.name],
+        target: distributionTarget,
+        preset_ids: selectedPresetIds,
+        project_ids: distributionTarget === 'project' ? selectedProjectIds : [],
+      })
+
+      const existingConflicts = checkResult.conflicts.filter(c => c.exists)
+      if (existingConflicts.length > 0) {
+        setConflicts(existingConflicts)
+        setShowConflictModal(true)
+        setDistributionLoading(false)
+        return
+      }
+
+      await performDistribution(false)
+    } catch (error) {
+      setDistributionError((error as Error).message)
+      setDistributionLoading(false)
+    }
+  }
+
+  const performDistribution = async (overwrite: boolean) => {
+    if (!skill) return
+
+    setDistributionLoading(true)
+    setDistributionError('')
+    setDistributionSuccess('')
 
     try {
       const results: string[] = []
@@ -526,6 +562,7 @@ export function SkillDetailDrawer({
               project_id: undefined,
               preset_id: presetId,
               mode: distributionMode,
+              overwrite,
             })
             results.push(result.target_path)
           } catch (error) {
@@ -543,6 +580,7 @@ export function SkillDetailDrawer({
                 project_id: projectId,
                 preset_id: presetId,
                 mode: distributionMode,
+                overwrite,
               })
               results.push(result.target_path)
             } catch (error) {
@@ -570,7 +608,18 @@ export function SkillDetailDrawer({
       setDistributionError((error as Error).message)
     } finally {
       setDistributionLoading(false)
+      setShowConflictModal(false)
     }
+  }
+
+  const handleConflictConfirm = () => {
+    performDistribution(true)
+  }
+
+  const handleConflictCancel = () => {
+    setShowConflictModal(false)
+    setConflicts([])
+    setDistributionLoading(false)
   }
 
   return (
@@ -1115,6 +1164,15 @@ export function SkillDetailDrawer({
           </div>
         </div>
       </aside>
+
+      {showConflictModal && (
+        <DistributionConflictModal
+          conflicts={conflicts}
+          onConfirm={handleConflictConfirm}
+          onCancel={handleConflictCancel}
+          loading={distributionLoading}
+        />
+      )}
 
       {showDeleteConfirm && (
         <>

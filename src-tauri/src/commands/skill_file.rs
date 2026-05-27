@@ -5,6 +5,7 @@ use tauri::{Emitter, Manager, State};
 
 use crate::db::connection::{get_connection, DbConnection};
 use crate::error::SkillerError;
+use crate::models::conflict::{CheckConflictsRequest, CheckConflictsResult};
 use crate::models::distribution::{DistributeSkillRequest, DistributeSkillResult};
 use crate::models::npx_import::{
     AgentsSkillInfo, ConfirmNpxSkillImportResponse, ManagedNpxImportSession, NativeNpxImportResponse,
@@ -1177,6 +1178,15 @@ pub fn distribute_skill(
     }
     
     result
+}
+
+#[tauri::command]
+pub fn check_distribution_conflicts(
+    db: State<'_, DbConnection>,
+    request: CheckConflictsRequest,
+) -> Result<CheckConflictsResult, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    distribution_service::check_distribution_conflicts(&conn, &request).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

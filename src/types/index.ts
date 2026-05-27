@@ -218,12 +218,33 @@ export interface DistributeSkillRequest {
   preset_id: string
   project_id?: string
   mode: SkillDistributionMode
+  overwrite?: boolean
 }
 
 export interface DistributeSkillResult {
   target_path: string
   target: SkillDistributionTarget
   mode: SkillDistributionMode
+}
+
+export interface ConflictInfo {
+  skill_id: string
+  skill_name: string
+  target_path: string
+  target_label: string
+  exists: boolean
+}
+
+export interface CheckConflictsRequest {
+  skill_ids: string[]
+  skill_names: string[]
+  target: SkillDistributionTarget
+  preset_ids: string[]
+  project_ids: string[]
+}
+
+export interface CheckConflictsResult {
+  conflicts: ConflictInfo[]
 }
 
 export interface SkillCenterState {

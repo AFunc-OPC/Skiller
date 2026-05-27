@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   distributeSkill: vi.fn<(request: unknown) => Promise<DistributeSkillResult>>(),
   getSkillTags: vi.fn<() => Promise<string[]>>(),
   updateSkillTags: vi.fn<() => Promise<void>>(),
+  checkConflicts: vi.fn<() => Promise<{ conflicts: { skill_id: string; skill_name: string; target_path: string; target_label: string; exists: boolean }[] }>>(),
 }))
 
 vi.mock('../../api/config', () => ({
@@ -29,6 +30,12 @@ vi.mock('../../api/project', () => ({
 vi.mock('../../api/desktop', () => ({
   desktopApi: {
     openFolder: vi.fn(),
+  },
+}))
+
+vi.mock('../../api/distribution', () => ({
+  distributionApi: {
+    checkConflicts: mocks.checkConflicts,
   },
 }))
 
@@ -107,6 +114,7 @@ describe('SkillDetailDrawer distribution flow', () => {
       target: 'global',
       mode: 'copy',
     })
+    mocks.checkConflicts.mockResolvedValue({ conflicts: [] })
   })
 
   it('switches between global and project targets', async () => {
@@ -153,13 +161,14 @@ describe('SkillDetailDrawer distribution flow', () => {
     await user.click(screen.getByRole('button', { name: '分发' }))
 
     await waitFor(() => {
-      expect(mocks.distributeSkill).toHaveBeenCalledWith({
+      expect(mocks.checkConflicts).toHaveBeenCalled()
+      expect(mocks.distributeSkill).toHaveBeenCalledWith(expect.objectContaining({
         skill_id: '/skills/demo-skill',
         target: 'project',
         project_id: 'project-1',
         preset_id: 'preset-opencode',
         mode: 'symlink',
-      })
+      }))
     })
 
     expect(await screen.findByText('分发成功：/workspace/project-alpha/.opencode/skills/demo-skill')).toBeInTheDocument()

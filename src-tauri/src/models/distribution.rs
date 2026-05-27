@@ -21,6 +21,8 @@ pub struct DistributeSkillRequest {
     pub preset_id: String,
     pub project_id: Option<String>,
     pub mode: SkillDistributionMode,
+    #[serde(default)]
+    pub overwrite: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

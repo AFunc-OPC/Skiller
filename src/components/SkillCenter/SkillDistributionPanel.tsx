@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { configApi } from '../../api/config'
+import { distributionApi } from '../../api/distribution'
 import { projectApi } from '../../api/project'
 import { useSkillContext } from '../../contexts/SkillContext'
 import { useAppStore } from '../../stores/appStore'
-import type { Project, SkillDistributionTarget, SkillDistributionMode, ToolPreset } from '../../types'
+import type { ConflictInfo, Project, SkillDistributionTarget, SkillDistributionMode, ToolPreset } from '../../types'
+import { DistributionConflictModal } from './DistributionConflictModal'
 
 function joinPath(basePath: string, nestedPath?: string, skillPath?: string): string {
   const segments = [basePath, nestedPath, skillPath]
@@ -65,6 +67,8 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
   const [distributionSuccess, setDistributionSuccess] = useState('')
   const [distributionPathCopied, setDistributionPathCopied] = useState(false)
   const [skillChipsExpanded, setSkillChipsExpanded] = useState(false)
+  const [conflicts, setConflicts] = useState<ConflictInfo[]>([])
+  const [showConflictModal, setShowConflictModal] = useState(false)
 
   const projectDropdownRef = useRef<HTMLDivElement>(null)
   const presetDropdownRef = useRef<HTMLDivElement>(null)
@@ -191,6 +195,36 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
     setDistributionLoading(true)
     setDistributionError('')
     setDistributionSuccess('')
+    setConflicts([])
+
+    try {
+      const checkResult = await distributionApi.checkConflicts({
+        skill_ids: skillIds,
+        skill_names: skillNames || skillIds,
+        target: distributionTarget,
+        preset_ids: selectedPresetIds,
+        project_ids: distributionTarget === 'project' ? selectedProjectIds : [],
+      })
+
+      const existingConflicts = checkResult.conflicts.filter(c => c.exists)
+      if (existingConflicts.length > 0) {
+        setConflicts(existingConflicts)
+        setShowConflictModal(true)
+        setDistributionLoading(false)
+        return
+      }
+
+      await performDistribution(false)
+    } catch (error) {
+      setDistributionError((error as Error).message)
+      setDistributionLoading(false)
+    }
+  }
+
+  const performDistribution = async (overwrite: boolean) => {
+    setDistributionLoading(true)
+    setDistributionError('')
+    setDistributionSuccess('')
 
     try {
       const results: string[] = []
@@ -206,6 +240,7 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
                 project_id: undefined,
                 preset_id: presetId,
                 mode: distributionMode,
+                overwrite,
               })
               results.push(result.target_path)
             } catch (error) {
@@ -223,6 +258,7 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
                   project_id: projectId,
                   preset_id: presetId,
                   mode: distributionMode,
+                  overwrite,
                 })
                 results.push(result.target_path)
               } catch (error) {
@@ -251,7 +287,18 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
       setDistributionError((error as Error).message)
     } finally {
       setDistributionLoading(false)
+      setShowConflictModal(false)
     }
+  }
+
+  const handleConflictConfirm = () => {
+    performDistribution(true)
+  }
+
+  const handleConflictCancel = () => {
+    setShowConflictModal(false)
+    setConflicts([])
+    setDistributionLoading(false)
   }
 
   const currentDestinationLabel = distributionTarget === 'global'
@@ -602,6 +649,15 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
           </button>
         </div>
       </div>
+
+      {showConflictModal && (
+        <DistributionConflictModal
+          conflicts={conflicts}
+          onConfirm={handleConflictConfirm}
+          onCancel={handleConflictCancel}
+          loading={distributionLoading}
+        />
+      )}
     </div>
   )
 }
