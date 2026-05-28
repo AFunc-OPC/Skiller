@@ -185,6 +185,10 @@ export interface RepoSyncEvent {
   recovery_action?: 'reclone' | null
 }
 
+export interface RepoCloneProgress {
+  message: string
+}
+
 export interface ToolPreset {
   id: string
   name: string

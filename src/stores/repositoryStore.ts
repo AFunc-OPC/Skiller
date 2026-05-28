@@ -27,6 +27,7 @@ interface RepositoryState {
   markRepositorySyncStarted: (id: string) => void
   markRepositorySyncCompleted: (repo: Repo) => void
   markRepositorySyncFailed: (id: string) => void
+  resetCloningState: () => void
   selectRepository: (id: string | null) => void
   setSearchKeyword: (keyword: string) => void
   setSortOption: (option: SortOption) => void
@@ -182,6 +183,10 @@ export const useRepositoryStore = create<RepositoryState>((set, get) => ({
     set((state) => ({
       syncingRepositoryIds: state.syncingRepositoryIds.filter((repoId) => repoId !== id),
     }))
+  },
+
+  resetCloningState: () => {
+    set({ cloningRepository: false, cloneProgress: null })
   },
   
   fetchRepositorySkills: async (repoId: string) => {

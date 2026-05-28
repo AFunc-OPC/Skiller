@@ -2,10 +2,11 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use serde::{Deserialize, Serialize};
 
 use crate::db::connection::{get_connection, init_database, DbConnection};
-use crate::models::repo::{CreateRepoRequest, Repo, RepoSyncEvent, UpdateRepoRequest};
+use crate::models::repo::{CreateRepoRequest, Repo, RepoCloneProgress, RepoSyncEvent, UpdateRepoRequest};
 use crate::services::{repo_service, LogService};
 
 const REPO_SYNC_PROGRESS_EVENT: &str = "repo-sync-progress";
+const REPO_CLONE_PROGRESS_EVENT: &str = "repo-clone-progress";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImportableSkill {
@@ -44,9 +45,13 @@ pub async fn add_repo(app: AppHandle, request: CreateRepoRequest) -> Result<Repo
         .to_string_lossy()
         .to_string();
 
+    let app_for_progress = app.clone();
+
     let result = tauri::async_runtime::spawn_blocking(move || {
         let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
-        repo_service::add_repo(&conn, request).map_err(|e| e.to_string())
+        repo_service::add_repo_with_progress(&conn, request, |message: String| {
+            let _ = app_for_progress.emit(REPO_CLONE_PROGRESS_EVENT, RepoCloneProgress { message });
+        }).map_err(|e| e.to_string())
     })
     .await
     .map_err(|error| format!("添加仓库任务执行失败: {}", error))?;

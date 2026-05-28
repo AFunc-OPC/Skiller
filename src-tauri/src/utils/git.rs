@@ -297,9 +297,9 @@ pub fn clone_repo_with_auth(
     auth: &GitAuthConfig,
     on_stderr_line: Option<&mut dyn FnMut(String)>,
 ) -> Result<(), SkillerError> {
-    const CLONE_TIMEOUT: Duration = Duration::from_secs(60);
+    const CLONE_TIMEOUT: Duration = Duration::from_secs(600);
 
-    let mut args = vec!["clone"];
+    let mut args = vec!["clone", "--progress"];
     if let Some(branch_name) = branch.filter(|value| !value.trim().is_empty()) {
         args.extend(["--branch", branch_name, "--single-branch"]);
     }

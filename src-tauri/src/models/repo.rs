@@ -54,3 +54,8 @@ pub struct RepoSyncEvent {
     pub error: Option<String>,
     pub recovery_action: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RepoCloneProgress {
+    pub message: String,
+}

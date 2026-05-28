@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { listen } from '@tauri-apps/api/event'
 import { useRepositoryStore } from '../../stores/repositoryStore'
 import { useAppStore } from '../../stores/appStore'
-import type { CreateRepoRequest } from '../../types'
+import type { CreateRepoRequest, RepoCloneProgress } from '../../types'
 
 interface RepositoryAddDialogProps {
   isOpen: boolean
@@ -25,7 +26,7 @@ function normalizeErrorMessage(error: unknown): string {
 
 export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProps) {
   const { language } = useAppStore()
-  const { addRepository, cloningRepository } = useRepositoryStore()
+  const { addRepository, cloningRepository, resetCloningState } = useRepositoryStore()
   
   const [repoUrl, setRepoUrl] = useState('')
   const [repoName, setRepoName] = useState('')
@@ -40,6 +41,53 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
   const [validationError, setValidationError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [cloneLogs, setCloneLogs] = useState<string[]>([])
+  const cloneAbortedRef = useRef(false)
+  const unlistenRef = useRef<(() => void) | null>(null)
+  const logsBodyRef = useRef<HTMLDivElement>(null)
+  
+  useEffect(() => {
+    if (!isOpen) return
+    
+    let mounted = true
+    const setup = async () => {
+      unlistenRef.current = await listen<RepoCloneProgress>('repo-clone-progress', (event) => {
+        if (mounted && !cloneAbortedRef.current) {
+          const line = event.payload.message
+          setCloneLogs(prev => {
+            if (line.includes('\r')) {
+              const parts = line.split('\r')
+              const lastPart = parts[parts.length - 1]
+              if (!lastPart.trim()) return prev
+              const updated = [...prev]
+              if (updated.length > 0) {
+                updated[updated.length - 1] = lastPart
+              } else {
+                updated.push(lastPart)
+              }
+              return updated
+            }
+            return [...prev, line]
+          })
+        }
+      })
+    }
+    setup()
+    
+    return () => {
+      mounted = false
+      if (unlistenRef.current) {
+        unlistenRef.current()
+        unlistenRef.current = null
+      }
+    }
+  }, [isOpen])
+  
+  useEffect(() => {
+    if (cloningRepository && logsBodyRef.current) {
+      logsBodyRef.current.scrollTop = logsBodyRef.current.scrollHeight
+    }
+  }, [cloneLogs, cloningRepository])
   
   const validateForm = useCallback((): boolean => {
     if (!repoUrl.trim()) {
@@ -76,6 +124,8 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) return
     
+    cloneAbortedRef.current = false
+    
     try {
       const request: CreateRepoRequest = {
         name: repoName.trim(),
@@ -91,6 +141,9 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
       }
       
       const createdRepository = await addRepository(request)
+      
+      if (cloneAbortedRef.current) return
+      
       // const savedPath = createdRepository.skill_relative_path?.trim() || '/'
       setSuccessMessage(
         language === 'zh'
@@ -101,6 +154,8 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
         handleClose()
       }, 1200)
     } catch (error) {
+      if (cloneAbortedRef.current) return
+      
       const errorMessage = normalizeErrorMessage(error)
       
       if (errorMessage.includes('UNIQUE constraint failed: repos.name')) {
@@ -119,6 +174,12 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
   }, [validateForm, repoName, repoUrl, branch, description, /* skillRelativePath, */ authMethod, username, token, sshKey, syncSchedule, addRepository, language])
   
   const handleClose = useCallback(() => {
+    cloneAbortedRef.current = true
+    
+    if (cloningRepository) {
+      resetCloningState()
+    }
+    
     setRepoUrl('')
     setRepoName('')
     setBranch('main')
@@ -131,8 +192,10 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
     setSyncSchedule('')
     setValidationError(null)
     setSuccessMessage(null)
+    setShowAdvanced(false)
+    setCloneLogs([])
     onClose()
-  }, [onClose])
+  }, [onClose, cloningRepository, resetCloningState])
   
   const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value
@@ -361,6 +424,24 @@ export function RepositoryAddDialog({ isOpen, onClose }: RepositoryAddDialogProp
                     ? '暂待开发' 
                     : 'Coming soon'}
                 </span>
+              </div>
+            </div>
+          )}
+
+          {cloneLogs.length > 0 && (
+            <div className="repo-form-section">
+              <label>{language === 'zh' ? '执行日志' : 'Execution Log'}</label>
+              <div className="sc-terminal">
+                <div className="sc-terminal-header">
+                  <span className={`sc-terminal-dot ${cloningRepository ? 'active' : ''}`} />
+                  <span className="sc-terminal-dot" />
+                  <span className="sc-terminal-dot" />
+                </div>
+                <div ref={logsBodyRef} className="sc-terminal-body">
+                  {cloneLogs.map((log, i) => (
+                    <div key={i}>{log}</div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

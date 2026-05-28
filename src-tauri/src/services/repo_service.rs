@@ -103,6 +103,82 @@ pub fn get_repos(conn: &Connection) -> Result<Vec<Repo>, SkillerError> {
     Ok(result)
 }
 
+pub fn add_repo_with_progress<F: FnMut(String)>(
+    conn: &Connection,
+    request: CreateRepoRequest,
+    mut on_progress: F,
+) -> Result<Repo, SkillerError> {
+    let id = Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    let local_path = get_repo_storage_path(&id);
+
+    if let Some(parent) = local_path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    on_progress(format!("Cloning {} ...", request.url));
+
+    let auth_config = build_git_auth_config(
+        request.auth_method.as_deref(),
+        request.username.as_deref(),
+        request.token.as_deref(),
+        request.ssh_key.as_deref(),
+    );
+
+    let mut progress_callback = |line: String| {
+        on_progress(line);
+    };
+
+    crate::utils::git::clone_repo_with_auth(
+        &request.url,
+        Some(&request.branch),
+        &local_path,
+        &auth_config,
+        Some(&mut progress_callback),
+    )?;
+
+    on_progress("Clone complete, saving to database...".to_string());
+
+    let description = request.description.clone();
+    let skill_relative_path = normalize_skill_relative_path(request.skill_relative_path.as_deref());
+    let auth_method = request
+        .auth_method
+        .clone()
+        .unwrap_or_else(|| "ssh".to_string());
+    let username = request.username.clone();
+    let token = request.token.clone();
+    let ssh_key = request.ssh_key.clone();
+
+    conn.execute(
+        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        rusqlite::params![
+            id,
+            request.name,
+            request.url,
+            local_path.to_string_lossy(),
+            request.branch,
+            now,
+            now,
+            now,
+            description,
+            skill_relative_path,
+            auth_method,
+            username,
+            token,
+            ssh_key
+        ],
+    )?;
+
+    let repo = get_repo_by_id(conn, &id)?;
+
+    on_progress("Scanning skills...".to_string());
+    let skills_count = scan_and_create_skills(conn, &repo)?;
+    on_progress(format!("Done. Found {} skill(s).", skills_count));
+
+    Ok(repo)
+}
+
 pub fn add_repo(conn: &Connection, request: CreateRepoRequest) -> Result<Repo, SkillerError> {
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
