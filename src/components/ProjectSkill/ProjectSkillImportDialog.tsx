@@ -48,6 +48,30 @@ export function ProjectSkillImportDialog({
   const { skills, filteredSkills: contextFilteredSkills, selectedTagId, setSelectedTag } = useSkillContext()
   const { tree, fetchTree } = useTagTreeStore()
 
+  const skillCountsByTagId = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const skill of skills) {
+      for (const tagId of skill.tags) {
+        counts.set(tagId, (counts.get(tagId) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [skills])
+
+  const treeWithLiveCounts = useMemo(() => {
+    const injectCounts = (nodes: TreeNode[]): TreeNode[] => {
+      return nodes.map((node) => ({
+        ...node,
+        tag: {
+          ...node.tag,
+          skill_count: skillCountsByTagId.get(node.tag.id) ?? 0,
+        },
+        children: injectCounts(node.children),
+      }))
+    }
+    return injectCounts(tree)
+  }, [tree, skillCountsByTagId])
+
   const [tagSearchKeyword, setTagSearchKeyword] = useState('')
   const [skillSearchKeyword, setSkillSearchKeyword] = useState('')
   const [presetSearchKeyword, setPresetSearchKeyword] = useState('')
@@ -96,7 +120,7 @@ export function ProjectSkillImportDialog({
   }, [skills, selectedTagId, skillSearchKeyword])
 
   const filteredTree = useMemo(() => {
-    if (!tagSearchKeyword.trim()) return tree
+    if (!tagSearchKeyword.trim()) return treeWithLiveCounts
     
     const keyword = tagSearchKeyword.toLowerCase()
     
@@ -121,8 +145,8 @@ export function ProjectSkillImportDialog({
       }, [])
     }
     
-    return filterNodes(tree)
-  }, [tree, tagSearchKeyword])
+    return filterNodes(treeWithLiveCounts)
+  }, [treeWithLiveCounts, tagSearchKeyword])
 
   const expandIdsToOpen = useMemo(() => {
     if (!tagSearchKeyword.trim()) return new Set<string>()
@@ -141,9 +165,9 @@ export function ProjectSkillImportDialog({
       }
     }
     
-    collectParentIds(tree)
+    collectParentIds(treeWithLiveCounts)
     return idsToExpand
-  }, [tree, tagSearchKeyword])
+  }, [treeWithLiveCounts, tagSearchKeyword])
 
   useEffect(() => {
     if (expandIdsToOpen.size > 0) {
@@ -207,9 +231,9 @@ export function ProjectSkillImportDialog({
         }
       }
     }
-    collectTags(tree)
+    collectTags(treeWithLiveCounts)
     return map
-  }, [tree])
+  }, [treeWithLiveCounts])
 
   const getTagName = (tagId: string): string => {
     return tagMap.get(tagId) || tagId
