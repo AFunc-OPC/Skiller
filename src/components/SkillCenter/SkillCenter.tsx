@@ -32,7 +32,7 @@ import { FileImportDialog } from './FileImportDialog'
 import { NpxImportDialog } from './NpxImportDialog'
 import { NpxFindDialog } from './NpxFindDialog'
 import { RepositorySelectDialog } from './RepositorySelectDialog'
-import { DraggableTagNode, SearchInput, SearchResults } from '../TagTree'
+import { DraggableTagNode, SearchInput, SearchResults, TagDialog, DeleteTagDialog } from '../TagTree'
 import { SortDropdown } from '../shared'
 import { Skill, Tag as TagType } from '../../types'
 import { invoke } from '../../api/tauri'
@@ -83,7 +83,14 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
     tree,
     loading: tagTreeLoading,
     error: tagTreeError,
-    fetchTree
+    fetchTree,
+    createTag,
+    updateTag,
+    deleteTag: deleteTagAction,
+    moveTag,
+    expandAll,
+    collapseAll,
+    expandedIds,
   } = useTagTreeStore()
 
   const {
@@ -98,6 +105,17 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const [addSkillMenuOpen, setAddSkillMenuOpen] = useState(false)
   const [activeTag, setActiveTag] = useState<TagType | null>(null)
   const [isDraggingOverSkillArea, setIsDraggingOverSkillArea] = useState(false)
+
+  // Tag CRUD state
+  const [tagCreateOpen, setTagCreateOpen] = useState(false)
+  const [tagEditOpen, setTagEditOpen] = useState(false)
+  const [tagDeleteOpen, setTagDeleteOpen] = useState(false)
+  const [tagCreateParentId, setTagCreateParentId] = useState<string | undefined>(undefined)
+  const [tagEditId, setTagEditId] = useState<string | null>(null)
+  const [tagDeleteId, setTagDeleteId] = useState<string | null>(null)
+  const [tagSubmitting, setTagSubmitting] = useState(false)
+  const [tagSuccessMessage, setTagSuccessMessage] = useState<string | null>(null)
+  const [tagErrorMessage, setTagErrorMessage] = useState<string | null>(null)
 
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [multiSelectMode, setMultiSelectMode] = useState(false)
@@ -523,6 +541,103 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
 
   const selectedTagPath = findTagPath(selectedTagId)
 
+  // Tag CRUD helpers — flat list for looking up tags by id
+  const allTagNodes = useMemo(() => {
+    const flat: TreeNode[] = []
+    const walk = (nodes: TreeNode[]) => {
+      for (const n of nodes) {
+        flat.push(n)
+        walk(n.children)
+      }
+    }
+    walk(treeWithLiveCounts)
+    return flat
+  }, [treeWithLiveCounts])
+
+  const tagNotify = useCallback((msg: string, isError = false) => {
+    if (isError) {
+      setTagErrorMessage(msg)
+    } else {
+      setTagSuccessMessage(msg)
+    }
+    setTimeout(() => {
+      setTagSuccessMessage(null)
+      setTagErrorMessage(null)
+    }, 3000)
+  }, [])
+
+  const getTagPathStr = useCallback((tagId: string | undefined | null): string | null => {
+    if (!tagId) return null
+    const node = allTagNodes.find(n => n.tag.id === tagId)
+    if (!node) return null
+    const segments: string[] = [node.tag.name]
+    let current = node.tag.parent_id
+    while (current) {
+      const parent = allTagNodes.find(n => n.tag.id === current)
+      if (!parent) break
+      segments.unshift(parent.tag.name)
+      current = parent.tag.parent_id
+    }
+    return segments.join('/')
+  }, [allTagNodes])
+
+  const handleCreateTag = useCallback(async (name: string) => {
+    try {
+      setTagSubmitting(true)
+      await createTag(name, 'group-build', tagCreateParentId)
+      setTagCreateOpen(false)
+      tagNotify(language === 'zh' ? `标签「${name}」创建成功` : `Tag "${name}" created`)
+      setTagCreateParentId(undefined)
+    } catch (err) {
+      tagNotify(String(err), true)
+    } finally {
+      setTagSubmitting(false)
+    }
+  }, [createTag, tagCreateParentId, language, tagNotify])
+
+  const handleEditTag = useCallback(async (newName: string) => {
+    if (!tagEditId) return
+    try {
+      setTagSubmitting(true)
+      await updateTag(tagEditId, newName)
+      setTagEditOpen(false)
+      tagNotify(language === 'zh' ? '标签已更新' : 'Tag updated')
+      setTagEditId(null)
+    } catch (err) {
+      tagNotify(String(err), true)
+    } finally {
+      setTagSubmitting(false)
+    }
+  }, [tagEditId, updateTag, language, tagNotify])
+
+  const hasTagChildren = useCallback((tagId: string): boolean => {
+    const node = allTagNodes.find(n => n.tag.id === tagId)
+    return !!node && node.children.length > 0
+  }, [allTagNodes])
+
+  const handleDeleteTag = useCallback(async (deleteChildren: boolean) => {
+    if (!tagDeleteId) return
+    try {
+      setTagSubmitting(true)
+      if (hasTagChildren(tagDeleteId)) {
+        await deleteTagAction(tagDeleteId, { delete_children: deleteChildren })
+      } else {
+        await deleteTagAction(tagDeleteId)
+      }
+      setTagDeleteOpen(false)
+      tagNotify(language === 'zh' ? '标签已删除' : 'Tag deleted')
+      setTagDeleteId(null)
+    } catch (err) {
+      tagNotify(String(err), true)
+    } finally {
+      setTagSubmitting(false)
+    }
+  }, [tagDeleteId, hasTagChildren, deleteTagAction, language, tagNotify])
+
+  const editTag = tagEditId ? allTagNodes.find(n => n.tag.id === tagEditId)?.tag : null
+  const editTagPath = getTagPathStr(tagEditId ? allTagNodes.find(n => n.tag.id === tagEditId)?.tag?.parent_id ?? null : null)
+  const deleteTagObj = tagDeleteId ? allTagNodes.find(n => n.tag.id === tagDeleteId)?.tag : null
+
   useEffect(() => {
     if (!addSkillMenuOpen) return
 
@@ -666,15 +781,52 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
         <div className="skill-center-content">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden min-h-0">
-              <div className="w-[220px] min-w-[220px] flex flex-col border-r border-[var(--border-soft)]">
-                <div className="p-3 border-b border-[var(--border-soft)]">
-                  <SearchInput
-                    value={tagQuery}
-                    onChange={searchTags}
-                    placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
-                  />
+              <div className="w-[260px] min-w-[200px] flex flex-col border-r border-[var(--border-soft)]">
+                <div className="p-3 border-b border-[var(--border-soft)] flex items-center gap-2">
+                  <div className="flex-1">
+                    <SearchInput
+                      value={tagQuery}
+                      onChange={searchTags}
+                      placeholder={language === 'zh' ? '搜索标签...' : 'Search tags...'}
+                    />
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={expandAll}
+                      title={language === 'zh' ? '全部展开' : 'Expand all'}
+                      className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-mint)] hover:bg-[var(--border-soft)] transition-colors"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5"><path d="M7 4l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <button
+                      onClick={collapseAll}
+                      title={language === 'zh' ? '全部折叠' : 'Collapse all'}
+                      className="w-7 h-7 flex items-center justify-center rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-mint)] hover:bg-[var(--border-soft)] transition-colors"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5"><path d="M13 4l-5 5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <button
+                      onClick={() => { setTagCreateParentId(undefined); setTagCreateOpen(true) }}
+                      title={language === 'zh' ? '新建标签' : 'New tag'}
+                      className="w-7 h-7 flex items-center justify-center rounded-md border border-[var(--border-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-mint)] hover:border-[var(--accent-mint)]/40 transition-colors"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" className="w-3.5 h-3.5"><path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-auto p-4">
+                  {/* Tag notifications */}
+                  {tagSuccessMessage && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs">
+                      {tagSuccessMessage}
+                    </div>
+                  )}
+                  {tagErrorMessage && (
+                    <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-xs">
+                      {tagErrorMessage}
+                    </div>
+                  )}
+
                   {tagQuery.trim() ? (
                     <SearchResults
                       query={tagQuery}
@@ -709,6 +861,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                               onSelectTag={handleSelectTag}
                               activeDragTagId={activeTag?.id ?? null}
                               highlightDragged={isDraggingOverSkillArea}
+                              onEdit={(id) => { setTagEditId(id); setTagEditOpen(true) }}
+                              onDelete={(id) => { setTagDeleteId(id); setTagDeleteOpen(true) }}
+                              onCreateChild={(id) => { setTagCreateParentId(id); setTagCreateOpen(true) }}
                             />
                           ))}
                         </div>
@@ -1050,6 +1205,38 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
             </div>
           )}
         </DragOverlay>
+
+        {/* Tag CRUD dialogs */}
+        <TagDialog
+          open={tagCreateOpen}
+          mode="create"
+          title={tagCreateParentId
+            ? (language === 'zh' ? '创建子标签' : 'Create Child Tag')
+            : (language === 'zh' ? '创建标签' : 'Create Tag')}
+          parentPath={getTagPathStr(tagCreateParentId ?? null)}
+          loading={tagSubmitting}
+          onClose={() => { setTagCreateOpen(false); setTagCreateParentId(undefined) }}
+          onSubmit={handleCreateTag}
+        />
+        <TagDialog
+          open={tagEditOpen}
+          mode="edit"
+          title={language === 'zh' ? '编辑标签' : 'Edit Tag'}
+          initialValue={editTag?.name ?? ''}
+          parentPath={editTagPath}
+          loading={tagSubmitting}
+          onClose={() => { setTagEditOpen(false); setTagEditId(null) }}
+          onSubmit={handleEditTag}
+        />
+        <DeleteTagDialog
+          open={tagDeleteOpen}
+          tagName={deleteTagObj?.name}
+          hasChildren={tagDeleteId ? hasTagChildren(tagDeleteId) : false}
+          skillCount={tagDeleteId ? (skillCountsByTagId.get(tagDeleteId) ?? 0) : 0}
+          loading={tagSubmitting}
+          onClose={() => { setTagDeleteOpen(false); setTagDeleteId(null) }}
+          onConfirm={handleDeleteTag}
+        />
       </div>
     </DndContext>
   )

@@ -1,0 +1,18 @@
+[source.crates-io]
+replace-with = "ustc"
+
+# 中科大源（默认）
+[source.ustc]
+registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"
+
+# 字节跳动 rsproxy
+[source.rsproxy]
+registry = "sparse+https://rsproxy.cn/crates.io-index/"
+
+# 清华源
+[source.tuna]
+registry = "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"
+
+[http]
+proxy = "http://127.0.0.1:7897"
+multiplexing = false

@@ -8,7 +8,6 @@ import { useTagTreeStore } from './stores/tagTreeStore'
 import { SkillProvider } from './contexts/SkillContext'
 import { SkillCenter } from './components/SkillCenter'
 import { t } from './i18n'
-import { TagGovernancePage } from './pages/TagGovernancePage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { RepositoryManagementPage, RepositoryAddDialog } from './components/RepositoryManagement'
@@ -21,7 +20,7 @@ import { desktopApi } from './api/desktop'
 import { SkillMarkdownPreview } from './components/SkillCenter/SkillMarkdownPreview'
 import { USER_GUIDE_CONTENT, USER_GUIDE_CONTENT_EN } from './data/userGuide'
 
-type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'tags' | 'clawhub' | 'settings'
+type ModuleKey = 'overview' | 'skills' | 'projects' | 'repos' | 'clawhub' | 'settings'
 type IconName = ModuleKey | 'sun' | 'moon' | 'search' | 'grid' | 'list' | 'plus' | 'x' | 'chevron-left' | 'chevron-right'
 
 const modules: Array<{ key: ModuleKey; titleZh: string; titleEn: string; noteZh: string; noteEn: string }> = [
@@ -30,7 +29,6 @@ const modules: Array<{ key: ModuleKey; titleZh: string; titleEn: string; noteZh:
   { key: 'projects', titleZh: '项目管理', titleEn: 'Projects', noteZh: '项目、技能分配', noteEn: 'Project and skill allocation' },
   { key: 'repos', titleZh: '仓库管理', titleEn: 'Repos', noteZh: '远程/本地技能仓库管理\n注意:当前仅做技能仓库管理', noteEn: 'Remote/local skill repository management\nNote: At present, only skill warehouse management is done.' },
   { key: 'clawhub', titleZh: 'ClawHub', titleEn: 'ClawHub', noteZh: '发现与导入线上技能', noteEn: 'Discover and import skills online' },
-  { key: 'tags', titleZh: '标签治理', titleEn: 'Tag Governance', noteZh: '分组与标签\n推荐:可为您的技能赋于标签，更便于管理', noteEn: 'Groups and links\nRecommended: You can assign tags to your skills for better management' },
   { key: 'settings', titleZh: '设置', titleEn: 'Settings', noteZh: '语言、主题、路径预设', noteEn: 'Locale, theme, path presets' },
 ]
 
@@ -46,8 +44,6 @@ const Icon = memo(function Icon({ name }: { name: IconName }) {
       return <svg viewBox="0 0 24 24"><path d="M6 6.5h12v11H6z" /><path d="M9 9.5h6M9 13h6" /></svg>
     case 'clawhub':
       return <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 015 9 15 15 0 01-5 9 15 15 0 01-5-9A15 15 0 0112 3z" /></svg>
-    case 'tags':
-      return <svg viewBox="0 0 24 24"><path d="M5 8V4h4l10 10-5 5z" /><circle cx="8.5" cy="7.5" r="1" /></svg>
     case 'settings':
       return <svg viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z" /><path d="M4 13.2v-2.4l2.1-.7.8-1.9-1-2 1.7-1.7 2 1 1.9-.8.7-2.1h2.4l.7 2.1 1.9.8 2-1 1.7 1.7-1 2 .8 1.9 2.1.7v2.4l-2.1.7-.8 1.9 1 2-1.7 1.7-2-1-1.9.8-.7 2.1h-2.4l-.7-2.1-1.9-.8-2 1-1.7-1.7 1-2-.8-1.9z" /></svg>
     case 'sun':
@@ -126,7 +122,6 @@ interface SidebarProps {
   language: 'zh' | 'en'
   fileSkillsCount: number
   reposCount: number
-  tagsCount: number
   projectsCount: number
   clawhubMenuEnabled: boolean
   githubStars: number | null
@@ -141,7 +136,6 @@ const Sidebar = memo(function Sidebar({
   language,
   fileSkillsCount,
   reposCount,
-  tagsCount,
   projectsCount,
   clawhubMenuEnabled,
   githubStars,
@@ -176,8 +170,6 @@ const Sidebar = memo(function Sidebar({
             countDisplay = fileSkillsCount.toString()
           } else if (item.key === 'repos') {
             countDisplay = reposCount.toString()
-          } else if (item.key === 'tags') {
-            countDisplay = tagsCount.toString()
           } else if (item.key === 'projects') {
             countDisplay = projectsCount.toString()
           }
@@ -260,20 +252,6 @@ function App() {
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
 
-  const tagCount = useMemo(() => {
-    const countAll = (nodes: typeof tree): number => {
-      let count = 0
-      for (const node of nodes) {
-        count++
-        if (node.children.length > 0) {
-          count += countAll(node.children)
-        }
-      }
-      return count
-    }
-    return countAll(tree)
-  }, [tree])
-  
   const projectCount = projects.length
 
   useEffect(() => {
@@ -433,13 +411,6 @@ function App() {
           </SkillProvider>
         )
       
-      case 'tags':
-        return (
-          <div className="content-grid single-grid" style={{ height: '100%' }}>
-            <TagGovernancePage />
-          </div>
-        )
-      
       case 'settings':
         return (
           <div className="content-grid single-grid">
@@ -475,7 +446,6 @@ function App() {
           language={language}
           fileSkillsCount={fileSkills.length}
           reposCount={repos.length}
-          tagsCount={tagCount}
           projectsCount={projectCount}
           clawhubMenuEnabled={clawhubMenuEnabled}
           githubStars={githubStars}

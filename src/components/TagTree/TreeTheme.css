@@ -327,6 +327,10 @@
   opacity: 1;
 }
 
+.tag-drag-node:hover .tree-node-actions {
+  opacity: 1;
+}
+
 .tree-action-btn {
   width: 20px;
   height: 20px;
@@ -879,6 +883,10 @@
 }
 
 .tree-node-row:hover .tree-node-actions {
+  opacity: 1;
+}
+
+.tag-drag-node:hover .tree-node-actions {
   opacity: 1;
 }
 

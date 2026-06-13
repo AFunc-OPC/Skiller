@@ -14,7 +14,7 @@ import { RepositorySelectDialog } from '../components/SkillCenter/RepositorySele
 import { invoke } from '../api/tauri'
 
 interface OverviewPageProps {
-  onNavigate: (module: 'skills' | 'projects' | 'repos' | 'tags' | 'settings') => void
+  onNavigate: (module: 'skills' | 'projects' | 'repos' | 'settings') => void
   onCreateProject: () => void
   onAddRepo: () => void
   onNavigateToRepository?: (repoId: string) => void
@@ -239,7 +239,7 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
                   : 'All skills categorized'
               }
               status={stats.orphanSkills > 0 ? 'warning' : 'success'}
-              onClick={() => onNavigate('tags')}
+              onClick={() => onNavigate('skills')}
             />
             
             <StatCard
@@ -349,7 +349,7 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
             }
             title={language === 'zh' ? '管理标签' : 'Manage Tags'}
             description={language === 'zh' ? '组织和分类你的技能' : 'Organize and categorize skills'}
-            onClick={() => onNavigate('tags')}
+            onClick={() => onNavigate('skills')}
           />
         </div>
       </section>
