@@ -244,6 +244,22 @@ export function ProjectSkillImportDialog({
     return skill?.name || skillId
   }
 
+  const normalizeImportError = useCallback((error: unknown): string => {
+    const rawMessage = error instanceof Error ? error.message : String(error)
+    const message = rawMessage.replace(/^Error:\s*/, '')
+
+    const isZh = language === 'zh'
+    const isAlreadyExists = /Target skill already exists|already exists/i.test(message)
+
+    if (isAlreadyExists) {
+      return isZh
+        ? '所选技能在目标预设中已存在，请勾选「强制覆盖」后重新导入'
+        : 'Selected skills already exist in the target preset. Enable "Force Overwrite" and retry.'
+    }
+
+    return isZh ? message.replace('Failed to invoke', '调用失败').replace('failed', '失败') : message
+  }, [language])
+
   const handleImport = async () => {
     if (selectedSkillIds.size === 0 || selectedPresetIds.size === 0) return
 
@@ -271,7 +287,7 @@ export function ProjectSkillImportDialog({
 
       await performImport(false)
     } catch (err) {
-      setError((err as Error).message)
+      setError(normalizeImportError(err))
       setStage('error')
     }
   }
@@ -285,7 +301,7 @@ export function ProjectSkillImportDialog({
       setStage('success')
       setTimeout(() => onClose(), 800)
     } catch (err) {
-      setError((err as Error).message)
+      setError(normalizeImportError(err))
       setStage('error')
     }
   }

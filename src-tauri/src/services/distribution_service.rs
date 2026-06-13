@@ -247,9 +247,10 @@ pub fn distribute_skill(
                 fs::remove_file(&target_path)?;
             }
         } else {
-            return Err(SkillerError::ValidationError(
-                "Target skill already exists".to_string(),
-            ));
+            return Err(SkillerError::ValidationError(format!(
+                "Target skill already exists at: {}",
+                target_path.display()
+            )));
         }
     }
 

@@ -558,6 +558,7 @@ export function ProjectsPage() {
           preset_id: presetId,
           project_id: selectedProject.id,
           mode,
+          overwrite: forceOverwrite,
         }
         await distributionApi.distribute(request)
       }
