@@ -69,6 +69,8 @@ fn main() {
             skiller::commands::tag::move_tag,
             skiller::commands::tag::get_tag_children,
             skiller::commands::tag::get_tag_skill_count,
+            skiller::commands::tag::reorder_tags,
+            skiller::commands::tag::toggle_tag_pin,
             skiller::commands::project::get_projects,
             skiller::commands::project::create_project,
             skiller::commands::project::update_project,

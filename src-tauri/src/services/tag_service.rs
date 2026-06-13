@@ -3,8 +3,38 @@ use uuid::Uuid;
 
 use crate::error::SkillerError;
 use crate::models::tag::{
-    CreateTagRequest, DeleteTagOptions, MoveTagRequest, Tag, TagGroup, TreeNode, UpdateTagRequest,
+    CreateTagRequest, DeleteTagOptions, MoveTagRequest, Tag, TagGroup, TagOrder, TreeNode, UpdateTagRequest,
 };
+
+/// Standard column list for Tag queries (without skill_count subquery).
+/// Use this as a base and append skill_count / ORDER BY as needed.
+const TAG_COLUMNS: &str = r#"t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at, t.sort_order, t.is_pinned, t.pinned_at"#;
+
+const TAG_ORDER: &str = r#"ORDER BY t.is_pinned DESC, t.pinned_at DESC, t.sort_order ASC, t.name ASC"#;
+
+fn row_to_tag(row: &rusqlite::Row) -> rusqlite::Result<Tag> {
+    Ok(Tag {
+        id: row.get(0)?,
+        name: row.get(1)?,
+        group_id: row.get(2)?,
+        parent_id: row.get(3)?,
+        materialized_path: row.get(4)?,
+        depth: row.get(5)?,
+        is_builtin: row.get(6)?,
+        created_at: row.get(7)?,
+        updated_at: row.get(8)?,
+        sort_order: row.get(9)?,
+        is_pinned: row.get::<_, i32>(10)? != 0,
+        pinned_at: row.get(11)?,
+        skill_count: 0,
+    })
+}
+
+fn row_to_tag_with_count(row: &rusqlite::Row, count_idx: usize) -> rusqlite::Result<Tag> {
+    let mut tag = row_to_tag(row)?;
+    tag.skill_count = row.get(count_idx)?;
+    Ok(tag)
+}
 
 pub fn get_tags(conn: &Connection) -> Result<Vec<Tag>, SkillerError> {
     let skills_dir = dirs::home_dir()
@@ -17,35 +47,30 @@ pub fn get_tags(conn: &Connection) -> Result<Vec<Tag>, SkillerError> {
         .join(".skiller")
         .join("skills");
     let skills_dir_str = skills_dir.to_string_lossy().to_string();
+    // Use the platform path separator for LIKE matching
+    let sep = std::path::MAIN_SEPARATOR.to_string();
+    let like_pattern = format!("{}{}%", skills_dir_str, sep);
+    let like_pattern_disabled = format!("{}{}.disable.%", skills_dir_str, sep);
 
-    let mut stmt = conn.prepare(
-        r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+    let sql = format!(
+        r#"SELECT {TAG_COLUMNS},
            (
                SELECT COUNT(DISTINCT st.skill_id)
                FROM skill_tags st
                LEFT JOIN tags alias_t ON alias_t.name = st.tag_id
                WHERE (st.tag_id = t.id OR alias_t.id = t.id)
                  AND (
-                     st.skill_id LIKE ?1 || '/%'
-                     OR st.skill_id LIKE ?1 || '/.disable.%'
+                     st.skill_id LIKE ?1
+                     OR st.skill_id LIKE ?2
                  )
            ) as skill_count
-           FROM tags t"#,
-    )?;
+           FROM tags t {TAG_ORDER}"#
+    );
 
-    let tags = stmt.query_map(rusqlite::params![skills_dir_str], |row| {
-        Ok(Tag {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            group_id: row.get(2)?,
-            parent_id: row.get(3)?,
-            materialized_path: row.get(4)?,
-            depth: row.get(5)?,
-            is_builtin: row.get(6)?,
-            created_at: row.get(7)?,
-            updated_at: row.get(8)?,
-            skill_count: row.get(9)?,
-        })
+    let mut stmt = conn.prepare(&sql)?;
+
+    let tags = stmt.query_map(rusqlite::params![like_pattern, like_pattern_disabled], |row| {
+        row_to_tag_with_count(row, 12)
     })?;
 
     let mut result = Vec::new();
@@ -108,6 +133,23 @@ fn calculate_depth(conn: &Connection, parent_id: Option<&str>) -> Result<i32, Sk
     }
 }
 
+/// Get the next sort_order for a sibling group (max + 1).
+fn next_sort_order(conn: &Connection, parent_id: Option<&str>) -> Result<i32, SkillerError> {
+    let max_order: i32 = match parent_id {
+        Some(pid) => conn.query_row(
+            "SELECT COALESCE(MAX(sort_order), -1) FROM tags WHERE parent_id = ?1",
+            rusqlite::params![pid],
+            |row| row.get(0),
+        )?,
+        None => conn.query_row(
+            "SELECT COALESCE(MAX(sort_order), -1) FROM tags WHERE parent_id IS NULL",
+            [],
+            |row| row.get(0),
+        )?,
+    };
+    Ok(max_order + 1)
+}
+
 pub fn create_tag(conn: &Connection, request: CreateTagRequest) -> Result<Tag, SkillerError> {
     let exists: bool = conn.query_row(
         "SELECT COUNT(*) > 0 FROM tags WHERE name = ?1 AND (parent_id = ?2 OR (?2 IS NULL AND parent_id IS NULL))",
@@ -132,9 +174,10 @@ pub fn create_tag(conn: &Connection, request: CreateTagRequest) -> Result<Tag, S
 
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
+    let sort_order = next_sort_order(conn, request.parent_id.as_deref())?;
 
     conn.execute(
-        "INSERT INTO tags (id, name, group_id, parent_id, materialized_path, depth, is_builtin, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8)",
+        "INSERT INTO tags (id, name, group_id, parent_id, materialized_path, depth, is_builtin, created_at, updated_at, sort_order) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9)",
         rusqlite::params![
             id,
             request.name,
@@ -143,7 +186,8 @@ pub fn create_tag(conn: &Connection, request: CreateTagRequest) -> Result<Tag, S
             materialized_path,
             depth,
             now,
-            now
+            now,
+            sort_order
         ],
     )?;
 
@@ -158,6 +202,9 @@ pub fn create_tag(conn: &Connection, request: CreateTagRequest) -> Result<Tag, S
         created_at: now.clone(),
         updated_at: now,
         skill_count: 0,
+        sort_order,
+        is_pinned: false,
+        pinned_at: None,
     })
 }
 
@@ -219,48 +266,26 @@ pub fn get_tag_tree(conn: &Connection) -> Result<Vec<TreeNode>, SkillerError> {
 }
 
 pub fn get_tag_subtree(conn: &Connection, tag_id: &str) -> Result<TreeNode, SkillerError> {
-    let tag: Tag = conn.query_row(
-        r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+    let sql = format!(
+        r#"SELECT {TAG_COLUMNS},
            (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-           FROM tags t WHERE t.id = ?1"#,
-        rusqlite::params![tag_id],
-        |row| {
-            Ok(Tag {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                group_id: row.get(2)?,
-                parent_id: row.get(3)?,
-                materialized_path: row.get(4)?,
-                depth: row.get(5)?,
-                is_builtin: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                skill_count: row.get(9)?,
-            })
-        },
-    )?;
+           FROM tags t WHERE t.id = ?1"#
+    );
+    let tag: Tag = conn.query_row(&sql, rusqlite::params![tag_id], |row| {
+        row_to_tag_with_count(row, 12)
+    })?;
 
     let descendant_path = format!("{}/%", tag.materialized_path);
-    let mut stmt = conn.prepare(
-        r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+    let desc_sql = format!(
+        r#"SELECT {TAG_COLUMNS},
            (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-           FROM tags t WHERE t.materialized_path LIKE ?1 ORDER BY t.materialized_path"#,
-    )?;
+           FROM tags t WHERE t.materialized_path LIKE ?1 {TAG_ORDER}"#
+    );
+    let mut stmt = conn.prepare(&desc_sql)?;
 
     let descendants: Vec<Tag> = stmt
         .query_map(rusqlite::params![descendant_path], |row| {
-            Ok(Tag {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                group_id: row.get(2)?,
-                parent_id: row.get(3)?,
-                materialized_path: row.get(4)?,
-                depth: row.get(5)?,
-                is_builtin: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                skill_count: row.get(9)?,
-            })
+            row_to_tag_with_count(row, 12)
         })?
         .filter_map(|t| t.ok())
         .collect();
@@ -270,6 +295,8 @@ pub fn get_tag_subtree(conn: &Connection, tag_id: &str) -> Result<TreeNode, Skil
 }
 
 fn build_tree(tags: Vec<Tag>, parent_id: Option<&str>) -> Result<Vec<TreeNode>, SkillerError> {
+    // tags are already sorted from SQL (is_pinned DESC, pinned_at DESC, sort_order ASC, name ASC),
+    // so preserve order by iterating in sequence
     let mut roots: Vec<TreeNode> = Vec::new();
 
     for tag in tags.iter() {
@@ -318,34 +345,16 @@ pub fn move_tag(conn: &Connection, request: MoveTagRequest) -> Result<Tag, Skill
         }
     }
 
-    let tag: Tag = conn.query_row(
-        r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
-           (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-           FROM tags t WHERE t.id = ?1"#,
-        rusqlite::params![&request.tag_id],
-        |row| {
-            Ok(Tag {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                group_id: row.get(2)?,
-                parent_id: row.get(3)?,
-                materialized_path: row.get(4)?,
-                depth: row.get(5)?,
-                is_builtin: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                skill_count: row.get(9)?,
-            })
-        },
-    )?;
+    let tag = get_tag_by_id(conn, &request.tag_id)?;
 
     let new_depth = calculate_depth(conn, request.new_parent_id.as_deref())?;
     let new_path = calculate_materialized_path(conn, request.new_parent_id.as_deref(), &tag.name)?;
 
     let now = chrono::Utc::now().to_rfc3339();
 
+    // Reset sort_order and is_pinned when moving to a new parent
     conn.execute(
-        "UPDATE tags SET parent_id = ?1, depth = ?2, materialized_path = ?3, updated_at = ?4 WHERE id = ?5",
+        "UPDATE tags SET parent_id = ?1, depth = ?2, materialized_path = ?3, updated_at = ?4, sort_order = 0, is_pinned = 0, pinned_at = NULL WHERE id = ?5",
         rusqlite::params![
             request.new_parent_id,
             new_depth,
@@ -389,26 +398,14 @@ fn update_descendant_paths(
 }
 
 pub fn get_tag_by_id(conn: &Connection, id: &str) -> Result<Tag, SkillerError> {
-    conn.query_row(
-        r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+    let sql = format!(
+        r#"SELECT {TAG_COLUMNS},
            (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-           FROM tags t WHERE t.id = ?1"#,
-        rusqlite::params![id],
-        |row| {
-            Ok(Tag {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                group_id: row.get(2)?,
-                parent_id: row.get(3)?,
-                materialized_path: row.get(4)?,
-                depth: row.get(5)?,
-                is_builtin: row.get(6)?,
-                created_at: row.get(7)?,
-                updated_at: row.get(8)?,
-                skill_count: row.get(9)?,
-            })
-        },
-    ).map_err(|_| SkillerError::TagNotFound(format!("Tag not found: {}", id)))
+           FROM tags t WHERE t.id = ?1"#
+    );
+    conn.query_row(&sql, rusqlite::params![id], |row| {
+        row_to_tag_with_count(row, 12)
+    }).map_err(|_| SkillerError::TagNotFound(format!("Tag not found: {}", id)))
 }
 
 pub fn update_tag(conn: &Connection, request: UpdateTagRequest) -> Result<Tag, SkillerError> {
@@ -469,6 +466,10 @@ pub fn get_tag_skill_count(conn: &Connection, tag_id: &str) -> Result<usize, Ski
         .join(".skiller")
         .join("skills");
     let skills_dir_str = skills_dir.to_string_lossy().to_string();
+    // Use the platform path separator for LIKE matching
+    let sep = std::path::MAIN_SEPARATOR.to_string();
+    let like_pattern = format!("{}{}%", skills_dir_str, sep);
+    let like_pattern_disabled = format!("{}{}.disable.%", skills_dir_str, sep);
 
     let count: i64 = conn.query_row(
         r#"SELECT COUNT(DISTINCT st.skill_id)
@@ -476,10 +477,10 @@ pub fn get_tag_skill_count(conn: &Connection, tag_id: &str) -> Result<usize, Ski
            LEFT JOIN tags alias_t ON alias_t.name = st.tag_id
            WHERE (st.tag_id = ?1 OR alias_t.id = ?1)
              AND (
-                 st.skill_id LIKE ?2 || '/%'
-                 OR st.skill_id LIKE ?2 || '/.disable.%'
+                 st.skill_id LIKE ?2
+                 OR st.skill_id LIKE ?3
              )"#,
-        rusqlite::params![tag_id, skills_dir_str],
+        rusqlite::params![tag_id, like_pattern, like_pattern_disabled],
         |row| row.get(0),
     )?;
     Ok(count as usize)
@@ -493,48 +494,28 @@ pub fn get_tag_children(
 
     match parent_id {
         Some(pid) => {
-            let mut stmt = conn.prepare(
-                r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+            let sql = format!(
+                r#"SELECT {TAG_COLUMNS},
                    (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-                   FROM tags t WHERE t.parent_id = ?1"#,
-            )?;
+                   FROM tags t WHERE t.parent_id = ?1 {TAG_ORDER}"#
+            );
+            let mut stmt = conn.prepare(&sql)?;
             let rows = stmt.query_map(rusqlite::params![pid], |row| {
-                Ok(Tag {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    group_id: row.get(2)?,
-                    parent_id: row.get(3)?,
-                    materialized_path: row.get(4)?,
-                    depth: row.get(5)?,
-                    is_builtin: row.get(6)?,
-                    created_at: row.get(7)?,
-                    updated_at: row.get(8)?,
-                    skill_count: row.get(9)?,
-                })
+                row_to_tag_with_count(row, 12)
             })?;
             for tag in rows {
                 tags.push(tag?);
             }
         }
         None => {
-            let mut stmt = conn.prepare(
-                r#"SELECT t.id, t.name, t.group_id, t.parent_id, t.materialized_path, t.depth, t.is_builtin, t.created_at, t.updated_at,
+            let sql = format!(
+                r#"SELECT {TAG_COLUMNS},
                    (SELECT COUNT(*) FROM skill_tags WHERE tag_id = t.id) as skill_count
-                   FROM tags t WHERE t.parent_id IS NULL"#,
-            )?;
+                   FROM tags t WHERE t.parent_id IS NULL {TAG_ORDER}"#
+            );
+            let mut stmt = conn.prepare(&sql)?;
             let rows = stmt.query_map([], |row| {
-                Ok(Tag {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    group_id: row.get(2)?,
-                    parent_id: row.get(3)?,
-                    materialized_path: row.get(4)?,
-                    depth: row.get(5)?,
-                    is_builtin: row.get(6)?,
-                    created_at: row.get(7)?,
-                    updated_at: row.get(8)?,
-                    skill_count: row.get(9)?,
-                })
+                row_to_tag_with_count(row, 12)
             })?;
             for tag in rows {
                 tags.push(tag?);
@@ -543,4 +524,35 @@ pub fn get_tag_children(
     }
 
     Ok(tags)
+}
+
+pub fn reorder_tags(conn: &Connection, orders: &[TagOrder]) -> Result<(), SkillerError> {
+    for item in orders {
+        conn.execute(
+            "UPDATE tags SET sort_order = ?1 WHERE id = ?2",
+            rusqlite::params![item.sort_order, item.tag_id],
+        )?;
+    }
+    Ok(())
+}
+
+pub fn toggle_tag_pin(conn: &Connection, tag_id: &str) -> Result<Tag, SkillerError> {
+    let tag = get_tag_by_id(conn, tag_id)?;
+    let now = chrono::Utc::now().to_rfc3339();
+
+    if tag.is_pinned {
+        // Unpin: reset sort_order and clear pinned state
+        conn.execute(
+            "UPDATE tags SET is_pinned = 0, pinned_at = NULL, sort_order = 0, updated_at = ?1 WHERE id = ?2",
+            rusqlite::params![now, tag_id],
+        )?;
+    } else {
+        // Pin: set is_pinned = 1, pinned_at = now
+        conn.execute(
+            "UPDATE tags SET is_pinned = 1, pinned_at = ?1, updated_at = ?1 WHERE id = ?2",
+            rusqlite::params![now, tag_id],
+        )?;
+    }
+
+    get_tag_by_id(conn, tag_id)
 }

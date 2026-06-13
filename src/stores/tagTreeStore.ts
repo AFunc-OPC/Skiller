@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { TreeNode, Tag, DeleteTagOptions } from '../types'
+import type { TreeNode, Tag, DeleteTagOptions, TagOrder } from '../types'
 import { tagApi } from '../api/tag'
 
 interface TagTreeState {
@@ -8,19 +8,21 @@ interface TagTreeState {
   selectedTagId: string | null
   loading: boolean
   error: string | null
-  
+
   fetchTree: () => Promise<void>
   createTag: (name: string, groupId: string, parentId?: string) => Promise<Tag>
   updateTag: (id: string, name: string) => Promise<void>
   moveTag: (tagId: string, newParentId?: string) => Promise<void>
   deleteTag: (id: string, options?: DeleteTagOptions) => Promise<void>
-  
+  reorderTags: (orders: TagOrder[]) => Promise<void>
+  toggleTagPin: (tagId: string) => Promise<void>
+
   toggleExpanded: (tagId: string) => void
   expandAll: () => void
   collapseAll: () => void
   selectTag: (tagId: string | null) => void
   expandToTag: (tagId: string) => void
-  
+
   clearError: () => void
   getTagCount: () => number
 }
@@ -110,7 +112,7 @@ export const useTagTreeStore = create<TagTreeState>((set, get) => ({
         await tagApi.delete(id)
       }
       await get().fetchTree()
-      
+
       set((state) => {
         const nextExpanded = new Set(state.expandedIds)
         nextExpanded.delete(id)
@@ -119,6 +121,26 @@ export const useTagTreeStore = create<TagTreeState>((set, get) => ({
           selectedTagId: state.selectedTagId === id ? null : state.selectedTagId,
         }
       })
+    } catch (error) {
+      set({ error: String(error) })
+      throw error
+    }
+  },
+
+  reorderTags: async (orders) => {
+    try {
+      await tagApi.reorder(orders)
+      await get().fetchTree()
+    } catch (error) {
+      set({ error: String(error) })
+      throw error
+    }
+  },
+
+  toggleTagPin: async (tagId) => {
+    try {
+      await tagApi.togglePin(tagId)
+      await get().fetchTree()
     } catch (error) {
       set({ error: String(error) })
       throw error

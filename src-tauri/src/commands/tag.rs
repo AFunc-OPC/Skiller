@@ -3,7 +3,7 @@ use tauri::State;
 use crate::db::connection::get_connection;
 use crate::db::connection::DbConnection;
 use crate::models::tag::{
-    CreateTagRequest, DeleteTagOptions, MoveTagRequest, Tag, TagGroup, TreeNode, UpdateTagRequest,
+    CreateTagRequest, DeleteTagOptions, MoveTagRequest, Tag, TagGroup, TagOrder, TreeNode, UpdateTagRequest,
 };
 use crate::services::tag_service;
 
@@ -78,4 +78,16 @@ pub fn get_tag_children(
 pub fn get_tag_skill_count(db: State<'_, DbConnection>, tag_id: String) -> Result<usize, String> {
     let conn = get_connection(&db).map_err(|e| e.to_string())?;
     tag_service::get_tag_skill_count(&conn, &tag_id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn reorder_tags(db: State<'_, DbConnection>, orders: Vec<TagOrder>) -> Result<(), String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    tag_service::reorder_tags(&conn, &orders).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn toggle_tag_pin(db: State<'_, DbConnection>, tag_id: String) -> Result<Tag, String> {
+    let conn = get_connection(&db).map_err(|e| e.to_string())?;
+    tag_service::toggle_tag_pin(&conn, &tag_id).map_err(|e| e.to_string())
 }

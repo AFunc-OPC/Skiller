@@ -88,6 +88,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
     updateTag,
     deleteTag: deleteTagAction,
     moveTag,
+    reorderTags,
+    toggleTagPin,
     expandAll,
     collapseAll,
     expandedIds,
@@ -133,10 +135,82 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
   const [batchTagPickerPosition, setBatchTagPickerPosition] = useState({ top: 0, left: 0, maxHeight: 360 })
 
+  // Tag reorder drag state
+  const [reorderActiveId, setReorderActiveId] = useState<string | null>(null)
+  const [reorderOverId, setReorderOverId] = useState<string | null>(null)
+  const [reorderActiveParentId, setReorderActiveParentId] = useState<string | null>(null)
+
+  // Resizable tag sidebar
+  const TAG_SIDEBAR_STORAGE_KEY = 'skill-center-tag-sidebar-width'
+  const MIN_SIDEBAR_WIDTH = 200
+  const MAX_SIDEBAR_WIDTH = 560
+  const DEFAULT_SIDEBAR_WIDTH = 320
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(TAG_SIDEBAR_STORAGE_KEY)
+    const parsed = saved ? parseInt(saved, 10) : NaN
+    return Number.isFinite(parsed) ? Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, parsed)) : DEFAULT_SIDEBAR_WIDTH
+  })
+  const [isResizing, setIsResizing] = useState(false)
+  const resizeStateRef = useRef<{ startX: number; startWidth: number } | null>(null)
+  const sidebarContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    resizeStateRef.current = { startX: e.clientX, startWidth: sidebarWidth }
+  }, [sidebarWidth])
+
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const state = resizeStateRef.current
+      if (!state) return
+      const delta = e.clientX - state.startX
+      const next = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, state.startWidth + delta))
+      setSidebarWidth(next)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      resizeStateRef.current = null
+      try {
+        localStorage.setItem(TAG_SIDEBAR_STORAGE_KEY, String(sidebarWidth))
+      } catch {
+        // ignore storage errors
+      }
+    }
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing, sidebarWidth])
+
   const selectedSkill = skills.find(s => s.id === selectedSkillId) || null
 
   const collisionDetection = useCallback((args: Parameters<typeof closestCenter>[0]) => {
-    if (args.active.data.current?.type !== 'tag-for-skill') {
+    const activeType = args.active.data.current?.type
+
+    // Tag reorder: only consider sibling reorder-drop zones
+    if (activeType === 'tag-reorder') {
+      const activeParentId = (args.active.data.current?.parentId ?? null) as string | null
+      const siblingContainers = args.droppableContainers.filter((container) => {
+        if (container.data.current?.type !== 'tag-reorder-drop') return false
+        const overParentId = (container.data.current?.parentId ?? null) as string | null
+        return overParentId === activeParentId
+      })
+      return closestCenter({ ...args, droppableContainers: siblingContainers })
+    }
+
+    if (activeType !== 'tag-for-skill') {
       return closestCenter(args)
     }
 
@@ -191,23 +265,78 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
     if (tagData?.type === 'tag-for-skill') {
       setActiveTag(tagData.tag)
       setIsDraggingOverSkillArea(false)
+    } else if (tagData?.type === 'tag-reorder') {
+      const tag = tagData.tag as TagType
+      setReorderActiveId(tag.id)
+      setReorderActiveParentId(tag.parent_id)
+      setReorderOverId(null)
     }
   }
 
   const handleDragOver = (event: DragOverEvent) => {
     const overId = typeof event.over?.id === 'string' ? event.over.id : ''
+    const activeType = event.active.data.current?.type
+
+    if (activeType === 'tag-reorder') {
+      const overData = event.over?.data.current
+      if (overData?.type === 'tag-reorder-drop') {
+        setReorderOverId(overData.tagId as string)
+      } else {
+        setReorderOverId(null)
+      }
+      return
+    }
+
     const isOverSkillArea = overId === 'skill-area' || overId.startsWith('skill-card-') || overId.startsWith('skill-list-')
     setIsDraggingOverSkillArea(isOverSkillArea)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    const activeData = active.data.current
+
+    // Handle tag reorder first
+    if (activeData?.type === 'tag-reorder') {
+      const overData = over?.data.current
+      setReorderActiveId(null)
+      setReorderOverId(null)
+      setReorderActiveParentId(null)
+
+      if (!over || overData?.type !== 'tag-reorder-drop') return
+
+      const draggedTag = activeData.tag as TagType
+      const overTagId = overData.tagId as string
+
+      // No reorder if dropped on itself
+      if (draggedTag.id === overTagId) return
+
+      // Collect sibling order from the current tree (same parent_id)
+      const siblings = collectSiblings(treeWithLiveCounts, draggedTag.parent_id)
+      const draggedIndex = siblings.findIndex((t) => t.id === draggedTag.id)
+      let overIndex = siblings.findIndex((t) => t.id === overTagId)
+      if (draggedIndex === -1 || overIndex === -1) return
+
+      // Remove dragged and reinsert before over target
+      const reordered = siblings.slice()
+      const [moved] = reordered.splice(draggedIndex, 1)
+      // After removal, overIndex may shift; recompute if dragged was before over
+      if (draggedIndex < overIndex) overIndex -= 1
+      reordered.splice(overIndex, 0, moved)
+
+      const orders = reordered.map((t, idx) => ({ tag_id: t.id, sort_order: idx }))
+      try {
+        await reorderTags(orders)
+      } catch (err) {
+        console.error('Failed to reorder tags:', err)
+      }
+      return
+    }
+
     setActiveTag(null)
     setIsDraggingOverSkillArea(false)
 
     if (!over) return
 
-    const activeData = active.data.current
     const overData = over.data.current
 
     if (activeData?.type === 'tag-for-skill' && overData?.type === 'skill') {
@@ -634,6 +763,31 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
     }
   }, [tagDeleteId, hasTagChildren, deleteTagAction, language, tagNotify])
 
+  const handleTogglePin = useCallback(async (tagId: string) => {
+    try {
+      await toggleTagPin(tagId)
+    } catch (err) {
+      tagNotify(String(err), true)
+    }
+  }, [toggleTagPin, tagNotify])
+
+  // Collect siblings (tags sharing the same parent_id) as a flat ordered list
+  const collectSiblings = useCallback((nodes: TreeNode[], parentId: string | null): TagType[] => {
+    const result: TagType[] = []
+    const walk = (list: TreeNode[], lookingFor: string | null) => {
+      for (const node of list) {
+        if ((node.tag.parent_id ?? null) === lookingFor) {
+          result.push(node.tag)
+        }
+        if (node.children.length > 0) {
+          walk(node.children, lookingFor)
+        }
+      }
+    }
+    walk(nodes, parentId)
+    return result
+  }, [])
+
   const editTag = tagEditId ? allTagNodes.find(n => n.tag.id === tagEditId)?.tag : null
   const editTagPath = getTagPathStr(tagEditId ? allTagNodes.find(n => n.tag.id === tagEditId)?.tag?.parent_id ?? null : null)
   const deleteTagObj = tagDeleteId ? allTagNodes.find(n => n.tag.id === tagDeleteId)?.tag : null
@@ -781,7 +935,11 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
         <div className="skill-center-content">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 flex rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] shadow-sm overflow-hidden min-h-0">
-              <div className="w-[260px] min-w-[200px] flex flex-col border-r border-[var(--border-soft)]">
+              <div
+                ref={sidebarContainerRef}
+                className="flex flex-col border-r border-[var(--border-soft)] relative flex-shrink-0"
+                style={{ width: `${sidebarWidth}px`, minWidth: `${MIN_SIDEBAR_WIDTH}px` }}
+              >
                 <div className="p-3 border-b border-[var(--border-soft)] flex items-center gap-2">
                   <div className="flex-1">
                     <SearchInput
@@ -864,6 +1022,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                               onEdit={(id) => { setTagEditId(id); setTagEditOpen(true) }}
                               onDelete={(id) => { setTagDeleteId(id); setTagDeleteOpen(true) }}
                               onCreateChild={(id) => { setTagCreateParentId(id); setTagCreateOpen(true) }}
+                              onTogglePin={handleTogglePin}
+                              reorderActiveId={reorderActiveId}
+                              reorderOverId={reorderOverId}
                             />
                           ))}
                         </div>
@@ -874,6 +1035,15 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                   )}
                 </div>
               </div>
+
+              <div
+                className={`tag-sidebar-resizer ${isResizing ? 'active' : ''}`}
+                onMouseDown={handleResizeStart}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label={language === 'zh' ? '调整标签栏宽度' : 'Resize tag sidebar'}
+                title={language === 'zh' ? '拖拽调整宽度' : 'Drag to resize'}
+              />
 
               <DroppableSkillArea
                 isDraggingTag={activeTag !== null}
@@ -1205,6 +1375,15 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
               {activeTag.name}
             </div>
           )}
+          {reorderActiveId && (() => {
+            const t = allTagNodes.find((n) => n.tag.id === reorderActiveId)?.tag
+            return t ? (
+              <div className="tag-drag-overlay">
+                <Tag className="w-3.5 h-3.5" />
+                {t.name}
+              </div>
+            ) : null
+          })()}
         </DragOverlay>
 
         {/* Tag CRUD dialogs */}

@@ -224,6 +224,13 @@
   position: relative;
 }
 
+/* Tag node name: allow wrapping to 2 lines instead of hard truncation */
+.tag-node-name {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
 .tag-drag-tooltip {
   position: absolute;
   left: 0;
@@ -329,6 +336,19 @@
 
 .tag-drag-node:hover .tree-node-actions {
   opacity: 1;
+}
+
+/* Reorder drag handle */
+.tree-reorder-handle {
+  color: var(--tree-text-muted);
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.tree-reorder-handle:hover,
+.tag-drag-node:hover .tree-reorder-handle {
+  opacity: 1;
+  color: var(--tree-text-muted);
 }
 
 .tree-action-btn {
@@ -890,6 +910,19 @@
   opacity: 1;
 }
 
+/* Reorder drag handle */
+.tree-reorder-handle {
+  color: var(--tree-text-muted);
+  opacity: 0.35;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.tree-reorder-handle:hover,
+.tag-drag-node:hover .tree-reorder-handle {
+  opacity: 1;
+  color: var(--tree-text-muted);
+}
+
 .tree-action-btn {
   width: 22px;
   height: 22px;
@@ -920,6 +953,30 @@
   stroke: currentColor;
   stroke-width: 1.75;
   fill: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pinned tag node
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.tag-pinned {
+  position: relative;
+}
+
+.tag-pinned::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent-mint, var(--tree-accent-warm));
+  opacity: 0.6;
+}
+
+.tree-action-btn.active {
+  color: var(--accent-mint, var(--tree-accent-warm));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

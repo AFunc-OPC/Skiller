@@ -69,6 +69,9 @@ export interface Tag {
   created_at: string
   updated_at: string
   skill_count?: number
+  sort_order: number
+  is_pinned: boolean
+  pinned_at: string | null
 }
 
 export interface TagGroup {
@@ -93,6 +96,11 @@ export interface UpdateTagRequest {
 export interface MoveTagRequest {
   tag_id: string
   new_parent_id?: string
+}
+
+export interface TagOrder {
+  tag_id: string
+  sort_order: number
 }
 
 export interface TreeNode {

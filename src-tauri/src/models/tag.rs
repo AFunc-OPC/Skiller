@@ -13,6 +13,12 @@ pub struct Tag {
     pub updated_at: String,
     #[serde(default)]
     pub skill_count: usize,
+    #[serde(default)]
+    pub sort_order: i32,
+    #[serde(default)]
+    pub is_pinned: bool,
+    #[serde(default)]
+    pub pinned_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,4 +58,10 @@ pub struct TreeNode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeleteTagOptions {
     pub delete_children: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TagOrder {
+    pub tag_id: String,
+    pub sort_order: i32,
 }

@@ -5,6 +5,40 @@
 
 /* ── Search Highlight ─────────────────────────────────────────────────── */
 
+/* Tag sidebar resizer */
+.tag-sidebar-resizer {
+  width: 6px;
+  margin-left: -3px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  position: relative;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.tag-sidebar-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.tag-sidebar-resizer:hover::after,
+.tag-sidebar-resizer.active::after {
+  background: var(--accent-mint, #10b981);
+}
+
+.tag-sidebar-resizer.active {
+  background: rgba(16, 185, 129, 0.06);
+}
+
 .skill-highlight {
   background: rgba(16, 185, 129, 0.25);
   color: inherit;
