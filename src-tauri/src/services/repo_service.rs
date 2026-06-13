@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::commands::repo::ImportableSkill;
 use crate::error::SkillerError;
-use crate::models::repo::{CreateRepoRequest, Repo, UpdateRepoRequest};
+use crate::models::repo::{CreateLocalRepoRequest, CreateRepoRequest, Repo, UpdateRepoRequest};
 use crate::models::skill::{CreateSkillRequest, SourceMetadata};
 use crate::services::skill_service;
 use crate::utils::markdown::parse_skill_markdown;
@@ -55,6 +55,16 @@ fn recreate_repo_checkout(
     local_path: &Path,
     auth_config: &crate::utils::git::GitAuthConfig,
 ) -> Result<(), SkillerError> {
+    // 安全保护：本地仓库或空 URL 的仓库，绝不删除 local_path
+    if repo.source_type == "local" || repo.url.is_empty() {
+        eprintln!(
+            "Warning: Skipping recreate for local/empty-url repo {} ({})",
+            repo.name,
+            repo.source_type
+        );
+        return Ok(());
+    }
+
     remove_path_if_exists(local_path)?;
 
     if let Some(parent) = local_path.parent() {
@@ -72,7 +82,7 @@ fn recreate_repo_checkout(
 
 pub fn get_repos(conn: &Connection) -> Result<Vec<Repo>, SkillerError> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key FROM repos",
+        "SELECT id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type FROM repos",
     )?;
 
     let repos = stmt.query_map([], |row| {
@@ -92,6 +102,7 @@ pub fn get_repos(conn: &Connection) -> Result<Vec<Repo>, SkillerError> {
             username: row.get(12)?,
             token: row.get(13)?,
             ssh_key: row.get(14)?,
+            source_type: row.get(15)?,
         })
     })?;
 
@@ -150,8 +161,8 @@ pub fn add_repo_with_progress<F: FnMut(String)>(
     let ssh_key = request.ssh_key.clone();
 
     conn.execute(
-        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key) 
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, 'remote')",
         rusqlite::params![
             id,
             request.name,
@@ -222,8 +233,8 @@ pub fn add_repo(conn: &Connection, request: CreateRepoRequest) -> Result<Repo, S
     let ssh_key = request.ssh_key.clone();
 
     conn.execute(
-        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key) 
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, 'remote')",
         rusqlite::params![
             id,
             request.name,
@@ -245,6 +256,55 @@ pub fn add_repo(conn: &Connection, request: CreateRepoRequest) -> Result<Repo, S
     let repo = get_repo_by_id(conn, &id)?;
 
     println!("Scanning skills in repository");
+    let skills_count = scan_and_create_skills(conn, &repo)?;
+    println!("Created {} skills", skills_count);
+
+    Ok(repo)
+}
+
+pub fn add_local_repo(
+    conn: &Connection,
+    request: CreateLocalRepoRequest,
+) -> Result<Repo, SkillerError> {
+    let local_path = PathBuf::from(&request.local_path);
+
+    if !local_path.exists() {
+        return Err(SkillerError::InvalidInput(format!(
+            "目录不存在: {}",
+            request.local_path
+        )));
+    }
+
+    if !local_path.is_dir() {
+        return Err(SkillerError::InvalidInput(format!(
+            "路径不是目录: {}",
+            request.local_path
+        )));
+    }
+
+    let id = Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    let description = request.description.clone();
+    let skill_relative_path = normalize_skill_relative_path(request.skill_relative_path.as_deref());
+
+    conn.execute(
+        "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type)
+         VALUES (?1, ?2, '', ?3, '', ?4, 0, ?5, ?6, ?7, ?8, NULL, NULL, NULL, NULL, 'local')",
+        rusqlite::params![
+            id,
+            request.name,
+            local_path.to_string_lossy(),
+            now,
+            now,
+            now,
+            description,
+            skill_relative_path,
+        ],
+    )?;
+
+    let repo = get_repo_by_id(conn, &id)?;
+
+    println!("Scanning skills in local repository");
     let skills_count = scan_and_create_skills(conn, &repo)?;
     println!("Created {} skills", skills_count);
 
@@ -332,24 +392,39 @@ pub fn refresh_repo(conn: &Connection, id: &str) -> Result<(Repo, bool), Skiller
         }
     };
 
-    println!("Pulling repository {}", repo.name);
+    let is_local = repo.source_type == "local" || repo.url.is_empty();
 
-    let auth_config = build_git_auth_config(
-        repo.auth_method.as_deref(),
-        repo.username.as_deref(),
-        repo.token.as_deref(),
-        repo.ssh_key.as_deref(),
-    );
-
-    let recovered_by_reclone = if is_repo_checkout_usable(&local_path) {
-        crate::utils::git::pull_repo(&local_path, &repo.branch, &auth_config)?;
+    let recovered_by_reclone = if is_local {
+        // 本地仓库：不执行 git pull，不删除目录，仅重扫 skills
+        println!("Refreshing local repository {} (no git pull)", repo.name);
         false
     } else {
-        recreate_repo_checkout(&repo, &local_path, &auth_config)?;
-        true
+        // 远程仓库：保持现有逻辑
+        if repo.url.is_empty() {
+            // 兜底保护：没有 URL 的仓库不走 clone/pull 流程
+            println!("Skipping refresh for repo {} with empty URL", repo.name);
+            false
+        } else {
+            println!("Pulling repository {}", repo.name);
+
+            let auth_config = build_git_auth_config(
+                repo.auth_method.as_deref(),
+                repo.username.as_deref(),
+                repo.token.as_deref(),
+                repo.ssh_key.as_deref(),
+            );
+
+            if is_repo_checkout_usable(&local_path) {
+                crate::utils::git::pull_repo(&local_path, &repo.branch, &auth_config)?;
+                false
+            } else {
+                recreate_repo_checkout(&repo, &local_path, &auth_config)?;
+                true
+            }
+        }
     };
 
-    println!("Pull successful, updating skills");
+    println!("Updating skills");
 
     delete_repo_skills(conn, id)?;
 
@@ -387,7 +462,7 @@ fn delete_repo_skills(conn: &Connection, repo_id: &str) -> Result<(), SkillerErr
 
 fn get_repo_by_id(conn: &Connection, id: &str) -> Result<Repo, SkillerError> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key FROM repos WHERE id = ?1"
+        "SELECT id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type FROM repos WHERE id = ?1"
     )?;
 
     stmt.query_row(rusqlite::params![id], |row| {
@@ -407,6 +482,7 @@ fn get_repo_by_id(conn: &Connection, id: &str) -> Result<Repo, SkillerError> {
             username: row.get(12)?,
             token: row.get(13)?,
             ssh_key: row.get(14)?,
+            source_type: row.get(15)?,
         })
     })
     .map_err(|_| SkillerError::RepoNotFound(id.to_string()))
@@ -597,13 +673,14 @@ mod tests {
             username: None,
             token: None,
             ssh_key: None,
+            source_type: "remote".to_string(),
         }
     }
 
     fn insert_repo(conn: &Connection, repo: &Repo) {
         conn.execute(
-            "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+            "INSERT INTO repos (id, name, url, local_path, branch, last_sync, is_builtin, created_at, updated_at, description, skill_relative_path, auth_method, username, token, ssh_key, source_type)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
             rusqlite::params![
                 repo.id,
                 repo.name,
@@ -620,6 +697,7 @@ mod tests {
                 repo.username,
                 repo.token,
                 repo.ssh_key,
+                repo.source_type,
             ],
         )
         .expect("insert repo");

@@ -17,6 +17,7 @@ pub struct Repo {
     pub username: Option<String>,
     pub token: Option<String>,
     pub ssh_key: Option<String>,
+    pub source_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,6 +31,14 @@ pub struct CreateRepoRequest {
     pub username: Option<String>,
     pub token: Option<String>,
     pub ssh_key: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateLocalRepoRequest {
+    pub name: String,
+    pub local_path: String,
+    pub description: Option<String>,
+    pub skill_relative_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

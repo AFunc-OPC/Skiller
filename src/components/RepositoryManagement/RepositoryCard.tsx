@@ -52,7 +52,9 @@ export function RepositoryCard({ repository, query, onClick, style }: Repository
   }
   
   const localPath = repository.local_path || `~/.skiller/repository/${repository.id}/`
-  
+  const isLocal = repository.source_type === 'local'
+  const displayUrl = isLocal ? localPath : repository.url
+
   return (
     <article className="repo-card" onClick={onClick} style={style}>
       <div className="repo-card-inner">
@@ -60,11 +62,18 @@ export function RepositoryCard({ repository, query, onClick, style }: Repository
           <div className="repo-card-title">
             <HighlightText text={repository.name} query={query} />
           </div>
-          {repository.is_builtin && (
-            <span className="repo-builtin-badge">
-              {language === 'zh' ? '内置' : 'Built-in'}
-            </span>
-          )}
+          <div className="repo-card-badges">
+            {isLocal && (
+              <span className="repo-local-badge">
+                {language === 'zh' ? '本地' : 'Local'}
+              </span>
+            )}
+            {repository.is_builtin && (
+              <span className="repo-builtin-badge">
+                {language === 'zh' ? '内置' : 'Built-in'}
+              </span>
+            )}
+          </div>
         </div>
         {description && description !== (language === 'zh' ? '无简介' : 'No description') && (
           <div className="repo-card-desc">{truncateText(description, 80)}</div>
@@ -72,11 +81,17 @@ export function RepositoryCard({ repository, query, onClick, style }: Repository
         <div className="repo-card-meta">
           <div className="repo-meta-item">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" className="w-3 h-3 flex-shrink-0" strokeWidth="1.5">
-              <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M9.172 6.172a2 2 0 00-2.828 0l-3 3a2 2 0 102.828 2.828l1.5-1.5" strokeLinecap="round" strokeLinejoin="round" />
+              {isLocal ? (
+                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
+              ) : (
+                <>
+                  <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M9.172 6.172a2 2 0 00-2.828 0l-3 3a2 2 0 102.828 2.828l1.5-1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </>
+              )}
             </svg>
-            <span className="repo-meta-text" title={repository.url}>
-              <HighlightText text={truncateText(repository.url, 50)} query={query} />
+            <span className="repo-meta-text" title={displayUrl}>
+              <HighlightText text={truncateText(displayUrl, 50)} query={query} />
             </span>
           </div>
           <div className="repo-meta-item">

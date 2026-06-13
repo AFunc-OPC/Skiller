@@ -149,6 +149,7 @@ export interface Repo {
   token?: string | null
   ssh_key?: string | null
   sync_schedule?: string | null
+  source_type?: 'remote' | 'local'
 }
 
 export interface CreateRepoRequest {
@@ -162,6 +163,13 @@ export interface CreateRepoRequest {
   token?: string
   ssh_key?: string
   sync_schedule?: string
+}
+
+export interface CreateLocalRepoRequest {
+  name: string
+  local_path: string
+  description?: string
+  skill_relative_path?: string
 }
 
 export interface UpdateRepoRequest {

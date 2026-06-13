@@ -1,5 +1,5 @@
 import { invoke } from './tauri'
-import type { Repo, CreateRepoRequest, UpdateRepoRequest } from '../types'
+import type { Repo, CreateRepoRequest, CreateLocalRepoRequest, UpdateRepoRequest } from '../types'
 
 export interface ImportableSkill {
   name: string
@@ -19,6 +19,10 @@ export const repoApi = {
   
   add: async (request: CreateRepoRequest): Promise<Repo> => {
     return await invoke('add_repo', { request })
+  },
+
+  addLocal: async (request: CreateLocalRepoRequest): Promise<Repo> => {
+    return await invoke('add_local_repo', { request })
   },
   
   update: async (request: UpdateRepoRequest): Promise<Repo> => {

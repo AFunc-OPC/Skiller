@@ -666,17 +666,26 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
             <div className="repo-drawer-meta-grid">
               <div className="repo-drawer-meta-item repo-drawer-meta-item-full">
                 <label>{language === 'zh' ? '仓库地址' : 'Repository URL'}</label>
-                <button
-                  onClick={() => openUrl(gitUrlToHttps(repository.url))}
-                  className="repo-drawer-link"
-                  title={repository.url}
-                >
-                  {repository.url}
-                  <svg viewBox="0 0 20 20" fill="currentColor" className="repo-link-icon">
-                    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                  </svg>
-                </button>
+                {repository.source_type === 'local' ? (
+                  <div className="repo-drawer-value repo-drawer-value-local">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="repo-value-icon">
+                      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    </svg>
+                    {language === 'zh' ? '本地仓库（无远程地址）' : 'Local repository (no remote URL)'}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => openUrl(gitUrlToHttps(repository.url))}
+                    className="repo-drawer-link"
+                    title={repository.url}
+                  >
+                    {repository.url}
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="repo-link-icon">
+                      <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                      <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                    </svg>
+                  </button>
+                )}
               </div>
               
               <div className="repo-drawer-meta-item repo-drawer-meta-item-full">
@@ -741,7 +750,11 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
               
               <div className="repo-drawer-meta-item">
                 <label>{language === 'zh' ? '分支' : 'Branch'}</label>
-                {editingField === 'branch' ? (
+                {repository.source_type === 'local' ? (
+                  <span className="repo-drawer-value">
+                    {language === 'zh' ? '不适用' : 'N/A'}
+                  </span>
+                ) : editingField === 'branch' ? (
                   <input
                     ref={inputRef}
                     type="text"

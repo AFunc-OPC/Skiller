@@ -82,6 +82,7 @@ fn main() {
             skiller::commands::project_skill::check_project_skill_exists,
             skiller::commands::repo::get_repos,
             skiller::commands::repo::add_repo,
+            skiller::commands::repo::add_local_repo,
             skiller::commands::repo::update_repo,
             skiller::commands::repo::delete_repo,
             skiller::commands::repo::refresh_repo,

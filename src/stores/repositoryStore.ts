@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Repo, CreateRepoRequest, UpdateRepoRequest, Skill, SortOption } from '../types'
+import type { Repo, CreateRepoRequest, CreateLocalRepoRequest, UpdateRepoRequest, Skill, SortOption } from '../types'
 import { DEFAULT_SORT, SORT_OPTIONS } from '../types'
 import { repoApi } from '../api/repo'
 import { skillApi } from '../api/skill'
@@ -19,6 +19,7 @@ interface RepositoryState {
   
   fetchRepositories: () => Promise<void>
   addRepository: (request: CreateRepoRequest) => Promise<Repo>
+  addLocalRepository: (request: CreateLocalRepoRequest) => Promise<Repo>
   updateRepository: (request: UpdateRepoRequest) => Promise<Repo>
   deleteRepository: (id: string) => Promise<void>
   syncRepository: (id: string, requestId: string) => Promise<string>
@@ -76,7 +77,23 @@ export const useRepositoryStore = create<RepositoryState>((set, get) => ({
     set({ cloningRepository: true, cloneProgress: null, error: null })
     try {
       const repository = await repoApi.add(request)
-      set((state) => ({ 
+      set((state) => ({
+        repositories: [...state.repositories, repository],
+        cloningRepository: false,
+        cloneProgress: null
+      }))
+      return repository
+    } catch (error) {
+      set({ cloningRepository: false, cloneProgress: null })
+      throw error
+    }
+  },
+
+  addLocalRepository: async (request: CreateLocalRepoRequest) => {
+    set({ cloningRepository: true, cloneProgress: null, error: null })
+    try {
+      const repository = await repoApi.addLocal(request)
+      set((state) => ({
         repositories: [...state.repositories, repository],
         cloningRepository: false,
         cloneProgress: null

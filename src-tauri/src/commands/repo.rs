@@ -2,7 +2,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use serde::{Deserialize, Serialize};
 
 use crate::db::connection::{get_connection, init_database, DbConnection};
-use crate::models::repo::{CreateRepoRequest, Repo, RepoCloneProgress, RepoSyncEvent, UpdateRepoRequest};
+use crate::models::repo::{CreateLocalRepoRequest, CreateRepoRequest, Repo, RepoCloneProgress, RepoSyncEvent, UpdateRepoRequest};
 use crate::services::{repo_service, LogService};
 
 const REPO_SYNC_PROGRESS_EVENT: &str = "repo-sync-progress";
@@ -71,6 +71,32 @@ pub fn update_repo(
 ) -> Result<Repo, String> {
     let conn = get_connection(&db).map_err(|e| e.to_string())?;
     repo_service::update_repo(&conn, request).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn add_local_repo(app: AppHandle, request: CreateLocalRepoRequest) -> Result<Repo, String> {
+    log_action(&app, "INFO", "repo", &format!("开始导入本地仓库: {} ({})", request.name, request.local_path));
+
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .to_string_lossy()
+        .to_string();
+
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let conn = init_database(&app_data_dir).map_err(|e| e.to_string())?;
+        repo_service::add_local_repo(&conn, request).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|error| format!("导入本地仓库任务执行失败: {}", error))?;
+
+    match &result {
+        Ok(repo) => log_action(&app, "INFO", "repo", &format!("成功导入本地仓库: {}", repo.name)),
+        Err(e) => log_action(&app, "ERROR", "repo", &format!("导入本地仓库失败: {}", e)),
+    }
+
+    result
 }
 
 #[tauri::command]

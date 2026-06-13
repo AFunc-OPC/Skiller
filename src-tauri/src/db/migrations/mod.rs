@@ -4,6 +4,7 @@ pub mod v11;
 pub mod v12;
 pub mod v13;
 pub mod v14;
+pub mod v15;
 pub mod v2;
 pub mod v3;
 pub mod v4;
@@ -29,5 +30,6 @@ pub fn run_migrations(conn: &Connection) -> Result<(), crate::error::SkillerErro
     v12::fix_global_paths(conn)?;
     v13::add_global_skills_project(conn)?;
     v14::add_clawhub_sources_table(conn)?;
+    v15::add_repo_source_type(conn)?;
     Ok(())
 }
