@@ -18,6 +18,7 @@ interface RepositorySelectDialogProps {
   onDeleteSkill?: (skillId: string, options?: { refresh?: boolean }) => Promise<void>
   existingSkills?: Skill[]
   onUpdateSkillTags?: (skillId: string, tags: string[], options?: { refresh?: boolean }) => Promise<void>
+  initialSelectedTagId?: string | null
   repositories: Repo[]
   loading?: boolean
   onLoadRepositories?: () => void
@@ -65,6 +66,7 @@ export function RepositorySelectDialog({
   onDeleteSkill,
   existingSkills,
   onUpdateSkillTags,
+  initialSelectedTagId,
   repositories,
   loading = false,
   onLoadRepositories,
@@ -120,7 +122,7 @@ export function RepositorySelectDialog({
       setConfirmOverwriteOpen(false)
       setConfirmOverwriteData({ existing: [], newSkills: [] })
       setRepoSkillCounts(new Map())
-      setSelectedTagIds(new Set())
+      setSelectedTagIds(initialSelectedTagId ? new Set([initialSelectedTagId]) : new Set())
       setTagSearch('')
       setShowTagPicker(false)
       setExpandedTagIds(new Set())
@@ -129,7 +131,7 @@ export function RepositorySelectDialog({
         onLoadRepositories()
       }
     }
-  }, [isOpen, onLoadRepositories, fetchTree])
+  }, [isOpen, onLoadRepositories, fetchTree, initialSelectedTagId])
 
   useEffect(() => {
     if (isOpen && repositories.length > 0) {

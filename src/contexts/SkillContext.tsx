@@ -222,12 +222,13 @@ export function SkillProvider({ children }: { children: ReactNode }) {
         tags,
       })
       if (options?.refresh !== false) {
+        await fetchSkills()
         await fetchTagTree()
       }
     } catch (error) {
       throw new Error('更新技能标签失败: ' + (error as Error).message)
     }
-  }, [updateSkillLocally, fetchTagTree])
+  }, [updateSkillLocally, fetchSkills, fetchTagTree])
 
   const distributeSkill = useCallback(async (request: DistributeSkillRequest) => {
     try {

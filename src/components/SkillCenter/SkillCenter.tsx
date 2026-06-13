@@ -1013,6 +1013,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
           onDeleteSkill={deleteSkill}
           existingSkills={skills}
           onUpdateSkillTags={updateSkillTags}
+          initialSelectedTagId={selectedTagId}
           repositories={repositories}
           loading={repositoriesLoading}
           onLoadRepositories={fetchRepositories}
