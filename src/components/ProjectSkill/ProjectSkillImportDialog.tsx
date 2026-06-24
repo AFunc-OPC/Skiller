@@ -520,11 +520,11 @@ export function ProjectSkillImportDialog({
           <div className="psi-conflict">
             <AlertTriangle className="psi-conflict-icon" />
             <div className="psi-conflict-content">
-              <h4>{language === 'zh' ? '技能已存在' : 'Skills already exist'}</h4>
+              <h4>{language === 'zh' ? '技能已存在，是否覆盖？' : 'Skills already exist — overwrite?'}</h4>
               <p>
                 {language === 'zh'
-                  ? `以下技能在项目中已存在：${existingSkills.join(', ')}`
-                  : `These skills already exist in the project: ${existingSkills.join(', ')}`}
+                  ? `以下技能在项目中已存在，覆盖将删除原有技能后再重新导入：${existingSkills.join(', ')}`
+                  : `These skills already exist in the project. Overwriting will delete the existing skills and re-import them: ${existingSkills.join(', ')}`}
               </p>
             </div>
             <div className="psi-conflict-actions">
@@ -532,7 +532,7 @@ export function ProjectSkillImportDialog({
                 {language === 'zh' ? '取消' : 'Cancel'}
               </button>
               <button className="psi-btn psi-btn-danger" onClick={handleForceOverwrite}>
-                {language === 'zh' ? '强制覆盖' : 'Force Overwrite'}
+                {language === 'zh' ? '确认覆盖' : 'Overwrite'}
               </button>
             </div>
           </div>

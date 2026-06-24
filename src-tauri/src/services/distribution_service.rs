@@ -232,16 +232,13 @@ pub fn distribute_skill(
     }
 
     let target_path = resolve_target_path(conn, request, &source_path)?;
-    if target_path.exists() {
+    let target_meta = fs::symlink_metadata(&target_path);
+    if target_meta.is_ok() {
         if request.overwrite {
-            if target_path.is_symlink() {
-                let metadata = fs::symlink_metadata(&target_path)?;
-                if metadata.file_type().is_dir() {
-                    fs::remove_dir(&target_path)?;
-                } else {
-                    fs::remove_file(&target_path)?;
-                }
-            } else if target_path.is_dir() {
+            let meta = target_meta.unwrap();
+            if meta.file_type().is_symlink() {
+                fs::remove_file(&target_path)?;
+            } else if meta.is_dir() {
                 fs::remove_dir_all(&target_path)?;
             } else {
                 fs::remove_file(&target_path)?;

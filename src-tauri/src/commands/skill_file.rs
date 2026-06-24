@@ -979,6 +979,15 @@ pub fn delete_file_skill(app: tauri::AppHandle, skill_id: String) -> Result<(), 
     
     if path.exists() && path.is_dir() {
         fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
+    } else if fs::symlink_metadata(&path).is_ok() {
+        let is_symlink = fs::symlink_metadata(&path)
+            .map(|m| m.file_type().is_symlink())
+            .unwrap_or(false);
+        if is_symlink {
+            fs::remove_file(&path).map_err(|e| e.to_string())?;
+        } else if path.is_dir() {
+            fs::remove_dir_all(&path).map_err(|e| e.to_string())?;
+        }
     }
     Ok(())
 }

@@ -222,9 +222,11 @@ pub fn remove_project_skill(
     let normal_path = skill_dir.join(&skill_name);
     let disabled_path = skill_dir.join(format!(".disable.{}", skill_name));
 
-    let target_path = if normal_path.exists() {
+    let path_exists = |p: &PathBuf| fs::symlink_metadata(p).is_ok();
+
+    let target_path: PathBuf = if path_exists(&normal_path) {
         normal_path
-    } else if disabled_path.exists() {
+    } else if path_exists(&disabled_path) {
         disabled_path
     } else {
         return Err(format!("Skill '{}' not found in project", skill_name));
@@ -232,7 +234,7 @@ pub fn remove_project_skill(
 
     let skill_name_for_log = target_path
         .file_name()
-        .and_then(|n| n.to_str())
+        .and_then(|n: &std::ffi::OsStr| n.to_str())
         .unwrap_or(&skill_name);
 
     log_action(
@@ -242,7 +244,12 @@ pub fn remove_project_skill(
         &format!("移除项目技能: {}", skill_name_for_log),
     );
 
-    if target_path.is_dir() {
+    let is_symlink = fs::symlink_metadata(&target_path)
+        .map(|m| m.file_type().is_symlink())
+        .unwrap_or(false);
+    if is_symlink {
+        fs::remove_file(&target_path).map_err(|e| e.to_string())?;
+    } else if target_path.is_dir() {
         fs::remove_dir_all(&target_path).map_err(|e| e.to_string())?;
     }
 
@@ -277,9 +284,11 @@ pub fn toggle_project_skill_status(
     let normal_path = skill_dir.join(&skill_name);
     let disabled_path = skill_dir.join(format!(".disable.{}", skill_name));
 
-    let (source_path, target_path, is_disabling) = if normal_path.exists() {
+    let path_exists = |p: &PathBuf| fs::symlink_metadata(p).is_ok();
+
+    let (source_path, target_path, is_disabling) = if path_exists(&normal_path) {
         (normal_path, disabled_path, true)
-    } else if disabled_path.exists() {
+    } else if path_exists(&disabled_path) {
         (disabled_path, normal_path, false)
     } else {
         return Err(format!("Skill '{}' not found in project", skill_name));
@@ -354,5 +363,5 @@ pub fn check_project_skill_exists(
     let normal_path = skill_dir.join(&skill_name);
     let disabled_path = skill_dir.join(format!(".disable.{}", skill_name));
 
-    Ok(normal_path.exists() || disabled_path.exists())
+    Ok(fs::symlink_metadata(&normal_path).is_ok() || fs::symlink_metadata(&disabled_path).is_ok())
 }
