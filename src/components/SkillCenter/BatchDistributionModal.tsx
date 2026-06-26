@@ -1,14 +1,16 @@
 import { useAppStore } from '../../stores/appStore'
 import { SkillDistributionPanel } from './SkillDistributionPanel'
+import type { SkillDistributionMode } from '../../types'
 
 interface BatchDistributionModalProps {
   skillIds: string[]
   skillNames: string[]
   isOpen: boolean
   onClose: () => void
+  modeLocked?: SkillDistributionMode
 }
 
-export function BatchDistributionModal({ skillIds, skillNames, isOpen, onClose }: BatchDistributionModalProps) {
+export function BatchDistributionModal({ skillIds, skillNames, isOpen, onClose, modeLocked }: BatchDistributionModalProps) {
   const { language } = useAppStore()
 
   if (!isOpen) return null
@@ -32,6 +34,7 @@ export function BatchDistributionModal({ skillIds, skillNames, isOpen, onClose }
             skillIds={skillIds}
             skillNames={skillNames}
             onSuccess={onClose}
+            modeLocked={modeLocked}
           />
         </div>
       </div>
