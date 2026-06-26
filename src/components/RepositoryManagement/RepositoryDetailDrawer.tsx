@@ -390,7 +390,11 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
       (skill.description && skill.description.toLowerCase().includes(keyword))
     )
   }, [repositorySkills, skillSearchKeyword])
-  
+
+  const selectedSkillsForDistribution = useMemo(() => {
+    return repositorySkills.filter(s => selectedSkillIds.has(s.id))
+  }, [repositorySkills, selectedSkillIds])
+
   const toggleSkillSelection = useCallback((skillId: string) => {
     setSelectedSkillIds(prev => {
       const next = new Set(prev)
@@ -1302,6 +1306,16 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
           skillPath={previewSkill.file_path}
           isOpen={Boolean(previewSkill)}
           onClose={() => setPreviewSkill(null)}
+        />
+      )}
+
+      {distributeModalOpen && selectedSkillsForDistribution.length > 0 && (
+        <BatchDistributionModal
+          skillIds={selectedSkillsForDistribution.map(s => s.file_path)}
+          skillNames={selectedSkillsForDistribution.map(s => s.name)}
+          isOpen={distributeModalOpen}
+          onClose={() => setDistributeModalOpen(false)}
+          modeLocked="copy"
         />
       )}
     </>
