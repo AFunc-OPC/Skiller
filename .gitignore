@@ -40,6 +40,9 @@ target/
 # Testing
 coverage/
 
+# Worktrees
+.worktrees/
+
 # Misc
 *.tsbuildinfo
 
