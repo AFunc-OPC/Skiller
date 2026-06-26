@@ -24,6 +24,7 @@ interface NpxImportDialogProps {
   onCancelImport: (sessionId: string) => Promise<void>
   onExecuteNative: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
   onSyncToSkiller: (skillName: string, command?: string) => Promise<SyncToSkillerResponse>
+  onCleanupAgentsSkills: (skillNames: string[]) => Promise<string[]>
   checkTools: () => Promise<ToolAvailability>
 }
 
@@ -38,6 +39,7 @@ export function NpxImportDialog({
   onCancelImport,
   onExecuteNative,
   onSyncToSkiller,
+  onCleanupAgentsSkills,
   checkTools,
 }: NpxImportDialogProps) {
   const [mode, setMode] = useState<ImportMode>('native')
@@ -119,6 +121,16 @@ export function NpxImportDialog({
         await onCancelImport(prepared.session_id)
       } catch (cancelError) {
         console.error(cancelError)
+      }
+    }
+    if (nativeResult && showNativeConfirm) {
+      const skillNames = nativeResult.skill_names.length > 0
+        ? nativeResult.skill_names
+        : [nativeResult.skill_name]
+      try {
+        await onCleanupAgentsSkills(skillNames)
+      } catch (cleanupError) {
+        console.error(cleanupError)
       }
     }
     onClose()

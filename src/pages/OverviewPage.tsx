@@ -94,6 +94,7 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
     checkToolAvailability,
     executeNativeNpxSkillsAdd,
     syncToSkiller,
+    cleanupAgentsSkills,
   } = useSkillContext()
 
   const {
@@ -368,6 +369,7 @@ export function OverviewPage({ onNavigate, onCreateProject, onAddRepo, onNavigat
         onCancelImport={cancelSkillImportFromNpx}
         onExecuteNative={executeNativeNpxSkillsAdd}
         onSyncToSkiller={syncToSkiller}
+        onCleanupAgentsSkills={cleanupAgentsSkills}
         checkTools={checkToolAvailability}
       />
 

@@ -1453,12 +1453,16 @@ pub async fn execute_npx_skills_add_native(
     fn ensure_flags(cmd: &str) -> String {
         let has_global = cmd.contains(" -g") || cmd.contains(" --global");
         let has_yes = cmd.contains(" -y") || cmd.contains(" --yes");
+        let has_agent = cmd.contains(" -a ") || cmd.contains(" --agent ") || cmd.contains(" --all");
         let mut result = cmd.to_string();
         if !has_global {
             result.push_str(" -g");
         }
         if !has_yes {
             result.push_str(" -y");
+        }
+        if !has_agent {
+            result.push_str(" -a universal");
         }
         result
     }
@@ -1711,6 +1715,27 @@ pub fn sync_skill_to_skiller(skill_name: String, command: Option<String>) -> Res
         skill_path: target_path.to_string_lossy().to_string(),
         is_update,
     })
+}
+
+/// Clean up skills from ~/.agents/skills/ when user cancels native import after successful installation.
+/// This removes the installed skill without syncing to Skiller.
+#[tauri::command]
+pub fn cleanup_agents_skills(skill_names: Vec<String>) -> Result<Vec<String>, String> {
+    let agents_skills_dir = get_agents_skills_dir().map_err(|e| e.to_string())?;
+    let mut cleaned = Vec::new();
+
+    for name in &skill_names {
+        let path = agents_skills_dir.join(name);
+        if path.exists() {
+            if let Err(e) = fs::remove_dir_all(&path) {
+                eprintln!("[Skiller] Warning: Failed to clean up skill '{}' from ~/.agents/skills/: {}", name, e);
+            } else {
+                cleaned.push(name.clone());
+            }
+        }
+    }
+
+    Ok(cleaned)
 }
 
 #[tauri::command]

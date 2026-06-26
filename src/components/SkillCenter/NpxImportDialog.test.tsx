@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   onCancelImport: vi.fn(),
   onExecuteNative: vi.fn(),
   onSyncToSkiller: vi.fn(),
+  onCleanupAgentsSkills: vi.fn(),
   checkTools: vi.fn(),
 }))
 
@@ -54,6 +55,7 @@ describe('NpxImportDialog', () => {
     mocks.onCancelImport.mockReset()
     mocks.onExecuteNative.mockReset()
     mocks.onSyncToSkiller.mockReset()
+    mocks.onCleanupAgentsSkills.mockReset()
     mocks.checkTools.mockReset()
 
     mocks.listen.mockResolvedValue(vi.fn())
@@ -78,6 +80,7 @@ describe('NpxImportDialog', () => {
       skill_path: '/home/demo/.skiller/skills/demo-skill',
       is_update: false,
     })
+    mocks.onCleanupAgentsSkills.mockResolvedValue([])
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001')
   })
 
@@ -95,6 +98,7 @@ describe('NpxImportDialog', () => {
         onCancelImport={mocks.onCancelImport}
         onExecuteNative={mocks.onExecuteNative}
         onSyncToSkiller={mocks.onSyncToSkiller}
+        onCleanupAgentsSkills={mocks.onCleanupAgentsSkills}
         checkTools={mocks.checkTools}
       />,
     )

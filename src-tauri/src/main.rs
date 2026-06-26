@@ -54,6 +54,7 @@ fn main() {
             skiller::commands::skill_file::execute_npx_skills_add_native,
             skiller::commands::skill_file::confirm_overwrite_and_sync,
             skiller::commands::skill_file::sync_skill_to_skiller,
+            skiller::commands::skill_file::cleanup_agents_skills,
             skiller::commands::skill_file::list_agents_skills,
             skiller::commands::skill_file::search_skills_sh_api,
             skiller::commands::skill_file::execute_npx_skills_find,

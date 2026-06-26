@@ -74,6 +74,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
     refreshSkillData,
     executeNativeNpxSkillsAdd,
     syncToSkiller,
+    cleanupAgentsSkills,
     updateSkillTags,
   } = useSkillContext()
 
@@ -847,6 +848,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
           onCancelImport={cancelSkillImportFromNpx}
           onExecuteNative={executeNativeNpxSkillsAdd}
           onSyncToSkiller={syncToSkiller}
+          onCleanupAgentsSkills={cleanupAgentsSkills}
           checkTools={checkToolAvailability}
         />
 

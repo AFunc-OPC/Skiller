@@ -51,6 +51,7 @@ interface SkillContextValue extends SkillCenterState {
   distributeSkill: (request: DistributeSkillRequest) => Promise<DistributeSkillResult>
   executeNativeNpxSkillsAdd: (command: string, requestId: string) => Promise<NativeNpxImportResponse>
   syncToSkiller: (skillName: string, command?: string) => Promise<{ skill_name: string; skill_path: string; is_update: boolean }>
+  cleanupAgentsSkills: (skillNames: string[]) => Promise<string[]>
   listAgentsSkills: () => Promise<AgentsSkillInfo[]>
 }
 
@@ -259,6 +260,15 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchSkills, fetchTagTree])
 
+  const cleanupAgentsSkills = useCallback(async (skillNames: string[]) => {
+    try {
+      return await invoke<string[]>('cleanup_agents_skills', { skillNames })
+    } catch (error) {
+      console.error('清理 ~/.agents/skills 失败:', error)
+      return []
+    }
+  }, [])
+
   const listAgentsSkills = useCallback(async () => {
     try {
       return await invoke<AgentsSkillInfo[]>('list_agents_skills')
@@ -370,6 +380,7 @@ export function SkillProvider({ children }: { children: ReactNode }) {
     distributeSkill,
     executeNativeNpxSkillsAdd,
     syncToSkiller,
+    cleanupAgentsSkills,
     listAgentsSkills,
   }
 

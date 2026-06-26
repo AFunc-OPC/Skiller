@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   onCancelImport: vi.fn(),
   onExecuteNative: vi.fn(),
   onSyncToSkiller: vi.fn(),
+  onCleanupAgentsSkills: vi.fn(),
   checkTools: vi.fn(),
 }))
 
@@ -25,6 +26,7 @@ const defaultProps = {
   onCancelImport: mocks.onCancelImport,
   onExecuteNative: mocks.onExecuteNative,
   onSyncToSkiller: mocks.onSyncToSkiller,
+  onCleanupAgentsSkills: mocks.onCleanupAgentsSkills,
   checkTools: mocks.checkTools,
 }
 
