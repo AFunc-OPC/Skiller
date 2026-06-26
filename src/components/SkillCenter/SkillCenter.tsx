@@ -102,6 +102,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
 
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const [multiSelectExpanded, setMultiSelectExpanded] = useState(() => {
+    return localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
+  })
   const [showBatchTagPicker, setShowBatchTagPicker] = useState(false)
   const [batchTagIds, setBatchTagIds] = useState<Set<string>>(new Set())
   const [batchTagSearch, setBatchTagSearch] = useState('')
@@ -231,8 +234,12 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const handleToggleMultiSelectMode = useCallback(() => {
     setMultiSelectMode(prev => {
       const next = !prev
-      if (!next) {
+      if (next) {
+        setMultiSelectExpanded(true)
+      } else {
         handleClearSelection()
+        const settingEnabled = localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
+        setMultiSelectExpanded(settingEnabled)
       }
       return next
     })
@@ -561,13 +568,13 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
             <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
               <div className={`skill-multi-mode-cluster ${multiSelectMode ? 'active' : ''}`}>
                 <button
-                  className={`skill-multi-mode-trigger ${multiSelectMode ? 'active' : ''}`}
+                  className={`skill-multi-mode-trigger ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}
                   title={language === 'zh' ? '多选模式' : 'Multi-select'}
                   aria-label={language === 'zh' ? '多选模式' : 'Multi-select'}
                 >
                   <ListChecks className="w-4 h-4" />
-                  {multiSelectMode && (
+                  {multiSelectExpanded && (
                     <span>{language === 'zh' ? '多选模式' : 'Multi-select'}</span>
                   )}
                   {multiSelectMode && (

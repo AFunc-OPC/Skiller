@@ -1763,6 +1763,11 @@ code.sc-prepared-value {
   min-width: 36px;
 }
 
+.skill-multi-mode-trigger.expanded {
+  width: auto;
+  min-width: 36px;
+}
+
 .skill-multi-selected-count {
   display: inline-flex;
   align-items: center;

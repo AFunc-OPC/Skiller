@@ -59,7 +59,17 @@ const TAB_ICONS: Record<TabKey, JSX.Element> = {
 
 export function SettingsTabs({ language, setLanguage, theme, setTheme, defaultTab }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>((defaultTab as TabKey) || 'general')
-  
+
+  const [multiSelectExpand, setMultiSelectExpand] = useState(() => {
+    return localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
+  })
+
+  const handleToggleMultiSelectExpand = () => {
+    const next = !multiSelectExpand
+    setMultiSelectExpand(next)
+    localStorage.setItem('skillCenterMultiSelectExpanded', String(next))
+  }
+
   const tabs: Array<{ key: TabKey; label: string; labelEn: string }> = [
     { key: 'general', label: '通用设置', labelEn: 'General' },
     { key: 'clawhub', label: 'ClawHub 源', labelEn: 'ClawHub Source' },
@@ -181,6 +191,25 @@ export function SettingsTabs({ language, setLanguage, theme, setTheme, defaultTa
                     )}
                   </button>
                 </div>
+              </div>
+              <div className="settings-section-header">
+                <div>
+                  <h2 className="settings-section-title">{t('multiSelectExpandTitle', language)}</h2>
+                  <p className="settings-section-desc">
+                    {language === 'zh' ? '技能中心 > 多选模式默认展开' : 'Skill Center > Multi-select expanded by default'}
+                  </p>
+                  <p className="settings-section-desc" style={{ fontSize: '0.8125rem', opacity: 0.7, marginTop: '0.25rem' }}>
+                    {t('multiSelectExpandHint', language)}
+                  </p>
+                </div>
+                <label className="settings-toggle" title={t('multiSelectExpandTitle', language)}>
+                  <input
+                    type="checkbox"
+                    checked={multiSelectExpand}
+                    onChange={handleToggleMultiSelectExpand}
+                  />
+                  <span className="settings-toggle-slider" />
+                </label>
               </div>
             </div>
           )}
