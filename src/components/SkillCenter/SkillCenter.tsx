@@ -102,6 +102,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
 
   const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set())
   const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const [multiSelectExpanded, setMultiSelectExpanded] = useState(() => {
+    return localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
+  })
   const [showBatchTagPicker, setShowBatchTagPicker] = useState(false)
   const [batchTagIds, setBatchTagIds] = useState<Set<string>>(new Set())
   const [batchTagSearch, setBatchTagSearch] = useState('')
@@ -231,8 +234,12 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const handleToggleMultiSelectMode = useCallback(() => {
     setMultiSelectMode(prev => {
       const next = !prev
-      if (!next) {
+      if (next) {
+        setMultiSelectExpanded(true)
+      } else {
         handleClearSelection()
+        const settingEnabled = localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
+        setMultiSelectExpanded(settingEnabled)
       }
       return next
     })
