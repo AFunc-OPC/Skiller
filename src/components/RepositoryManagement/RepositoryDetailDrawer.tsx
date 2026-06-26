@@ -9,6 +9,7 @@ import { useTagTreeStore } from '../../stores/tagTreeStore'
 import { desktopApi } from '../../api/desktop'
 import type { Repo, RepoSyncEvent, Skill, TreeNode } from '../../types'
 import { SkillMarkdownPreview } from '../SkillCenter/SkillMarkdownPreview'
+import { BatchDistributionModal } from '../SkillCenter/BatchDistributionModal'
 
 const REPO_SYNC_PROGRESS_EVENT = 'repo-sync-progress'
 
@@ -80,6 +81,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
     newSkills: Skill[]
   }>({ existing: [], newSkills: [] })
   const [previewSkill, setPreviewSkill] = useState<Skill | null>(null)
+  const [distributeModalOpen, setDistributeModalOpen] = useState(false)
   const [copiedSkillId, setCopiedSkillId] = useState<string | null>(null)
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [tagSearchKeyword, setTagSearchKeyword] = useState('')
@@ -922,6 +924,21 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
                     {language === 'zh' ? '立即同步' : 'Sync Now'}
                   </>
                 )}
+              </button>
+
+              <button
+                className="repo-btn-primary repo-distribute-btn"
+                onClick={() => setDistributeModalOpen(true)}
+                disabled={selectedSkillIds.size === 0 || repositorySkills.length === 0}
+                title={language === 'zh' ? '分发选中的仓库技能' : 'Distribute selected repository skills'}
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 7H4a2 2 0 00-2 2v6a2 2 0 002 2h9a2 2 0 002-2V9a2 2 0 00-2-2zm-4 9v-3" />
+                  <path d="M11.293 3.293a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 6.414V11a1 1 0 11-2 0V6.414L9.707 7.707a1 1 0 01-1.414-1.414l3-3z" />
+                  <path d="M5 12a1 1 0 100 2h3a1 1 0 100-2H5z" />
+                </svg>
+                {language === 'zh' ? '立即分发' : 'Distribute Now'}
+                {selectedSkillIds.size > 0 && <span className="repo-import-count">({selectedSkillIds.size})</span>}
               </button>
 
               {syncError && (
