@@ -5108,6 +5108,12 @@ body {
     0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.sk-distribution-choice.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .sk-distribution-choice.compact {
   padding: 0.5rem 0.625rem;
 }

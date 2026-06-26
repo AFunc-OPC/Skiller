@@ -45,9 +45,10 @@ export interface SkillDistributionPanelProps {
   skillNames?: string[]
   language?: string
   onSuccess?: () => void
+  modeLocked?: SkillDistributionMode
 }
 
-export function SkillDistributionPanel({ skillIds, skillNames, language: languageProp, onSuccess }: SkillDistributionPanelProps){
+export function SkillDistributionPanel({ skillIds, skillNames, language: languageProp, onSuccess, modeLocked }: SkillDistributionPanelProps){
   const { distributeSkill } = useSkillContext()
   const { language: storeLanguage } = useAppStore()
   const language = languageProp || storeLanguage
@@ -55,7 +56,7 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
   const [toolPresets, setToolPresets] = useState<ToolPreset[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [distributionTarget, setDistributionTarget] = useState<SkillDistributionTarget>('project')
-  const [distributionMode, setDistributionMode] = useState<SkillDistributionMode>('symlink')
+  const [distributionMode, setDistributionMode] = useState<SkillDistributionMode>(modeLocked || 'symlink')
   const [selectedPresetIds, setSelectedPresetIds] = useState<string[]>([])
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
   const [showProjectDropdown, setShowProjectDropdown] = useState(false)
@@ -98,6 +99,12 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
     }
     loadOptions()
   }, [])
+
+  useEffect(() => {
+    if (modeLocked) {
+      setDistributionMode(modeLocked)
+    }
+  }, [modeLocked])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -589,14 +596,16 @@ export function SkillDistributionPanel({ skillIds, skillNames, language: languag
           <div className="sk-distribution-choice-grid compact">
             {modeOptions.map((option) => {
               const active = distributionMode === option.value
+              const isDisabled = Boolean(modeLocked) && modeLocked !== option.value
               return (
-                <label key={option.value} className={`sk-distribution-choice compact ${active ? 'active' : ''}`}>
+                <label key={option.value} className={`sk-distribution-choice compact ${active ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
                   <input
                     type="radio"
                     name={`distribution-mode-${isBatch ? 'batch' : 'single'}`}
                     aria-label={option.label}
                     checked={active}
                     onChange={() => setDistributionMode(option.value)}
+                    disabled={isDisabled}
                   />
                   <strong>{option.title}</strong>
                 </label>
