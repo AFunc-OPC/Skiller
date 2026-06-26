@@ -568,13 +568,13 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
             <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
               <div className={`skill-multi-mode-cluster ${multiSelectMode ? 'active' : ''}`}>
                 <button
-                  className={`skill-multi-mode-trigger ${multiSelectMode ? 'active' : ''}`}
+                  className={`skill-multi-mode-trigger ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}
                   title={language === 'zh' ? '多选模式' : 'Multi-select'}
                   aria-label={language === 'zh' ? '多选模式' : 'Multi-select'}
                 >
                   <ListChecks className="w-4 h-4" />
-                  {multiSelectMode && (
+                  {multiSelectExpanded && (
                     <span>{language === 'zh' ? '多选模式' : 'Multi-select'}</span>
                   )}
                   {multiSelectMode && (
