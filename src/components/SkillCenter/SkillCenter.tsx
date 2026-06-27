@@ -119,6 +119,29 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
   const [batchTagPickerPosition, setBatchTagPickerPosition] = useState({ top: 0, left: 0, maxHeight: 360 })
 
+  const [multiTipPositions, setMultiTipPositions] = useState<{ text: string; x: number; y: number; cls: string }[]>([])
+  const [multiTipVisible, setMultiTipVisible] = useState(false)
+
+  const handleMultiTipEnter = useCallback(() => {
+    const wrap = multiSelectPanelRef.current
+    if (!wrap) return
+    const buttons = wrap.querySelectorAll<HTMLElement>('[data-tip]')
+    const tips: { text: string; x: number; y: number; cls: string }[] = []
+    buttons.forEach(btn => {
+      const text = btn.getAttribute('data-tip') || ''
+      if (!text) return
+      const rect = btn.getBoundingClientRect()
+      const cls = btn.className
+      tips.push({ text, x: rect.left + rect.width / 2, y: rect.top, cls })
+    })
+    setMultiTipPositions(tips)
+    setMultiTipVisible(true)
+  }, [])
+
+  const handleMultiTipLeave = useCallback(() => {
+    setMultiTipVisible(false)
+  }, [])
+
   const selectedSkill = skills.find(s => s.id === selectedSkillId) || null
 
   const collisionDetection = useCallback((args: Parameters<typeof closestCenter>[0]) => {
@@ -565,12 +588,18 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
           </div>
 
           <div className="skill-actions">
-            <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
+            <div
+              className="skill-multi-mode-wrap"
+              ref={multiSelectPanelRef}
+              onMouseEnter={handleMultiTipEnter}
+              onMouseLeave={handleMultiTipLeave}
+            >
               <div className={`skill-multi-mode-cluster ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}>
                 <button
                   className={`skill-multi-mode-trigger ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}
-                  title={language === 'zh' ? '多选模式' : 'Multi-select'}
+                  title=""
+                  data-tip={language === 'zh' ? '多选模式' : 'Multi-select'}
                   aria-label={language === 'zh' ? '多选模式' : 'Multi-select'}
                 >
                   <ListChecks className="w-4 h-4" />
@@ -588,7 +617,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                       className={`skill-multi-action-btn ${allFilteredSelected ? 'selected' : 'neutral'}`}
                       onClick={handleToggleSelectAll}
                       disabled={filteredSkills.length === 0}
-                      title={allFilteredSelected
+                      title=""
+                      data-tip={allFilteredSelected
                         ? (language === 'zh' ? '取消全选' : 'Deselect all')
                         : (language === 'zh' ? '全选' : 'Select all')}
                       aria-label={allFilteredSelected
@@ -602,7 +632,9 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                       ref={tagActionButtonRef}
                       className="skill-multi-action-btn tag"
                       onClick={() => setShowBatchTagPicker(prev => !prev)}
-                      title={language === 'zh' ? '加标签' : 'Add tags'}
+                      disabled={selectedSkillIds.size === 0}
+                      title=""
+                      data-tip={language === 'zh' ? '加标签' : 'Add tags'}
                       aria-label={language === 'zh' ? '加标签' : 'Add tags'}
                     >
                       <Tags className="w-3.5 h-3.5" />
@@ -615,7 +647,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                       className="skill-multi-action-btn danger"
                       onClick={handleRequestBatchDelete}
                       disabled={selectedSkillIds.size === 0 || batchDeleting}
-                      title={language === 'zh' ? '批量删除' : 'Batch delete'}
+                      title=""
+                      data-tip={language === 'zh' ? '批量删除' : 'Batch delete'}
                       aria-label={language === 'zh' ? '批量删除' : 'Batch delete'}
                     >
                       {batchDeleting ? <span className="skill-batch-spinner" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -625,7 +658,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                       className="skill-multi-action-btn export"
                       onClick={handleBatchExport}
                       disabled={selectedSkillIds.size === 0 || batchExporting}
-                      title={language === 'zh' ? '导出' : 'Export'}
+                      title=""
+                      data-tip={language === 'zh' ? '导出' : 'Export'}
                       aria-label={language === 'zh' ? '导出' : 'Export'}
                     >
                       {batchExporting ? <span className="skill-batch-spinner" /> : <Download className="w-3.5 h-3.5" />}
@@ -635,7 +669,8 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                       className="skill-multi-action-btn distribution"
                       onClick={() => setBatchDistributionOpen(true)}
                       disabled={selectedSkillIds.size === 0}
-                      title={language === 'zh' ? '分发' : 'Distribute'}
+                      title=""
+                      data-tip={language === 'zh' ? '分发' : 'Distribute'}
                       aria-label={language === 'zh' ? '分发' : 'Distribute'}
                     >
                       <SendHorizonal className="w-3.5 h-3.5" />
@@ -1059,6 +1094,29 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
             </div>
           )}
         </DragOverlay>
+
+        {multiTipVisible && createPortal(
+          <div className="skill-multi-tip-overlay" data-visible={multiTipVisible}>
+            {multiTipPositions.map((tip, i) => {
+              const isDanger = tip.cls.includes('danger')
+              const isTag = tip.cls.includes('tag') || tip.cls.includes('skill-multi-mode-trigger')
+              const isExport = tip.cls.includes('export')
+              const isDist = tip.cls.includes('distribution')
+              const accentClass = isDanger ? 'danger' : isExport ? 'export' : isDist ? 'distribution' : isTag ? 'mint' : ''
+              return (
+                <div
+                  key={i}
+                  className={`skill-multi-tip-bubble ${accentClass}`}
+                  style={{ left: `${tip.x}px`, top: `${tip.y - 14}px` }}
+                >
+                  <span className="skill-multi-tip-arrow" />
+                  <span className="skill-multi-tip-text">{tip.text}</span>
+                </div>
+              )
+            })}
+          </div>,
+          document.body
+        )}
       </div>
     </DndContext>
   )

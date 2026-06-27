@@ -1709,6 +1709,90 @@ code.sc-prepared-value {
   z-index: 32;
 }
 
+/* ── Multi-mode group tooltips (portal speech-bubble) ──────────── */
+
+.skill-multi-tip-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+}
+
+.skill-multi-tip-bubble {
+  position: fixed;
+  transform: translateX(-50%) translateY(-100%);
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  pointer-events: none;
+  animation: skill-tip-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes skill-tip-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%) scale(1);
+  }
+}
+
+.skill-multi-tip-text {
+  display: inline-block;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.12),
+    0 0 0 1px var(--border-soft);
+}
+
+/* Diagonal arrow — a rotated square that sits below the bubble */
+.skill-multi-tip-arrow {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Dark theme */
+[data-theme="dark"] .skill-multi-tip-text {
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .skill-multi-tip-arrow {
+  background: #1f2937;
+  border-right-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Per-button accent tint */
+.skill-multi-tip-bubble.danger .skill-multi-tip-text { color: #dc2626; }
+.skill-multi-tip-bubble.mint .skill-multi-tip-text { color: var(--accent-mint); }
+.skill-multi-tip-bubble.export .skill-multi-tip-text { color: #2563eb; }
+.skill-multi-tip-bubble.distribution .skill-multi-tip-text { color: #7c3aed; }
+
+[data-theme="dark"] .skill-multi-tip-bubble.danger .skill-multi-tip-text { color: #f87171; }
+[data-theme="dark"] .skill-multi-tip-bubble.export .skill-multi-tip-text { color: #60a5fa; }
+[data-theme="dark"] .skill-multi-tip-bubble.distribution .skill-multi-tip-text { color: #a78bfa; }
+
 .skill-multi-mode-cluster {
   display: inline-flex;
   align-items: center;

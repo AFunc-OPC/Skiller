@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { ArrowUpDown, CheckSquare, Download, ListChecks, Square } from 'lucide-react'
 import { useClawhubStore } from '../../stores/clawhubStore'
 import { useAppStore } from '../../stores/appStore'
@@ -59,6 +60,29 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
   const lastExploreRequestKeyRef = useRef<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const sortDropdownRef = useRef<HTMLDivElement>(null)
+  const clawhubMultiTipRef = useRef<HTMLDivElement>(null)
+  const [clawhubTipPositions, setClawhubTipPositions] = useState<{ text: string; x: number; y: number; cls: string }[]>([])
+  const [clawhubTipVisible, setClawhubTipVisible] = useState(false)
+
+  const handleClawhubTipEnter = useCallback(() => {
+    const wrap = clawhubMultiTipRef.current
+    if (!wrap) return
+    const buttons = wrap.querySelectorAll<HTMLElement>('[data-tip]')
+    const tips: { text: string; x: number; y: number; cls: string }[] = []
+    buttons.forEach(btn => {
+      const text = btn.getAttribute('data-tip') || ''
+      if (!text) return
+      const rect = btn.getBoundingClientRect()
+      const cls = btn.className
+      tips.push({ text, x: rect.left + rect.width / 2, y: rect.top, cls })
+    })
+    setClawhubTipPositions(tips)
+    setClawhubTipVisible(true)
+  }, [])
+
+  const handleClawhubTipLeave = useCallback(() => {
+    setClawhubTipVisible(false)
+  }, [])
 
   useEffect(() => {
     setLocalSearch(searchQuery || '')
@@ -360,12 +384,18 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
         </div>
 
         <div className="skill-actions clawhub-toolbar-actions">
-          <div className="skill-multi-mode-wrap">
+          <div
+            className="skill-multi-mode-wrap"
+            ref={clawhubMultiTipRef}
+            onMouseEnter={handleClawhubTipEnter}
+            onMouseLeave={handleClawhubTipLeave}
+          >
             <div className={`skill-multi-mode-cluster ${batchMode ? 'active' : ''}`}>
               <button
                 className={`skill-multi-mode-trigger ${batchMode ? 'active' : ''}`}
                 onClick={handleToggleBatchMode}
-                title={language === 'zh' ? '批量选择' : 'Batch select'}
+                title=""
+                data-tip={language === 'zh' ? '批量选择' : 'Batch select'}
                 aria-label={language === 'zh' ? '批量选择' : 'Batch select'}
                 type="button"
               >
@@ -384,7 +414,8 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                     className={`skill-multi-action-btn ${allSkillsSelected ? 'selected' : 'neutral'}`}
                     onClick={handleToggleSelectAll}
                     disabled={skills.length === 0}
-                    title={allSkillsSelected
+                    title=""
+                    data-tip={allSkillsSelected
                       ? (language === 'zh' ? '取消全选' : 'Deselect all')
                       : (language === 'zh' ? '全选' : 'Select all')}
                     aria-label={allSkillsSelected
@@ -398,7 +429,8 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
                     className="skill-multi-action-btn export"
                     onClick={handleImportToCenter}
                     disabled={selectedSlugs.size === 0 || importing || importingToCenter}
-                    title={language === 'zh' ? '导入到技能中心' : 'Import to Skill Center'}
+                    title=""
+                    data-tip={language === 'zh' ? '导入到技能中心' : 'Import to Skill Center'}
                     aria-label={language === 'zh' ? '导入到技能中心' : 'Import to Skill Center'}
                     type="button"
                   >
@@ -663,6 +695,27 @@ export function SkillGrid({ language, sourceId, sourceName }: SkillGridProps) {
           loading={detailLoading}
           onClose={clearSkillDetail}
         />
+      )}
+
+      {clawhubTipVisible && createPortal(
+        <div className="skill-multi-tip-overlay">
+          {clawhubTipPositions.map((tip, i) => {
+            const isExport = tip.cls.includes('export')
+            const isMint = tip.cls.includes('skill-multi-mode-trigger')
+            const accentClass = isExport ? 'export' : isMint ? 'mint' : ''
+            return (
+              <div
+                key={i}
+                className={`skill-multi-tip-bubble ${accentClass}`}
+                style={{ left: `${tip.x}px`, top: `${tip.y - 14}px` }}
+              >
+                <span className="skill-multi-tip-arrow" />
+                <span className="skill-multi-tip-text">{tip.text}</span>
+              </div>
+            )
+          })}
+        </div>,
+        document.body
       )}
     </div>
   )
