@@ -566,7 +566,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
 
           <div className="skill-actions">
             <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
-              <div className={`skill-multi-mode-cluster ${(multiSelectExpanded || multiSelectMode) ? 'active' : ''}`}>
+              <div className={`skill-multi-mode-cluster ${multiSelectMode ? 'active' : ''}`}>
                 <button
                   className={`skill-multi-mode-trigger ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}
@@ -582,7 +582,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
                   )}
                 </button>
 
-                {multiSelectMode && (
+                {(multiSelectExpanded || multiSelectMode) && (
                   <div className="skill-multi-inline-actions">
                     <button
                       className={`skill-multi-action-btn ${allFilteredSelected ? 'selected' : 'neutral'}`}
