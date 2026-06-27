@@ -566,7 +566,7 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
 
           <div className="skill-actions">
             <div className="skill-multi-mode-wrap" ref={multiSelectPanelRef}>
-              <div className={`skill-multi-mode-cluster ${multiSelectMode ? 'active' : ''}`}>
+              <div className={`skill-multi-mode-cluster ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}>
                 <button
                   className={`skill-multi-mode-trigger ${multiSelectExpanded ? 'expanded' : ''} ${multiSelectMode ? 'active' : ''}`}
                   onClick={handleToggleMultiSelectMode}

@@ -1720,6 +1720,10 @@ code.sc-prepared-value {
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.skill-multi-mode-cluster.expanded {
+  border-color: var(--border-soft);
+}
+
 .skill-multi-mode-cluster.active {
   border-color: rgba(16, 185, 129, 0.28);
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
