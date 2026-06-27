@@ -1720,23 +1720,83 @@ code.sc-prepared-value {
 
 .skill-multi-tip-bubble {
   position: fixed;
-  transform: translateX(-50%) translateY(-100%);
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
   pointer-events: none;
   animation: skill-tip-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes skill-tip-pop {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-100%) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-100%) scale(1);
-  }
+/* ── Top placement (default) ── */
+.skill-multi-tip-bubble.tip-top {
+  transform: translateX(-50%) translateY(-100%);
+}
+
+@keyframes skill-tip-pop-top {
+  from { opacity: 0; transform: translateX(-50%) translateY(-100%) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(-100%) scale(1); }
+}
+
+.skill-multi-tip-bubble.tip-top { animation-name: skill-tip-pop-top; }
+
+.skill-multi-tip-bubble.tip-top .skill-multi-tip-arrow {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Right placement ── */
+.skill-multi-tip-bubble.tip-right {
+  transform: translateY(-50%);
+}
+
+@keyframes skill-tip-pop-right {
+  from { opacity: 0; transform: translateY(-50%) translateX(-6px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0) scale(1); }
+}
+
+.skill-multi-tip-bubble.tip-right { animation-name: skill-tip-pop-right; }
+
+.skill-multi-tip-bubble.tip-right .skill-multi-tip-arrow {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Left placement ── */
+.skill-multi-tip-bubble.tip-left {
+  transform: translateX(-100%) translateY(-50%);
+}
+
+@keyframes skill-tip-pop-left {
+  from { opacity: 0; transform: translateX(-100%) translateY(-50%) translateX(6px) scale(0.9); }
+  to   { opacity: 1; transform: translateX(-100%) translateY(-50%) translateX(0) scale(1); }
+}
+
+.skill-multi-tip-bubble.tip-left { animation-name: skill-tip-pop-left; }
+
+.skill-multi-tip-bubble.tip-left .skill-multi-tip-arrow {
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border-soft);
+  border-top: 1px solid var(--border-soft);
+  box-shadow: 2px -2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .skill-multi-tip-text {
@@ -1754,20 +1814,6 @@ code.sc-prepared-value {
     0 0 0 1px var(--border-soft);
 }
 
-/* Diagonal arrow — a rotated square that sits below the bubble */
-.skill-multi-tip-arrow {
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background: var(--bg-elevated);
-  border-right: 1px solid var(--border-soft);
-  border-bottom: 1px solid var(--border-soft);
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.06);
-}
-
 /* Dark theme */
 [data-theme="dark"] .skill-multi-tip-text {
   background: #1f2937;
@@ -1777,10 +1823,9 @@ code.sc-prepared-value {
     0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-[data-theme="dark"] .skill-multi-tip-arrow {
+[data-theme="dark"] .skill-multi-tip-bubble .skill-multi-tip-arrow {
   background: #1f2937;
-  border-right-color: rgba(255, 255, 255, 0.08);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Per-button accent tint */

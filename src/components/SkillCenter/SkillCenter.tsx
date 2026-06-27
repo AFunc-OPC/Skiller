@@ -119,20 +119,20 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
   const batchTagPickerRef = useRef<HTMLDivElement>(null)
   const [batchTagPickerPosition, setBatchTagPickerPosition] = useState({ top: 0, left: 0, maxHeight: 360 })
 
-  const [multiTipPositions, setMultiTipPositions] = useState<{ text: string; x: number; y: number; cls: string }[]>([])
+  const [multiTipPositions, setMultiTipPositions] = useState<{ text: string; x: number; y: number; w: number; h: number; cls: string }[]>([])
   const [multiTipVisible, setMultiTipVisible] = useState(false)
 
   const handleMultiTipEnter = useCallback(() => {
     const wrap = multiSelectPanelRef.current
     if (!wrap) return
     const buttons = wrap.querySelectorAll<HTMLElement>('[data-tip]')
-    const tips: { text: string; x: number; y: number; cls: string }[] = []
+    const tips: { text: string; x: number; y: number; w: number; h: number; cls: string }[] = []
     buttons.forEach(btn => {
       const text = btn.getAttribute('data-tip') || ''
       if (!text) return
       const rect = btn.getBoundingClientRect()
       const cls = btn.className
-      tips.push({ text, x: rect.left + rect.width / 2, y: rect.top, cls })
+      tips.push({ text, x: rect.left + rect.width / 2, y: rect.top, w: rect.width, h: rect.height, cls })
     })
     setMultiTipPositions(tips)
     setMultiTipVisible(true)
@@ -1103,11 +1103,18 @@ export function SkillCenter({ onNavigateToRepository, onNavigateToAddRepo, onNav
               const isExport = tip.cls.includes('export')
               const isDist = tip.cls.includes('distribution')
               const accentClass = isDanger ? 'danger' : isExport ? 'export' : isDist ? 'distribution' : isTag ? 'mint' : ''
+              const place = (() => {
+                const tipH = 28
+                const gap = 14
+                if (tip.y - tipH - gap >= 8) return { dir: 'top', style: { left: `${tip.x}px`, top: `${tip.y - gap}px` } }
+                if (tip.x + tip.w / 2 + 120 <= window.innerWidth - 8) return { dir: 'right', style: { left: `${tip.x + tip.w / 2 + gap}px`, top: `${tip.y + tip.h / 2}px` } }
+                return { dir: 'left', style: { left: `${tip.x - tip.w / 2 - gap}px`, top: `${tip.y + tip.h / 2}px` } }
+              })()
               return (
                 <div
                   key={i}
-                  className={`skill-multi-tip-bubble ${accentClass}`}
-                  style={{ left: `${tip.x}px`, top: `${tip.y - 14}px` }}
+                  className={`skill-multi-tip-bubble ${accentClass} tip-${place.dir}`}
+                  style={place.style}
                 >
                   <span className="skill-multi-tip-arrow" />
                   <span className="skill-multi-tip-text">{tip.text}</span>
