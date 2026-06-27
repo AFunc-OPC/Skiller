@@ -82,6 +82,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
   }>({ existing: [], newSkills: [] })
   const [previewSkill, setPreviewSkill] = useState<Skill | null>(null)
   const [distributeModalOpen, setDistributeModalOpen] = useState(false)
+  const [distributeHint, setDistributeHint] = useState<string | null>(null)
   const [copiedSkillId, setCopiedSkillId] = useState<string | null>(null)
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [tagSearchKeyword, setTagSearchKeyword] = useState('')
@@ -394,6 +395,16 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
   const selectedSkillsForDistribution = useMemo(() => {
     return repositorySkills.filter(s => selectedSkillIds.has(s.id))
   }, [repositorySkills, selectedSkillIds])
+
+  const handleDistributeClick = useCallback(() => {
+    if (selectedSkillsForDistribution.length === 0) {
+      setDistributeHint(language === 'zh' ? '请先在右侧「仓库技能」中勾选要分发的技能' : 'Please select skills in "Repository Skills" on the right first')
+      setTimeout(() => setDistributeHint(null), 5000)
+      return
+    }
+    setDistributeHint(null)
+    setDistributeModalOpen(true)
+  }, [selectedSkillsForDistribution.length, language])
 
   const toggleSkillSelection = useCallback((skillId: string) => {
     setSelectedSkillIds(prev => {
@@ -932,8 +943,8 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
 
               <button
                 className="repo-btn-primary repo-distribute-btn"
-                onClick={() => setDistributeModalOpen(true)}
-                disabled={selectedSkillIds.size === 0 || repositorySkills.length === 0}
+                onClick={handleDistributeClick}
+                disabled={repositorySkills.length === 0}
                 title={language === 'zh' ? '分发选中的仓库技能' : 'Distribute selected repository skills'}
               >
                 <svg viewBox="0 0 20 20" fill="currentColor">
@@ -942,8 +953,19 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
                   <path d="M5 12a1 1 0 100 2h3a1 1 0 100-2H5z" />
                 </svg>
                 {language === 'zh' ? '立即分发' : 'Distribute Now'}
-                {selectedSkillIds.size > 0 && <span className="repo-import-count">({selectedSkillIds.size})</span>}
+                {selectedSkillsForDistribution.length > 0 && <span className="repo-import-count">({selectedSkillsForDistribution.length})</span>}
               </button>
+
+              {distributeHint && (
+                <div className="repo-inline-error" role="alert">
+                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-.993.883L9 6v4a1 1 0 001.993.117L11 10V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div className="repo-inline-error-copy">
+                    <span>{distributeHint}</span>
+                  </div>
+                </div>
+              )}
 
               {syncError && (
                 <div className="repo-inline-error" role="alert">
@@ -1311,7 +1333,7 @@ export function RepositoryDetailDrawer({ repository, isOpen, onClose, onNavigate
 
       {distributeModalOpen && selectedSkillsForDistribution.length > 0 && (
         <BatchDistributionModal
-          skillIds={selectedSkillsForDistribution.map(s => s.file_path)}
+          skillIds={selectedSkillsForDistribution.map(s => getSkillFolderPath(s))}
           skillNames={selectedSkillsForDistribution.map(s => s.name)}
           isOpen={distributeModalOpen}
           onClose={() => setDistributeModalOpen(false)}
