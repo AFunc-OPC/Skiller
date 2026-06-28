@@ -1,10 +1,18 @@
-import { useState, useMemo, useCallback } from 'react'
-import { Search, FolderOpen, Trash2, Power } from 'lucide-react'
-import { Skill, ToolPreset } from '../../types'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { Search, FolderOpen, Trash2, Power, ArrowUpDown, Clock, Calendar, Type, FolderTree, ArrowUp, ArrowDown, Check } from 'lucide-react'
+import { Skill, ToolPreset, SortOption, SORT_OPTIONS, SortField, SortOrder } from '../../types'
 import { useAppStore } from '../../stores/appStore'
+import { useSort } from '../../hooks/useSort'
 import { ProjectSkillCard } from './ProjectSkillCard'
 import { ProjectSkillListItem } from './ProjectSkillListItem'
 import './ProjectSkill.css'
+
+const SORT_ICON_MAP: Record<SortField, typeof Clock> = {
+  updated_at: Clock,
+  created_at: Calendar,
+  name: Type,
+  path: FolderTree,
+}
 
 interface ProjectSkillListProps {
   skills: Skill[]
@@ -41,6 +49,38 @@ export function ProjectSkillList({
   const [searchKeyword, setSearchKeyword] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const sortDropdownRef = useRef<HTMLDivElement>(null)
+
+  const { sortOption, setSortOption, sortData } = useSort({ storageKey: 'project-skill-sort-option' })
+
+  useEffect(() => {
+    if (!sortMenuOpen) return
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setSortMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [sortMenuOpen])
+
+  const localizedSortOptions = useMemo(() => {
+    const labels: Record<string, { zh: string; en: string }> = {
+      'updated_at-desc': { zh: '更新时间最新', en: 'Updated (newest)' },
+      'updated_at-asc': { zh: '更新时间最旧', en: 'Updated (oldest)' },
+      'created_at-desc': { zh: '创建时间最新', en: 'Created (newest)' },
+      'created_at-asc': { zh: '创建时间最旧', en: 'Created (oldest)' },
+      'name-asc': { zh: '名称 A-Z', en: 'Name A-Z' },
+      'name-desc': { zh: '名称 Z-A', en: 'Name Z-A' },
+      'path-asc': { zh: '路径 A-Z', en: 'Path A-Z' },
+      'path-desc': { zh: '路径 Z-A', en: 'Path Z-A' },
+    }
+    return SORT_OPTIONS.map(opt => ({
+      ...opt,
+      label: language === 'zh' ? labels[`${opt.field}-${opt.order}`].zh : labels[`${opt.field}-${opt.order}`].en,
+    }))
+  }, [language])
 
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
   const [batchRemoveConfirmOpen, setBatchRemoveConfirmOpen] = useState(false)
@@ -54,13 +94,15 @@ export function ProjectSkillList({
 
   const filteredSkills = useMemo(() => {
     const normalized = searchKeyword.trim().toLowerCase()
-    if (!normalized) return currentPresetSkills
-    return currentPresetSkills.filter(
-      (skill) =>
-        skill.name.toLowerCase().includes(normalized) ||
-        skill.file_path.toLowerCase().includes(normalized)
-    )
-  }, [currentPresetSkills, searchKeyword])
+    const result = !normalized
+      ? currentPresetSkills
+      : currentPresetSkills.filter(
+          (skill) =>
+            skill.name.toLowerCase().includes(normalized) ||
+            skill.file_path.toLowerCase().includes(normalized)
+        )
+    return sortData(result)
+  }, [currentPresetSkills, searchKeyword, sortData])
 
   const selectedCount = selectedIds.size
 
@@ -286,6 +328,45 @@ export function ProjectSkillList({
                 <><strong>{filteredSkills.length}</strong> skills</>
               )}
             </span>
+
+            <div className="sort-dropdown ps-sort-dropdown" ref={sortDropdownRef}>
+              <button
+                className={`sort-dropdown-trigger ps-sort-trigger ${sortMenuOpen ? 'ps-sort-open' : ''}`}
+                onClick={() => setSortMenuOpen(prev => !prev)}
+                title={language === 'zh' ? '排序' : 'Sort'}
+                type="button"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+              </button>
+              {sortMenuOpen && (
+                <div className="sort-dropdown-menu">
+                  {localizedSortOptions.map((option) => {
+                    const Icon = SORT_ICON_MAP[option.field]
+                    const isActive = sortOption.field === option.field && sortOption.order === option.order
+                    return (
+                      <button
+                        key={`${option.field}-${option.order}`}
+                        className={`sort-dropdown-item ps-sort-item ${isActive ? 'active' : ''}`}
+                        onClick={() => {
+                          setSortOption(option)
+                          setSortMenuOpen(false)
+                        }}
+                        type="button"
+                      >
+                        <span className="ps-sort-item-icon">
+                          <Icon className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="sort-dropdown-label">{option.label}</span>
+                        <span className="ps-sort-item-arrow">
+                          {option.order === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                        </span>
+                        {isActive && <Check className="w-3.5 h-3.5 ps-sort-item-check" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {filteredSkills.length === 0 ? (

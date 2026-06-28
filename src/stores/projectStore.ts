@@ -127,7 +127,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const skillsByPreset = await projectSkillApi.listByPresets(projectId)
       const allSkills = Object.values(skillsByPreset).flat()
       const { selectedPresetId, toolPresets } = get()
-      const defaultPresetId = selectedPresetId || toolPresets[0]?.id || null
+      const sortedPresets = [...toolPresets].sort((a, b) => {
+        const countA = (skillsByPreset[a.id] || []).length
+        const countB = (skillsByPreset[b.id] || []).length
+        return countB - countA
+      })
+      const defaultPresetId = selectedPresetId || sortedPresets[0]?.id || null
       set({ 
         projectSkillsByPreset: skillsByPreset, 
         projectSkills: allSkills,

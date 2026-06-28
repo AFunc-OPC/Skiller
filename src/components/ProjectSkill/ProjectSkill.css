@@ -281,6 +281,137 @@
   margin-bottom: 6px;
 }
 
+.ps-sort-dropdown {
+  margin-left: auto;
+}
+
+.ps-sort-trigger {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 5px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  transition: border-color 0.15s, color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ps-sort-trigger:hover {
+  background: var(--bg-elevated);
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+}
+
+.ps-sort-trigger:active {
+  transform: scale(0.96);
+}
+
+.ps-sort-open {
+  background: var(--bg-elevated);
+  border-color: var(--accent-mint);
+  color: var(--accent-mint);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+[data-theme="dark"] .ps-sort-open {
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+}
+
+.ps-sort-dropdown .sort-dropdown-menu {
+  top: calc(100% + 3px);
+  right: 0;
+  min-width: 188px;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  animation: ps-sort-menu-in 0.14s ease-out;
+}
+
+.ps-sort-dropdown .sort-dropdown-item {
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  gap: 7px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ps-sort-dropdown .sort-dropdown-item:hover {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.ps-sort-dropdown .sort-dropdown-item.active {
+  background: color-mix(in srgb, var(--accent-mint) 8%, transparent);
+  color: var(--accent-mint);
+  font-weight: 500;
+}
+
+.ps-sort-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: color 0.12s;
+}
+
+.ps-sort-item:hover .ps-sort-item-icon {
+  color: var(--text-secondary);
+}
+
+.ps-sort-item.active .ps-sort-item-icon {
+  color: var(--accent-mint);
+}
+
+.ps-sort-item-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.ps-sort-item.active .ps-sort-item-arrow {
+  color: var(--accent-mint);
+  opacity: 0.6;
+}
+
+.ps-sort-item-check {
+  flex-shrink: 0;
+  color: var(--accent-mint);
+  animation: ps-sort-check-in 0.15s ease-out;
+}
+
+@keyframes ps-sort-check-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ps-sort-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+[data-theme="dark"] .ps-sort-dropdown .sort-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .ps-sort-dropdown .sort-dropdown-menu {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
 .ps-checkbox-wrap {
   display: flex;
   align-items: center;
@@ -420,8 +551,9 @@
 
 .ps-card-meta {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .ps-meta-item {
@@ -543,8 +675,9 @@
 
 .ps-list-meta-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .ps-list-meta-item {

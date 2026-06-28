@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trash2, Ban, CheckCircle, Folder, Link, FileText, FolderOpen, Link2Off } from 'lucide-react'
+import { Trash2, Ban, CheckCircle, Folder, Link, FileText, FolderOpen, Link2Off, Clock } from 'lucide-react'
 import { Skill } from '../../types'
 import { useAppStore } from '../../stores/appStore'
 import { desktopApi } from '../../api/desktop'
@@ -118,6 +118,12 @@ export function ProjectSkillCard({
               <Folder className="w-3 h-3 flex-shrink-0" />
               <span className="ps-meta-text" title={skill.file_path}>
                 <HighlightText text={skill.file_path} keyword={searchKeyword} />
+              </span>
+            </div>
+            <div className="ps-meta-item">
+              <Clock className="w-3 h-3 flex-shrink-0" />
+              <span className="ps-meta-text">
+                {new Date(skill.updated_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </div>
           </div>
