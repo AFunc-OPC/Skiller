@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 use tauri::{Manager, State};
@@ -24,13 +25,22 @@ fn get_preset_skill_path(conn: &rusqlite::Connection, preset_id: &str) -> Result
 
 fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) -> Vec<Skill> {
     let mut skills = Vec::new();
+    let mut seen_names: HashSet<String> = HashSet::new();
 
     if !dir.exists() {
         return skills;
     }
 
     if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
+        let mut sorted_entries: Vec<_> = entries.flatten().collect();
+        sorted_entries.sort_by_key(|e| {
+            e.file_name()
+                .to_string_lossy()
+                .starts_with(".disable.")
+                .to_string()
+        });
+
+        for entry in sorted_entries {
             let path = entry.path();
             let symlink_metadata = fs::symlink_metadata(&path).ok();
             let is_symlink = symlink_metadata
@@ -136,6 +146,10 @@ fn scan_skills_from_directory(dir: &PathBuf, project_id: &str, preset_id: &str) 
                     symlink_valid,
                     symlink_target_disabled: target_disabled,
                 };
+
+                if !seen_names.insert(actual_name.clone()) {
+                    continue;
+                }
 
                 skills.push(skill);
             }
