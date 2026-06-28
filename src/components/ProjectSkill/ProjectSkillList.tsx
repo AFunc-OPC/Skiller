@@ -228,7 +228,11 @@ export function ProjectSkillList({
       <div className="ps-filter-bar">
         <span className="ps-filter-label">{language === 'zh' ? '工具预设:' : 'Preset:'}</span>
         <div className="ps-preset-tabs">
-          {toolPresets.map((preset) => {
+          {[...toolPresets].sort((a, b) => {
+            const countA = (skillsByPreset[a.id] || []).length
+            const countB = (skillsByPreset[b.id] || []).length
+            return countB - countA
+          }).map((preset) => {
             const count = (skillsByPreset[preset.id] || []).length
             return (
               <button
