@@ -1,10 +1,3 @@
-pub mod clawhub;
-pub mod skill;
-pub mod skill_file;
-pub mod tag;
-pub mod project;
-pub mod project_skill;
-pub mod repo;
 pub mod config;
 pub mod desktop;
 pub mod log;

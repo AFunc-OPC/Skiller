@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import { ToolPresetSettings } from './ToolPresetSettings'
 import { LogPanel } from './LogPanel'
 import { About } from './About'
-import { ProxySettings } from './ProxySettings'
-import { ClawhubSourceSettings } from './ClawhubSourceSettings'
 import { t } from '../../i18n'
 
 interface SettingsTabsProps {
@@ -14,27 +11,13 @@ interface SettingsTabsProps {
   defaultTab?: string
 }
 
-type TabKey = 'general' | 'clawhub' | 'presets' | 'proxy' | 'logs' | 'about'
+type TabKey = 'general' | 'logs' | 'about'
 
 const TAB_ICONS: Record<TabKey, JSX.Element> = {
   general: (
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
       <path d="M10.5 1.5h-1l-.863 2.59a7 7 0 00-1.547.635L4.79 3.283l-.707.707 1.442 2.3a7 7 0 00-.635 1.547L2 8.5v1l2.59.863c.162.544.377 1.064.635 1.547L3.783 14.21l.707.707 2.3-1.442a7 7 0 001.547.635L9.5 17h1l.863-2.59a7 7 0 001.547-.635l2.3 1.442.707-.707-1.442-2.3a7 7 0 00.635-1.547L18 9.5v-1l-2.59-.863a7 7 0 00-.635-1.547l1.442-2.3-.707-.707-2.3 1.442a7 7 0 00-1.547-.635L10.5 1.5z"/>
       <circle cx="10" cy="9" r="2.5"/>
-    </svg>
-  ),
-  presets: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.5 5.5h13v11a2 2 0 01-2 2h-9a2 2 0 01-2-2v-11z"/>
-      <path d="M3.5 5.5l2-3h9l2 3"/>
-      <path d="M8 9.5v5M12 9.5v5"/>
-    </svg>
-  ),
-  proxy: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="3"/>
-      <path d="M10 2v2M10 16v2M18 10h-2M4 10H2"/>
-      <path d="M15.5 4.5l-1.4 1.4M5.9 14.1l-1.4 1.4M15.5 15.5l-1.4-1.4M5.9 5.9L4.5 4.5"/>
     </svg>
   ),
   logs: (
@@ -49,32 +32,13 @@ const TAB_ICONS: Record<TabKey, JSX.Element> = {
       <path d="M10 7v1M10 10.5v3"/>
     </svg>
   ),
-  clawhub: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10" cy="10" r="7.5"/>
-      <path d="M2 10h16M10 2a13 13 0 014 8 13 13 0 01-4 8 13 13 0 01-4-8 13 13 0 014-8z"/>
-    </svg>
-  ),
 }
 
 export function SettingsTabs({ language, setLanguage, theme, setTheme, defaultTab }: SettingsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>((defaultTab as TabKey) || 'general')
 
-  const [multiSelectExpand, setMultiSelectExpand] = useState(() => {
-    return localStorage.getItem('skillCenterMultiSelectExpanded') === 'true'
-  })
-
-  const handleToggleMultiSelectExpand = () => {
-    const next = !multiSelectExpand
-    setMultiSelectExpand(next)
-    localStorage.setItem('skillCenterMultiSelectExpanded', String(next))
-  }
-
   const tabs: Array<{ key: TabKey; label: string; labelEn: string }> = [
     { key: 'general', label: '通用设置', labelEn: 'General' },
-    { key: 'clawhub', label: 'ClawHub 源', labelEn: 'ClawHub Source' },
-    { key: 'presets', label: '路径预设', labelEn: 'Path Presets' },
-    { key: 'proxy', label: '代理', labelEn: 'Proxy' },
     { key: 'logs', label: '运行日志', labelEn: 'Logs' },
     { key: 'about', label: '关于', labelEn: 'About' },
   ]
@@ -192,33 +156,8 @@ export function SettingsTabs({ language, setLanguage, theme, setTheme, defaultTa
                   </button>
                 </div>
               </div>
-              <div className="settings-section-header">
-                <div>
-                  <h2 className="settings-section-title">{t('multiSelectExpandTitle', language)}</h2>
-                  <p className="settings-section-desc">
-                    {language === 'zh' ? '技能中心 > 多选模式默认展开' : 'Skill Center > Multi-select expanded by default'}
-                  </p>
-                  <p className="settings-section-desc" style={{ fontSize: '0.8125rem', opacity: 0.7, marginTop: '0.25rem' }}>
-                    {t('multiSelectExpandHint', language)}
-                  </p>
-                </div>
-                <label className="settings-toggle" title={t('multiSelectExpandTitle', language)}>
-                  <input
-                    type="checkbox"
-                    checked={multiSelectExpand}
-                    onChange={handleToggleMultiSelectExpand}
-                  />
-                  <span className="settings-toggle-slider" />
-                </label>
-              </div>
             </div>
           )}
-          
-          {activeTab === 'clawhub' && <ClawhubSourceSettings language={language} />}
-          
-          {activeTab === 'presets' && <ToolPresetSettings language={language} />}
-          
-          {activeTab === 'proxy' && <ProxySettings language={language} />}
           
           {activeTab === 'logs' && <LogPanel language={language} />}
           

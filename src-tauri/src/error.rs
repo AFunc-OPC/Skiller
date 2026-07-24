@@ -3,21 +3,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum SkillerError {
-    #[error("Skill not found: {0}")]
-    SkillNotFound(String),
-
-    #[error("Tag name already exists: {0}")]
-    TagNameExists(String),
-
-    #[error("Tag not found: {0}")]
-    TagNotFound(String),
-
-    #[error("Project not found: {0}")]
-    ProjectNotFound(String),
-
-    #[error("Repository not found: {0}")]
-    RepoNotFound(String),
-
     #[error("Validation error: {0}")]
     ValidationError(String),
 
@@ -30,26 +15,8 @@ pub enum SkillerError {
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
 
-    #[error("Git error: {0}")]
-    GitError(String),
-
     #[error("Invalid input: {0}")]
     InvalidInput(String),
-
-    #[error("ClawHub source not found: {0}")]
-    ClawhubSourceNotFound(String),
-
-    #[error("ClawHub connection failed: {0}")]
-    ClawhubConnectionFailed(String),
-
-    #[error("ClawHub API error: {0}")]
-    ClawhubApiError(String),
-
-    #[error("ClawHub CLI error: {0}")]
-    ClawhubCliError(String),
-
-    #[error("Encryption error: {0}")]
-    EncryptionError(String),
 }
 
 impl Serialize for SkillerError {
@@ -68,22 +35,11 @@ impl Serialize for SkillerError {
 impl SkillerError {
     pub fn error_code(&self) -> &str {
         match self {
-            SkillerError::SkillNotFound(_) => "SKILL_NOT_FOUND",
-            SkillerError::TagNameExists(_) => "TAG_EXISTS",
-            SkillerError::TagNotFound(_) => "TAG_NOT_FOUND",
-            SkillerError::ProjectNotFound(_) => "PROJECT_NOT_FOUND",
-            SkillerError::RepoNotFound(_) => "REPO_NOT_FOUND",
             SkillerError::ValidationError(_) => "VALIDATION_ERROR",
             SkillerError::DatabaseError(_) => "DATABASE_ERROR",
             SkillerError::IoError(_) => "IO_ERROR",
             SkillerError::JsonError(_) => "JSON_ERROR",
-            SkillerError::GitError(_) => "GIT_ERROR",
             SkillerError::InvalidInput(_) => "INVALID_INPUT",
-            SkillerError::ClawhubSourceNotFound(_) => "CLAWHUB_SOURCE_NOT_FOUND",
-            SkillerError::ClawhubConnectionFailed(_) => "CLAWHUB_CONNECTION_FAILED",
-            SkillerError::ClawhubApiError(_) => "CLAWHUB_API_ERROR",
-            SkillerError::ClawhubCliError(_) => "CLAWHUB_CLI_ERROR",
-            SkillerError::EncryptionError(_) => "ENCRYPTION_ERROR",
         }
     }
 }

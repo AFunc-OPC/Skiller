@@ -1,90 +1,90 @@
 import { create } from 'zustand'
-import { listen } from '@tauri-apps/api/event'
 import { logApi, type LogEntry, type LogFilter, type LogStats } from '../api/log'
+import { isTauriEnvironment } from '../api/tauri'
 
 interface LogState {
   logs: LogEntry[]
   stats: LogStats
   filter: LogFilter
   loading: boolean
-  error: string | null
-  
   fetchLogs: () => Promise<void>
   fetchStats: () => Promise<void>
   setFilter: (filter: Partial<LogFilter>) => void
   clearLogs: () => Promise<void>
   exportLogs: (format: 'txt' | 'json') => Promise<void>
-  addLog: (entry: LogEntry) => void
   initEventListener: () => () => void
+}
+
+const defaultStats: LogStats = {
+  total: 0,
+  info_count: 0,
+  warn_count: 0,
+  error_count: 0,
 }
 
 export const useLogStore = create<LogState>((set, get) => ({
   logs: [],
-  stats: { total: 0, info_count: 0, warn_count: 0, error_count: 0 },
-  filter: { limit: 500 },
+  stats: defaultStats,
+  filter: {},
   loading: false,
-  error: null,
-  
+
   fetchLogs: async () => {
-    set({ loading: true, error: null })
+    if (!isTauriEnvironment()) return
+    set({ loading: true })
     try {
       const logs = await logApi.getLogs(get().filter)
       set({ logs, loading: false })
-    } catch (error) {
-      set({ error: String(error), loading: false })
+    } catch {
+      set({ loading: false })
     }
   },
-  
+
   fetchStats: async () => {
+    if (!isTauriEnvironment()) return
     try {
       const stats = await logApi.getStats()
       set({ stats })
-    } catch (error) {
-      console.error('Failed to fetch log stats:', error)
+    } catch {
+      // ignore
     }
   },
-  
-  setFilter: (newFilter) => {
-    set((state) => ({
-      filter: { ...state.filter, ...newFilter }
-    }))
+
+  setFilter: (partial) => {
+    const filter = { ...get().filter, ...partial }
+    set({ filter })
     get().fetchLogs()
+    get().fetchStats()
   },
-  
+
   clearLogs: async () => {
+    if (!isTauriEnvironment()) return
     try {
       await logApi.clearLogs()
-      set({ logs: [], stats: { total: 0, info_count: 0, warn_count: 0, error_count: 0 } })
-    } catch (error) {
-      set({ error: String(error) })
+      set({ logs: [], stats: defaultStats })
+    } catch {
+      // ignore
     }
   },
-  
+
   exportLogs: async (format) => {
+    if (!isTauriEnvironment()) return
     try {
       await logApi.exportLogs(format, get().filter)
-    } catch (error) {
-      set({ error: String(error) })
+    } catch {
+      // ignore
     }
   },
-  
-  addLog: (entry) => {
-    set((state) => ({
-      logs: [...state.logs, entry].slice(-10000)
-    }))
-  },
-  
+
   initEventListener: () => {
-    let unlisten: (() => void) | null = null
-    
-    listen<LogEntry>('log:new', (event) => {
-      get().addLog(event.payload)
-    }).then((fn) => {
-      unlisten = fn
-    })
-    
+    if (!isTauriEnvironment()) return () => {}
+    const unlistenPromise = import('@tauri-apps/api/event').then(({ listen }) =>
+      listen<LogEntry>('log:new', () => {
+        get().fetchLogs()
+        get().fetchStats()
+      })
+    )
     return () => {
-      if (unlisten) unlisten()
+      unlistenPromise.then((unlisten) => unlisten())
     }
   },
 }))
